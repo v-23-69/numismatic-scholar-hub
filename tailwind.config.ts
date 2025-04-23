@@ -18,6 +18,9 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				'playfair': ['Playfair Display', 'serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -52,6 +55,19 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+                // Royal theme colors
+                royal: {
+                    DEFAULT: '#0B2C5E', // Royal blue
+                    light: '#1A4B8C',
+                    dark: '#091F40',
+                    foreground: '#FFFFFF'
+                },
+                gold: {
+                    DEFAULT: '#D4AF37', // Royal gold
+                    light: '#F2D777',
+                    dark: '#A8880B',
+                    muted: '#F9F4E0'
+                },
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

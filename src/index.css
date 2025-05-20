@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -142,4 +143,13 @@
   .section-subtitle {
     @apply text-xl text-gray-600 mb-10 max-w-2xl mx-auto;
   }
+}
+
+@keyframes shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shine {
+  animation: shine 1.5s infinite;
 }

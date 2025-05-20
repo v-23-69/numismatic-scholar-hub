@@ -1,242 +1,238 @@
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Upload, Camera, Check, Image } from "lucide-react";
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Eye, EyeOff, GitHub, Mail } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
 const Authenticate = () => {
-  const [frontImage, setFrontImage] = useState<File | null>(null);
-  const [backImage, setBackImage] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {
-    if (e.target.files && e.target.files[0]) {
-      if (side === 'front') {
-        setFrontImage(e.target.files[0]);
-      } else {
-        setBackImage(e.target.files[0]);
-      }
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  // Form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false);
-      // In a real implementation, you would handle the upload and payment processing here
-      console.log("Form submitted:", { frontImage, backImage });
-      alert("Authentication request submitted successfully!");
-    }, 1500);
+    // This would connect to Supabase Auth in a real implementation
+    console.log('Login attempt:', { email, password, rememberMe });
+  };
+  
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    // This would connect to Supabase Auth in a real implementation
+    console.log('Register attempt:', { username, email, password });
+  };
+  
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-royal/5 to-white">
       <Navbar />
-      <main className="flex-grow py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <h1 className="text-3xl md:text-4xl font-bold text-royal font-playfair mb-6 text-center">
-                Upload Your Coin for Authentication
-              </h1>
-              <p className="text-lg text-gray-600 mb-8 text-center">
-                Our experts will analyze your coin and provide detailed authentication and valuation information.
-              </p>
-
-              <Card className="border-gold/20 mb-8">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4 mb-6 p-4 bg-gold/10 rounded-md">
-                    <div className="text-gold">
-                      <Check size={24} />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-royal">Fast & Reliable</h3>
-                      <p className="text-sm text-gray-600">
-                        Upload your coin photos, pay ₹20, and receive expert analysis within 24 hours
-                      </p>
-                    </div>
+      <main className="flex-grow flex items-center justify-center py-16 px-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
+          <div className="bg-white rounded-xl shadow-lg border border-gold/20 overflow-hidden">
+            <Tabs defaultValue="login" className="w-full">
+              <TabsList className="grid grid-cols-2 h-14">
+                <TabsTrigger value="login" className="text-lg">Sign In</TabsTrigger>
+                <TabsTrigger value="register" className="text-lg">Register</TabsTrigger>
+              </TabsList>
+              
+              {/* Login Form */}
+              <TabsContent value="login" className="p-6">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div>
+                    <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">
+                      Email
+                    </label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      required
+                    />
                   </div>
-
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Front side image upload */}
-                      <div>
-                        <Label htmlFor="front-image" className="block mb-2">
-                          Front Side Image <span className="text-red-500">*</span>
-                        </Label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center">
-                          {frontImage ? (
-                            <div className="text-center">
-                              <div className="relative mx-auto w-32 h-32 mb-2">
-                                <Image className="mx-auto text-gray-400" />
-                                <div className="absolute inset-0 flex items-center justify-center bg-royal/10 rounded-md">
-                                  <Check className="h-8 w-8 text-royal" />
-                                </div>
-                              </div>
-                              <p className="text-sm text-gray-600 truncate">
-                                {frontImage.name}
-                              </p>
-                              <button 
-                                type="button"
-                                className="mt-2 text-sm text-red-500 hover:underline"
-                                onClick={() => setFrontImage(null)}
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          ) : (
-                            <label htmlFor="front-image" className="cursor-pointer">
-                              <div className="flex flex-col items-center justify-center py-4">
-                                <Camera className="h-10 w-10 text-gray-400 mb-2" />
-                                <p className="text-sm font-medium text-royal">
-                                  Click to upload front image
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  PNG, JPG up to 5MB
-                                </p>
-                              </div>
-                              <input
-                                id="front-image"
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => handleImageChange(e, 'front')}
-                                required
-                              />
-                            </label>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Back side image upload */}
-                      <div>
-                        <Label htmlFor="back-image" className="block mb-2">
-                          Back Side Image <span className="text-red-500">*</span>
-                        </Label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center">
-                          {backImage ? (
-                            <div className="text-center">
-                              <div className="relative mx-auto w-32 h-32 mb-2">
-                                <Image className="mx-auto text-gray-400" />
-                                <div className="absolute inset-0 flex items-center justify-center bg-royal/10 rounded-md">
-                                  <Check className="h-8 w-8 text-royal" />
-                                </div>
-                              </div>
-                              <p className="text-sm text-gray-600 truncate">
-                                {backImage.name}
-                              </p>
-                              <button 
-                                type="button"
-                                className="mt-2 text-sm text-red-500 hover:underline"
-                                onClick={() => setBackImage(null)}
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          ) : (
-                            <label htmlFor="back-image" className="cursor-pointer">
-                              <div className="flex flex-col items-center justify-center py-4">
-                                <Camera className="h-10 w-10 text-gray-400 mb-2" />
-                                <p className="text-sm font-medium text-royal">
-                                  Click to upload back image
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  PNG, JPG up to 5MB
-                                </p>
-                              </div>
-                              <input
-                                id="back-image"
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => handleImageChange(e, 'back')}
-                                required
-                              />
-                            </label>
-                          )}
-                        </div>
-                      </div>
+                  
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">
+                        Password
+                      </label>
+                      <Link to="/forgot-password" className="text-xs text-royal hover:underline">
+                        Forgot password?
+                      </Link>
                     </div>
-
-                    <div>
-                      <Label htmlFor="notes" className="block mb-2">
-                        Additional Notes (Optional)
-                      </Label>
-                      <Textarea
-                        id="notes"
-                        placeholder="Provide any additional information about the coin that might help with authentication..."
-                        className="min-h-[100px]"
+                    <div className="relative">
+                      <Input
+                        id="login-password"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
                       />
-                    </div>
-
-                    <div className="bg-royal/5 p-4 rounded-md">
-                      <h3 className="font-medium text-royal mb-2">Fee: ₹20 per coin</h3>
-                      <p className="text-sm text-gray-600 mb-0">
-                        Payment will be processed securely after submission.
-                      </p>
-                    </div>
-
-                    <div className="text-center">
-                      <Button
-                        type="submit"
-                        className="bg-gold hover:bg-gold-light text-royal font-medium px-8 py-6 text-lg"
-                        disabled={!frontImage || !backImage || isSubmitting}
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={togglePasswordVisibility}
                       >
-                        {isSubmitting ? (
-                          <>Processing...</>
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5 text-gray-400" />
                         ) : (
-                          <>
-                            <Upload className="mr-2" size={18} />
-                            Submit for Authentication
-                          </>
+                          <Eye className="h-5 w-5 text-gray-400" />
                         )}
-                      </Button>
+                      </button>
                     </div>
-                  </form>
-                </CardContent>
-              </Card>
-
-              <div className="bg-royal/5 p-6 rounded-lg border border-royal/10">
-                <h3 className="font-bold text-royal mb-4 font-playfair text-xl">
-                  Frequently Asked Questions
-                </h3>
-                <div className="space-y-4">
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="remember-me" 
+                      checked={rememberMe} 
+                      onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                    />
+                    <label htmlFor="remember-me" className="text-sm text-gray-600">
+                      Remember me
+                    </label>
+                  </div>
+                  
+                  <Button type="submit" className="w-full bg-royal hover:bg-royal-light text-white">
+                    Sign In
+                  </Button>
+                  
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <Button variant="outline" className="w-full">
+                      <Mail className="h-5 w-5 mr-2" />
+                      Google
+                    </Button>
+                    <Button variant="outline" className="w-full">
+                      <GitHub className="h-5 w-5 mr-2" />
+                      GitHub
+                    </Button>
+                  </div>
+                </form>
+              </TabsContent>
+              
+              {/* Register Form */}
+              <TabsContent value="register" className="p-6">
+                <form onSubmit={handleRegister} className="space-y-4">
                   <div>
-                    <h4 className="font-bold text-royal">How long does authentication take?</h4>
-                    <p className="text-gray-600">
-                      Our experts typically complete authentication within 24 hours of receiving your submission.
+                    <label htmlFor="register-username" className="block text-sm font-medium text-gray-700 mb-1">
+                      Username
+                    </label>
+                    <Input
+                      id="register-username"
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="johndoe"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 mb-1">
+                      Email
+                    </label>
+                    <Input
+                      id="register-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-1">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <Input
+                        id="register-password"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        minLength={8}
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={togglePasswordVisibility}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Password must be at least 8 characters
                     </p>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-royal">What if my coin is determined to be inauthentic?</h4>
-                    <p className="text-gray-600">
-                      You'll still receive a detailed report explaining the findings. This information can be valuable for educational purposes.
-                    </p>
+                  
+                  <Button type="submit" className="w-full bg-royal hover:bg-royal-light text-white">
+                    Create Account
+                  </Button>
+                  
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white text-gray-500">Or register with</span>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-royal">Can I authenticate multiple coins at once?</h4>
-                    <p className="text-gray-600">
-                      Yes, you can submit multiple coins. Each coin requires separate images and a fee of ₹20 per coin.
-                    </p>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <Button variant="outline" className="w-full">
+                      <Mail className="h-5 w-5 mr-2" />
+                      Google
+                    </Button>
+                    <Button variant="outline" className="w-full">
+                      <GitHub className="h-5 w-5 mr-2" />
+                      GitHub
+                    </Button>
                   </div>
-                </div>
-              </div>
-            </motion.div>
+                  
+                  <p className="text-xs text-center text-gray-500 mt-4">
+                    By registering, you agree to our{" "}
+                    <Link to="/terms" className="text-royal hover:underline">Terms of Service</Link> and{" "}
+                    <Link to="/privacy" className="text-royal hover:underline">Privacy Policy</Link>.
+                  </p>
+                </form>
+              </TabsContent>
+            </Tabs>
           </div>
-        </div>
+        </motion.div>
       </main>
       <Footer />
     </div>

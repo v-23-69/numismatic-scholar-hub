@@ -1,6 +1,6 @@
 
 import { Link } from 'react-router-dom';
-import { BookOpen, ShoppingBag, Users, Award } from 'lucide-react';
+import { BookOpen, ShoppingBag, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { motion } from 'framer-motion';
 
@@ -55,7 +55,7 @@ const FeaturedSections = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <FeatureCard 
             icon={BookOpen}
             title="Learn"
@@ -81,15 +81,6 @@ const FeaturedSections = () => {
             link="/community"
             linkText="Join Community"
             color="bg-royal"
-          />
-          
-          <FeatureCard 
-            icon={Award}
-            title="Sell"
-            description="Become a verified seller and offer your authentic coins to our trusted community."
-            link="/become-seller"
-            linkText="Start Selling"
-            color="bg-gold"
           />
         </div>
       </div>

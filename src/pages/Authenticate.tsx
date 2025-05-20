@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Github, Mail, Phone } from 'lucide-react';
+import { Eye, EyeOff, GitHub, Mail, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
+import { ConfigContext } from "@/App";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
@@ -29,12 +30,20 @@ const Authenticate = () => {
   
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { supabaseConfigured } = useContext(ConfigContext);
   
   // Initialize Supabase client
   useEffect(() => {
     const initializeSupabase = async () => {
-      if (supabaseUrl && supabaseAnonKey) {
+      if (supabaseConfigured) {
         try {
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+          
+          if (!supabaseUrl || !supabaseAnonKey) {
+            throw new Error("Supabase environment variables are not set");
+          }
+          
           const { createClient } = await import('@supabase/supabase-js');
           const supabase = createClient(supabaseUrl, supabaseAnonKey);
           setSupabaseClient(supabase);
@@ -62,7 +71,7 @@ const Authenticate = () => {
     };
     
     initializeSupabase();
-  }, [navigate, toast]);
+  }, [navigate, toast, supabaseConfigured]);
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,15 +264,22 @@ const Authenticate = () => {
           className="w-full max-w-md"
         >
           <div className="bg-white rounded-xl shadow-lg border border-gold/20 overflow-hidden">
-            {!supabaseClient && (
+            {!supabaseConfigured && (
               <div className="p-6 text-center">
                 <h2 className="text-xl font-semibold text-royal mb-2">Authentication Not Available</h2>
                 <p className="text-gray-600 mb-4">
-                  The authentication service is not properly configured. Please contact an administrator.
+                  The authentication service is not properly configured. Please set the required Supabase environment variables.
                 </p>
                 <Link to="/">
                   <Button variant="outline">Return to Home</Button>
                 </Link>
+              </div>
+            )}
+            
+            {supabaseConfigured && !supabaseClient && (
+              <div className="p-6 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-royal mx-auto mb-4"></div>
+                <p className="text-gray-600">Connecting to authentication service...</p>
               </div>
             )}
             

@@ -1,9 +1,8 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Edit, LogOut, BookOpen, ShoppingCart, Mail, MapPin, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { createClient } from '@supabase/supabase-js';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,14 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { ConfigContext } from "@/App";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
-// Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
+// Only define interfaces - these don't depend on Supabase being available
 interface UserProfile {
   id: string;
   username: string;
@@ -56,6 +52,7 @@ interface SavedItem {
 }
 
 const Profile = () => {
+  // State
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -64,20 +61,58 @@ const Profile = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
   const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
+  const [supabase, setSupabase] = useState<any>(null);
   
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { supabaseConfigured } = useContext(ConfigContext);
   
+  // Initialize Supabase client only if configured
   useEffect(() => {
-    getProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const initializeSupabase = async () => {
+      if (supabaseConfigured) {
+        try {
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+          
+          if (!supabaseUrl || !supabaseAnonKey) {
+            throw new Error("Supabase environment variables are not set");
+          }
+          
+          const { createClient } = await import('@supabase/supabase-js');
+          const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+          setSupabase(supabaseClient);
+          
+          // Now that we have a client, get profile data
+          getProfile(supabaseClient);
+        } catch (error: any) {
+          console.error("Failed to initialize Supabase:", error);
+          toast({
+            title: "Connection Error",
+            description: "Could not connect to the profile service.",
+            variant: "destructive"
+          });
+          setLoading(false);
+        }
+      } else {
+        // Supabase is not configured
+        toast({
+          title: "Configuration Error",
+          description: "Profile service is not properly configured.",
+          variant: "destructive"
+        });
+        setLoading(false);
+      }
+    };
+    
+    initializeSupabase();
+  }, [supabaseConfigured, toast]);
   
-  const getProfile = async () => {
+  const getProfile = async (supabaseClient: any) => {
     try {
       setLoading(true);
       
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
       
       if (sessionError || !sessionData.session) {
         navigate('/authenticate');
@@ -87,7 +122,7 @@ const Profile = () => {
       const { user: authUser } = sessionData.session;
       
       // Get profile data
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('profiles')
         .select('*')
         .eq('id', authUser.id)
@@ -105,7 +140,7 @@ const Profile = () => {
             avatar_url: null,
           };
           
-          await supabase.from('profiles').insert([newProfile]);
+          await supabaseClient.from('profiles').insert([newProfile]);
           
           setUser(newProfile);
           setUpdatedProfile(newProfile);
@@ -118,7 +153,7 @@ const Profile = () => {
       }
       
       // Get courses
-      const { data: coursesData } = await supabase
+      const { data: coursesData } = await supabaseClient
         .from('enrolled_courses')
         .select('courses(*)')
         .eq('user_id', authUser.id);
@@ -128,7 +163,7 @@ const Profile = () => {
       }
       
       // Get listings
-      const { data: listingsData } = await supabase
+      const { data: listingsData } = await supabaseClient
         .from('coin_listings')
         .select('*')
         .eq('user_id', authUser.id);
@@ -138,7 +173,7 @@ const Profile = () => {
       }
       
       // Get saved items
-      const { data: savedData } = await supabase
+      const { data: savedData } = await supabaseClient
         .from('saved_items')
         .select('*')
         .eq('user_id', authUser.id);
@@ -169,10 +204,17 @@ const Profile = () => {
   };
   
   const handleSaveProfile = async () => {
+    if (!supabase || !user) {
+      toast({
+        title: "Error",
+        description: "Could not save profile. Service is unavailable.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
       setLoading(true);
-      
-      if (!user) return;
       
       let avatarUrl = user.avatar_url;
       
@@ -187,6 +229,7 @@ const Profile = () => {
           
         if (uploadError) throw uploadError;
         
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         avatarUrl = `${supabaseUrl}/storage/v1/object/public/avatars/${filePath}`;
       }
       
@@ -221,10 +264,13 @@ const Profile = () => {
   };
   
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     navigate('/');
   };
   
+  // Show loading state when initializing
   if (loading && !user) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -237,6 +283,28 @@ const Profile = () => {
     );
   }
   
+  // Show not configured state
+  if (!supabaseConfigured && !loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow py-8 px-4">
+          <div className="container mx-auto max-w-6xl text-center">
+            <h1 className="text-3xl font-bold text-royal mb-4">Profile Not Available</h1>
+            <p className="text-gray-700 mb-6">
+              The profile service is not properly configured. Please make sure Supabase is set up correctly.
+            </p>
+            <Button onClick={() => navigate('/')} variant="outline">
+              Return to Home
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+  
+  // Normal render with user data
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />

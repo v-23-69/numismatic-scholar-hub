@@ -3,42 +3,70 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, BookOpen, User, ShoppingCart, LogIn } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { createClient } from '@supabase/supabase-js';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useToast } from "@/components/ui/use-toast";
 
-// Initialize Supabase client
+// Initialize Supabase client only if environment variables are available
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Create a placeholder or mock auth state when Supabase isn't configured
+const useAuthState = () => {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Only attempt to initialize Supabase if we have the required credentials
+    if (supabaseUrl && supabaseAnonKey) {
+      const initSupabase = async () => {
+        try {
+          // Dynamically import Supabase only when needed
+          const { createClient } = await import('@supabase/supabase-js');
+          const supabase = createClient(supabaseUrl, supabaseAnonKey);
+          
+          setLoading(true);
+          const { data } = await supabase.auth.getSession();
+          setUser(data.session?.user || null);
+          setLoading(false);
+          
+          const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user || null);
+          });
+          
+          return () => {
+            authListener.subscription.unsubscribe();
+          };
+        } catch (error) {
+          console.error("Failed to initialize Supabase:", error);
+          toast({
+            title: "Authentication Error",
+            description: "Could not connect to authentication service.",
+            variant: "destructive"
+          });
+          setLoading(false);
+        }
+      };
+      
+      initSupabase();
+    } else {
+      console.warn("Supabase environment variables are not set.");
+      setLoading(false);
+    }
+  }, [toast]);
+  
+  return { user, loading };
+};
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchActive, setSearchActive] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuthState();
   
   const navigate = useNavigate();
 
   const toggleNav = () => setIsOpen(!isOpen);
   const toggleSearch = () => setSearchActive(!searchActive);
-  
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      setUser(data.session?.user || null);
-      setLoading(false);
-    };
-    
-    checkUser();
-    
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-    });
-    
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
 
   const navLinks = [
     { name: "Home", path: "/" },

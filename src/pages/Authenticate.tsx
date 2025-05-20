@@ -1,14 +1,21 @@
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Eye, EyeOff, Github, Mail } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, Github, Mail, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/components/ui/use-toast";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const Authenticate = () => {
   // Form state
@@ -17,17 +24,161 @@ const Authenticate = () => {
   const [username, setUsername] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
-  const handleLogin = (e: React.FormEvent) => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Check if user is already logged in
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        navigate('/profile');
+      }
+    };
+    
+    checkUser();
+  }, [navigate]);
+  
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // This would connect to Supabase Auth in a real implementation
-    console.log('Login attempt:', { email, password, rememberMe });
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Login successful!",
+        description: "Welcome back to NumismaticScholar.",
+      });
+      
+      navigate('/profile');
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message || "Please check your credentials and try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
   
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    // This would connect to Supabase Auth in a real implementation
-    console.log('Register attempt:', { username, email, password });
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+          },
+        },
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Registration successful!",
+        description: "Please check your email for verification.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Registration failed",
+        description: error.message || "Please check your information and try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleGoogleSignIn = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/profile`
+        }
+      });
+      
+      if (error) throw error;
+      
+    } catch (error: any) {
+      toast({
+        title: "Google sign in failed",
+        description: error.message || "Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handlePhoneLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    if (!isOtpSent) {
+      // Send OTP
+      try {
+        const { data, error } = await supabase.auth.signInWithOtp({
+          phone,
+        });
+        
+        if (error) throw error;
+        
+        setIsOtpSent(true);
+        toast({
+          title: "OTP sent",
+          description: "Please check your phone for the verification code.",
+        });
+      } catch (error: any) {
+        toast({
+          title: "Failed to send OTP",
+          description: error.message || "Please check your phone number and try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      // Verify OTP
+      try {
+        const { data, error } = await supabase.auth.verifyOtp({
+          phone,
+          token: otp,
+          type: 'sms'
+        });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Phone verification successful!",
+          description: "You are now logged in.",
+        });
+        
+        navigate('/profile');
+      } catch (error: any) {
+        toast({
+          title: "Verification failed",
+          description: error.message || "Invalid code. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
   
   const togglePasswordVisibility = () => {
@@ -46,9 +197,10 @@ const Authenticate = () => {
         >
           <div className="bg-white rounded-xl shadow-lg border border-gold/20 overflow-hidden">
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid grid-cols-2 h-14">
+              <TabsList className="grid grid-cols-3 h-14">
                 <TabsTrigger value="login" className="text-lg">Sign In</TabsTrigger>
                 <TabsTrigger value="register" className="text-lg">Register</TabsTrigger>
+                <TabsTrigger value="phone" className="text-lg">Phone</TabsTrigger>
               </TabsList>
               
               {/* Login Form */}
@@ -65,6 +217,7 @@ const Authenticate = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="your@email.com"
                       required
+                      disabled={isLoading}
                     />
                   </div>
                   
@@ -85,6 +238,7 @@ const Authenticate = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
                         required
+                        disabled={isLoading}
                       />
                       <button
                         type="button"
@@ -105,14 +259,15 @@ const Authenticate = () => {
                       id="remember-me" 
                       checked={rememberMe} 
                       onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                      disabled={isLoading}
                     />
                     <label htmlFor="remember-me" className="text-sm text-gray-600">
                       Remember me
                     </label>
                   </div>
                   
-                  <Button type="submit" className="w-full bg-royal hover:bg-royal-light text-white">
-                    Sign In
+                  <Button type="submit" className="w-full bg-royal hover:bg-royal-light text-white" disabled={isLoading}>
+                    {isLoading ? "Signing In..." : "Sign In"}
                   </Button>
                   
                   <div className="relative my-6">
@@ -125,11 +280,11 @@ const Authenticate = () => {
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
-                    <Button variant="outline" className="w-full">
+                    <Button type="button" variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
                       <Mail className="h-5 w-5 mr-2" />
                       Google
                     </Button>
-                    <Button variant="outline" className="w-full">
+                    <Button type="button" variant="outline" className="w-full" disabled={isLoading}>
                       <Github className="h-5 w-5 mr-2" />
                       GitHub
                     </Button>
@@ -151,6 +306,7 @@ const Authenticate = () => {
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="johndoe"
                       required
+                      disabled={isLoading}
                     />
                   </div>
                   
@@ -165,6 +321,7 @@ const Authenticate = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="your@email.com"
                       required
+                      disabled={isLoading}
                     />
                   </div>
                   
@@ -181,6 +338,7 @@ const Authenticate = () => {
                         placeholder="••••••••"
                         required
                         minLength={8}
+                        disabled={isLoading}
                       />
                       <button
                         type="button"
@@ -199,8 +357,8 @@ const Authenticate = () => {
                     </p>
                   </div>
                   
-                  <Button type="submit" className="w-full bg-royal hover:bg-royal-light text-white">
-                    Create Account
+                  <Button type="submit" className="w-full bg-royal hover:bg-royal-light text-white" disabled={isLoading}>
+                    {isLoading ? "Creating Account..." : "Create Account"}
                   </Button>
                   
                   <div className="relative my-6">
@@ -213,11 +371,11 @@ const Authenticate = () => {
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
-                    <Button variant="outline" className="w-full">
+                    <Button type="button" variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
                       <Mail className="h-5 w-5 mr-2" />
                       Google
                     </Button>
-                    <Button variant="outline" className="w-full">
+                    <Button type="button" variant="outline" className="w-full" disabled={isLoading}>
                       <Github className="h-5 w-5 mr-2" />
                       GitHub
                     </Button>
@@ -228,6 +386,70 @@ const Authenticate = () => {
                     <Link to="/terms" className="text-royal hover:underline">Terms of Service</Link> and{" "}
                     <Link to="/privacy" className="text-royal hover:underline">Privacy Policy</Link>.
                   </p>
+                </form>
+              </TabsContent>
+              
+              {/* Phone Login Form */}
+              <TabsContent value="phone" className="p-6">
+                <form onSubmit={handlePhoneLogin} className="space-y-4">
+                  <div>
+                    <label htmlFor="phone-number" className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number
+                    </label>
+                    <Input
+                      id="phone-number"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+1 (555) 555-5555"
+                      required
+                      disabled={isLoading || isOtpSent}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Include country code (e.g., +1 for US)
+                    </p>
+                  </div>
+                  
+                  {isOtpSent && (
+                    <div>
+                      <label htmlFor="otp-code" className="block text-sm font-medium text-gray-700 mb-1">
+                        Verification Code
+                      </label>
+                      <Input
+                        id="otp-code"
+                        type="text"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        placeholder="123456"
+                        required
+                        disabled={isLoading}
+                        maxLength={6}
+                      />
+                    </div>
+                  )}
+                  
+                  <Button type="submit" className="w-full bg-royal hover:bg-royal-light text-white" disabled={isLoading}>
+                    {isLoading ? "Processing..." : isOtpSent ? "Verify Code" : "Send Verification Code"}
+                  </Button>
+                  
+                  {isOtpSent && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="w-full mt-2" 
+                      onClick={() => setIsOtpSent(false)}
+                      disabled={isLoading}
+                    >
+                      Change Phone Number
+                    </Button>
+                  )}
+                  
+                  <div className="flex items-center justify-center space-x-2 mt-4">
+                    <Phone className="h-5 w-5 text-royal" />
+                    <p className="text-sm text-gray-600">
+                      We'll send a one-time code to your phone
+                    </p>
+                  </div>
                 </form>
               </TabsContent>
             </Tabs>

@@ -1,15 +1,44 @@
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, Search, BookOpen, User, ShoppingCart, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X, Search, BookOpen, User, ShoppingCart, LogIn } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { createClient } from '@supabase/supabase-js';
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
+// Initialize Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchActive, setSearchActive] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  const navigate = useNavigate();
 
   const toggleNav = () => setIsOpen(!isOpen);
   const toggleSearch = () => setSearchActive(!searchActive);
+  
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getSession();
+      setUser(data.session?.user || null);
+      setLoading(false);
+    };
+    
+    checkUser();
+    
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+    
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -41,19 +70,6 @@ const Navbar = () => {
               {link.name}
             </Link>
           ))}
-
-          <div className="relative group ml-2">
-            <button className="px-3 py-2 text-gray-700 hover:text-royal transition-colors duration-300 flex items-center">
-              Resources <ChevronDown className="h-4 w-4 ml-1" />
-            </button>
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
-              <div className="py-1">
-                <Link to="/blog" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gold/10">Blog & Articles</Link>
-                <Link to="/guides" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gold/10">Guides</Link>
-                <Link to="/events" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gold/10">Events</Link>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Search and User Actions */}
@@ -75,14 +91,29 @@ const Navbar = () => {
             <ShoppingCart className="h-5 w-5" />
             <span className="absolute top-0 right-0 bg-gold text-xs text-white rounded-full h-4 w-4 flex items-center justify-center">2</span>
           </Link>
-          <Link to="/account" className="p-2 text-gray-500 hover:text-royal">
-            <User className="h-5 w-5" />
-          </Link>
-          <Link to="/login">
-            <Button variant="outline" className="border-royal text-royal hover:bg-royal hover:text-white">
-              Sign In
-            </Button>
-          </Link>
+          
+          {loading ? (
+            <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
+          ) : user ? (
+            <Link to="/profile" className="flex items-center">
+              <Avatar className="h-8 w-8">
+                {user.user_metadata?.avatar_url ? (
+                  <AvatarImage src={user.user_metadata.avatar_url} alt="Profile" />
+                ) : (
+                  <AvatarFallback className="bg-royal text-white">
+                    {user.email?.charAt(0).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+            </Link>
+          ) : (
+            <Link to="/authenticate">
+              <Button variant="outline" className="border-royal text-royal hover:bg-royal hover:text-white">
+                <LogIn className="h-4 w-4 mr-2" />
+                Sign In
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -121,22 +152,29 @@ const Navbar = () => {
               {link.name}
             </Link>
           ))}
-          <div className="px-3 py-2 text-gray-700">Resources</div>
-          <Link to="/blog" className="block px-5 py-2 text-sm text-gray-700 hover:bg-gold/10">Blog & Articles</Link>
-          <Link to="/guides" className="block px-5 py-2 text-sm text-gray-700 hover:bg-gold/10">Guides</Link>
-          <Link to="/events" className="block px-5 py-2 text-sm text-gray-700 hover:bg-gold/10">Events</Link>
           
           <div className="mt-4 flex space-x-2 px-3">
-            <Link to="/login" className="w-1/2">
-              <Button variant="outline" className="w-full border-royal text-royal">
-                Sign In
-              </Button>
-            </Link>
-            <Link to="/register" className="w-1/2">
-              <Button className="w-full bg-royal hover:bg-royal-light text-white">
-                Register
-              </Button>
-            </Link>
+            {user ? (
+              <Link to="/profile" className="w-full">
+                <Button className="w-full bg-royal hover:bg-royal-light text-white">
+                  <User className="h-4 w-4 mr-2" />
+                  My Profile
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link to="/authenticate" className="w-1/2">
+                  <Button variant="outline" className="w-full border-royal text-royal">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/authenticate?tab=register" className="w-1/2">
+                  <Button className="w-full bg-royal hover:bg-royal-light text-white">
+                    Register
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

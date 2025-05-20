@@ -8,6 +8,9 @@ import { useState } from "react";
 import Index from "./pages/Index";
 import Courses from "./pages/Courses";
 import Marketplace from "./pages/Marketplace";
+import Community from "./pages/Community";
+import About from "./pages/About";
+import Profile from "./pages/Profile";
 import Authenticate from "./pages/Authenticate";
 import NotFound from "./pages/NotFound";
 
@@ -26,7 +29,11 @@ const App = () => {
             <Route path="/" element={<Index />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/authenticate" element={<Authenticate />} />
+            <Route path="/login" element={<Authenticate />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -1,666 +1,598 @@
 
 import { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, Edit, LogOut, BookOpen, ShoppingCart, Mail, MapPin, Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { ConfigContext } from "@/App";
+import { 
+  User, 
+  Mail, 
+  Phone, 
+  Calendar, 
+  Edit, 
+  Save, 
+  Shield, 
+  BookOpen, 
+  Award,
+  LogOut,
+  AlertCircle
+} from 'lucide-react';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-
-// Only define interfaces - these don't depend on Supabase being available
-interface UserProfile {
-  id: string;
-  username: string;
-  full_name: string;
-  bio: string;
-  location: string;
-  avatar_url: string | null;
-}
-
-interface Course {
-  id: string;
-  title: string;
-  image: string;
-  description: string;
-  progress: number;
-  instructor: string;
-}
-
-interface Listing {
-  id: string;
-  title: string;
-  image: string;
-  price: number;
-  description: string;
-  created_at: string;
-  status: 'active' | 'sold' | 'pending';
-}
-
-interface SavedItem {
-  id: string;
-  type: 'course' | 'listing';
-  title: string;
-  image: string;
-  price?: number;
-}
+import { ConfigContext } from "@/App";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
-  // State
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [updatedProfile, setUpdatedProfile] = useState<Partial<UserProfile>>({});
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
-  const [supabase, setSupabase] = useState<any>(null);
-  
-  const navigate = useNavigate();
+  const { supabaseClient, supabaseConfigured } = useContext(ConfigContext);
   const { toast } = useToast();
-  const { supabaseConfigured } = useContext(ConfigContext);
+  const navigate = useNavigate();
   
-  // Initialize Supabase client only if configured
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  
+  // Profile form state
+  const [name, setName] = useState('');
+  const [bio, setBio] = useState('');
+  const [phone, setPhone] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  
+  // Sample data for demo purposes (in a real app, this would come from Supabase)
+  const userCourses = [
+    {
+      id: 1,
+      title: "Ancient Coin Authentication",
+      progress: 65,
+      lastActivity: "2024-05-15",
+      image: "https://images.unsplash.com/photo-1583485088034-697b5bc1b13a?w=300&auto=format&fit=crop&q=80"
+    },
+    {
+      id: 2,
+      title: "Modern Collectible Grading",
+      progress: 30,
+      lastActivity: "2024-05-10",
+      image: "https://images.unsplash.com/photo-1566753323558-f4e0952af115?w=300&auto=format&fit=crop&q=80"
+    }
+  ];
+  
+  const userCoins = [
+    {
+      id: 1,
+      title: "1854 Gold Double Eagle",
+      status: "Verified",
+      submittedDate: "2024-05-02",
+      image: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=300&auto=format&fit=crop&q=80"
+    },
+    {
+      id: 2,
+      title: "Ancient Roman Denarius",
+      status: "Pending",
+      submittedDate: "2024-05-18",
+      image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=300&auto=format&fit=crop&q=80"
+    },
+    {
+      id: 3,
+      title: "Mughal Empire Gold Mohur",
+      status: "Rejected",
+      submittedDate: "2024-04-25",
+      image: "https://images.unsplash.com/photo-1583485088034-697b5bc1b13a?w=300&auto=format&fit=crop&q=80"
+    }
+  ];
+  
+  const certificates = [
+    {
+      id: 1,
+      title: "Advanced Coin Authentication",
+      issueDate: "2024-03-15",
+      instructor: "Dr. Eleanor Davies"
+    },
+    {
+      id: 2,
+      title: "Digital Collection Management",
+      issueDate: "2024-02-10",
+      instructor: "Thomas Wright"
+    }
+  ];
+
+  // Fetch user data on mount
   useEffect(() => {
-    const initializeSupabase = async () => {
-      if (supabaseConfigured) {
+    const fetchUserData = async () => {
+      setLoading(true);
+      
+      if (supabaseClient) {
         try {
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+          const { data: { session }, error } = await supabaseClient.auth.getSession();
           
-          if (!supabaseUrl || !supabaseAnonKey) {
-            throw new Error("Supabase environment variables are not set");
+          if (error) throw error;
+          
+          if (!session) {
+            navigate('/authenticate');
+            return;
           }
           
-          const { createClient } = await import('@supabase/supabase-js');
-          const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-          setSupabase(supabaseClient);
+          // Get user profile
+          const { data: profile, error: profileError } = await supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+            
+          if (profileError && profileError.code !== 'PGRST116') {
+            throw profileError;
+          }
           
-          // Now that we have a client, get profile data
-          getProfile(supabaseClient);
+          setUser(session.user);
+          
+          if (profile) {
+            setName(profile.full_name || '');
+            setBio(profile.bio || '');
+            setPhone(profile.phone || '');
+            setAvatarUrl(profile.avatar_url || '');
+          } else {
+            // Set defaults from auth metadata if profile doesn't exist yet
+            setName(session.user.user_metadata?.full_name || '');
+          }
         } catch (error: any) {
-          console.error("Failed to initialize Supabase:", error);
+          console.error('Error fetching user data:', error);
           toast({
-            title: "Connection Error",
-            description: "Could not connect to the profile service.",
+            title: "Error loading profile",
+            description: error.message,
             variant: "destructive"
           });
+        } finally {
           setLoading(false);
         }
       } else {
-        // Supabase is not configured
-        toast({
-          title: "Configuration Error",
-          description: "Profile service is not properly configured.",
-          variant: "destructive"
-        });
-        setLoading(false);
+        // Demo mode for when Supabase is not configured
+        setTimeout(() => {
+          const demoUser = {
+            id: '12345',
+            email: 'demo@example.com',
+            user_metadata: {
+              full_name: 'Demo User',
+              avatar_url: ''
+            }
+          };
+          
+          setUser(demoUser);
+          setName('Demo User');
+          setBio('Passionate coin collector with interests in ancient Roman and Indian coinage.');
+          setPhone('+91 98765 43210');
+          setLoading(false);
+        }, 1000);
       }
     };
     
-    initializeSupabase();
-  }, [supabaseConfigured, toast]);
+    fetchUserData();
+  }, [supabaseClient, navigate, toast]);
   
-  const getProfile = async (supabaseClient: any) => {
-    try {
-      setLoading(true);
-      
-      const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
-      
-      if (sessionError || !sessionData.session) {
-        navigate('/authenticate');
-        return;
-      }
-      
-      const { user: authUser } = sessionData.session;
-      
-      // Get profile data
-      const { data, error } = await supabaseClient
-        .from('profiles')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
+  const handleLogout = async () => {
+    if (supabaseClient) {
+      try {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) throw error;
         
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // Profile doesn't exist yet, create one
-          const newProfile = {
-            id: authUser.id,
-            username: authUser.email?.split('@')[0] || 'user',
-            full_name: authUser.user_metadata?.full_name || '',
-            bio: '',
-            location: '',
-            avatar_url: null,
-          };
-          
-          await supabaseClient.from('profiles').insert([newProfile]);
-          
-          setUser(newProfile);
-          setUpdatedProfile(newProfile);
-        } else {
-          throw error;
-        }
-      } else {
-        setUser(data);
-        setUpdatedProfile(data);
-      }
-      
-      // Get courses
-      const { data: coursesData } = await supabaseClient
-        .from('enrolled_courses')
-        .select('courses(*)')
-        .eq('user_id', authUser.id);
+        toast({
+          title: "Logged out successfully",
+          description: "You have been logged out of your account.",
+        });
         
-      if (coursesData) {
-        setCourses(coursesData.map((item: any) => item.courses));
+        navigate('/');
+      } catch (error: any) {
+        toast({
+          title: "Error logging out",
+          description: error.message,
+          variant: "destructive"
+        });
       }
-      
-      // Get listings
-      const { data: listingsData } = await supabaseClient
-        .from('coin_listings')
-        .select('*')
-        .eq('user_id', authUser.id);
-        
-      if (listingsData) {
-        setListings(listingsData);
-      }
-      
-      // Get saved items
-      const { data: savedData } = await supabaseClient
-        .from('saved_items')
-        .select('*')
-        .eq('user_id', authUser.id);
-        
-      if (savedData) {
-        setSavedItems(savedData);
-      }
-    } catch (error: any) {
+    } else {
+      // Demo mode
       toast({
-        title: "Error loading profile",
-        description: error.message || "Please try again later.",
-        variant: "destructive"
+        title: "Logged out successfully",
+        description: "You have been logged out of your account.",
       });
-    } finally {
-      setLoading(false);
+      navigate('/');
     }
-  };
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setUpdatedProfile({ ...updatedProfile, [name]: value });
   };
   
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setAvatarFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setAvatarFile(file);
+      
+      // Create a preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAvatarUrl(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
   
-  const handleSaveProfile = async () => {
-    if (!supabase || !user) {
-      toast({
-        title: "Error",
-        description: "Could not save profile. Service is unavailable.",
-        variant: "destructive"
-      });
-      return;
-    }
+  const handleProfileUpdate = async () => {
+    if (!supabaseClient || !user) return;
+    
+    setLoading(true);
     
     try {
-      setLoading(true);
-      
-      let avatarUrl = user.avatar_url;
+      let newAvatarUrl = avatarUrl;
       
       // Upload avatar if changed
       if (avatarFile) {
         const fileExt = avatarFile.name.split('.').pop();
-        const filePath = `avatars/${user.id}-${Math.random()}.${fileExt}`;
+        const filePath = `avatars/${user.id}-${Date.now()}.${fileExt}`;
         
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
+        const { error: uploadError } = await supabaseClient
+          .storage
+          .from('profiles')
           .upload(filePath, avatarFile);
           
         if (uploadError) throw uploadError;
         
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        avatarUrl = `${supabaseUrl}/storage/v1/object/public/avatars/${filePath}`;
+        // Get the public URL
+        const { data: urlData } = supabaseClient
+          .storage
+          .from('profiles')
+          .getPublicUrl(filePath);
+          
+        newAvatarUrl = urlData.publicUrl;
       }
       
       // Update profile
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('profiles')
-        .update({
-          ...updatedProfile,
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
+        .upsert({
+          id: user.id,
+          full_name: name,
+          bio,
+          phone,
+          avatar_url: newAvatarUrl,
+          updated_at: new Date().toISOString()
+        });
         
       if (error) throw error;
       
-      setUser({ ...user, ...updatedProfile, avatar_url: avatarUrl });
-      setIsEditMode(false);
-      
       toast({
         title: "Profile updated",
-        description: "Your profile has been successfully updated.",
+        description: "Your profile has been updated successfully.",
       });
+      
+      setEditMode(false);
     } catch (error: any) {
       toast({
         title: "Error updating profile",
-        description: error.message || "Please try again later.",
+        description: error.message,
         variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-  
-  const handleSignOut = async () => {
-    if (supabase) {
-      await supabase.auth.signOut();
-    }
-    navigate('/');
-  };
-  
-  // Show loading state when initializing
-  if (loading && !user) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-royal"></div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-  
-  // Show not configured state
-  if (!supabaseConfigured && !loading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-grow py-8 px-4">
-          <div className="container mx-auto max-w-6xl text-center">
-            <h1 className="text-3xl font-bold text-royal mb-4">Profile Not Available</h1>
-            <p className="text-gray-700 mb-6">
-              The profile service is not properly configured. Please make sure Supabase is set up correctly.
-            </p>
-            <Button onClick={() => navigate('/')} variant="outline">
-              Return to Home
-            </Button>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-  
-  // Normal render with user data
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-grow py-8 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            {/* Profile Header */}
-            <div className="mb-8 bg-white rounded-xl shadow-sm border border-gold/10 p-8">
-              <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                {isEditMode ? (
-                  <div className="relative">
-                    <Avatar className="h-32 w-32">
-                      {avatarFile ? (
-                        <AvatarImage src={URL.createObjectURL(avatarFile)} alt="Profile" />
-                      ) : (
-                        user?.avatar_url ? (
-                          <AvatarImage src={user.avatar_url} alt="Profile" />
+      <main className="flex-grow bg-gradient-to-b from-royal/5 to-white">
+        <div className="container mx-auto px-4 py-16">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="w-12 h-12 border-4 border-t-4 border-royal rounded-full animate-spin mb-4"></div>
+              <p className="text-gray-600">Loading your profile...</p>
+            </div>
+          ) : !user ? (
+            <div className="text-center py-12">
+              <AlertCircle className="h-12 w-12 text-royal mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-royal mb-4">Authentication Required</h2>
+              <p className="text-gray-600 mb-6">
+                Please sign in to view your profile and access your courses.
+              </p>
+              <Link to="/authenticate">
+                <Button>Sign In</Button>
+              </Link>
+            </div>
+          ) : (
+            <>
+              {/* Profile Header */}
+              <div className="mb-12">
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <div className="relative group">
+                      <Avatar className="h-32 w-32 border-4 border-white shadow-md">
+                        {avatarUrl ? (
+                          <AvatarImage src={avatarUrl} alt={name} />
                         ) : (
-                          <AvatarFallback className="bg-royal text-white text-2xl">
-                            {user?.username?.charAt(0).toUpperCase() || 'U'}
+                          <AvatarFallback className="bg-royal text-white text-4xl">
+                            {name ? name.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
                           </AvatarFallback>
-                        )
+                        )}
+                      </Avatar>
+                      {editMode && (
+                        <label 
+                          htmlFor="avatar-upload" 
+                          className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center text-white text-sm cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          Change Photo
+                          <input 
+                            id="avatar-upload" 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={handleAvatarChange}
+                          />
+                        </label>
                       )}
-                    </Avatar>
-                    <label 
-                      htmlFor="avatar-upload"
-                      className="absolute bottom-1 right-1 bg-white rounded-full p-1 shadow-md cursor-pointer"
-                    >
-                      <Edit className="h-4 w-4 text-royal" />
-                      <input 
-                        id="avatar-upload"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleAvatarChange}
-                      />
-                    </label>
-                  </div>
-                ) : (
-                  <Avatar className="h-32 w-32">
-                    {user?.avatar_url ? (
-                      <AvatarImage src={user.avatar_url} alt="Profile" />
-                    ) : (
-                      <AvatarFallback className="bg-royal text-white text-2xl">
-                        {user?.username?.charAt(0).toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                )}
-                
-                <div className="flex-1 text-center md:text-left">
-                  {isEditMode ? (
-                    <div className="space-y-4 max-w-lg">
-                      <div>
-                        <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1">
-                          Full Name
-                        </label>
-                        <Input
-                          id="full_name"
-                          name="full_name"
-                          value={updatedProfile.full_name || ''}
-                          onChange={handleChange}
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                          Username
-                        </label>
-                        <Input
-                          id="username"
-                          name="username"
-                          value={updatedProfile.username || ''}
-                          onChange={handleChange}
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-                          Location
-                        </label>
-                        <Input
-                          id="location"
-                          name="location"
-                          value={updatedProfile.location || ''}
-                          onChange={handleChange}
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
-                          Bio
-                        </label>
-                        <Textarea
-                          id="bio"
-                          name="bio"
-                          value={updatedProfile.bio || ''}
-                          onChange={handleChange}
-                          rows={4}
-                        />
-                      </div>
                     </div>
-                  ) : (
-                    <>
-                      <h1 className="text-3xl font-bold text-royal font-playfair">
-                        {user?.full_name || 'Anonymous Collector'}
-                      </h1>
-                      <p className="text-gray-500">@{user?.username}</p>
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="flex-grow"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                  >
+                    <div className="text-center md:text-left">
+                      {editMode ? (
+                        <Input 
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="Your Name"
+                          className="text-3xl font-bold text-royal mb-2 max-w-md"
+                        />
+                      ) : (
+                        <h1 className="text-3xl font-bold text-royal mb-2">{name || 'Unnamed User'}</h1>
+                      )}
                       
-                      {user?.location && (
-                        <div className="flex items-center justify-center md:justify-start mt-2">
-                          <MapPin className="h-4 w-4 text-gray-500 mr-1" />
-                          <span className="text-gray-600 text-sm">{user.location}</span>
+                      <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-gray-600 mb-4">
+                        <div className="flex items-center">
+                          <Mail className="h-4 w-4 mr-1" />
+                          <span>{user.email}</span>
                         </div>
+                        {phone && (
+                          <div className="flex items-center">
+                            <Phone className="h-4 w-4 mr-1" />
+                            <span>{phone}</span>
+                          </div>
+                        )}
+                        {user.created_at && (
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-1" />
+                            <span>Member since {new Date(user.created_at).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {editMode ? (
+                        <Textarea 
+                          value={bio}
+                          onChange={(e) => setBio(e.target.value)}
+                          placeholder="Tell us about yourself and your collection..."
+                          className="mb-4 max-w-md"
+                          rows={3}
+                        />
+                      ) : (
+                        <p className="text-gray-700 mb-4 max-w-2xl">
+                          {bio || 'No bio provided yet.'}
+                        </p>
                       )}
                       
-                      {user?.bio && (
-                        <p className="text-gray-700 mt-4 max-w-2xl">{user.bio}</p>
-                      )}
-                    </>
-                  )}
-                </div>
-                
-                <div>
-                  {isEditMode ? (
-                    <div className="space-y-2">
-                      <Button 
-                        onClick={handleSaveProfile}
-                        disabled={loading}
-                        className="w-full bg-royal hover:bg-royal-light text-white"
-                      >
-                        Save Profile
-                      </Button>
-                      <Button 
-                        onClick={() => setIsEditMode(false)}
-                        variant="outline"
-                        disabled={loading}
-                        className="w-full"
-                      >
-                        Cancel
-                      </Button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {editMode ? (
+                          <>
+                            <Button 
+                              onClick={handleProfileUpdate} 
+                              className="bg-royal hover:bg-royal-light text-white"
+                              disabled={loading}
+                            >
+                              <Save className="h-4 w-4 mr-2" />
+                              Save Changes
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              onClick={() => setEditMode(false)}
+                              disabled={loading}
+                            >
+                              Cancel
+                            </Button>
+                          </>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setEditMode(true)}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Profile
+                          </Button>
+                        )}
+                        
+                        <Button 
+                          variant="outline" 
+                          onClick={handleLogout}
+                          className="text-destructive hover:bg-destructive/10"
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Sign Out
+                        </Button>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Button 
-                        onClick={() => setIsEditMode(true)}
-                        variant="outline"
-                        className="flex items-center"
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit Profile
-                      </Button>
-                      <Button 
-                        onClick={handleSignOut}
-                        variant="outline"
-                        className="flex items-center text-red-500 border-red-200 hover:bg-red-50"
-                      >
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Sign Out
-                      </Button>
-                    </div>
-                  )}
+                  </motion.div>
                 </div>
               </div>
-            </div>
-            
-            {/* Tabs Content */}
-            <Tabs defaultValue="courses" className="w-full">
-              <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto mb-8">
-                <TabsTrigger value="courses" className="text-lg flex items-center">
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  My Courses
-                </TabsTrigger>
-                <TabsTrigger value="listings" className="text-lg flex items-center">
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  My Listings
-                </TabsTrigger>
-                <TabsTrigger value="saved" className="text-lg flex items-center">
-                  <Heart className="h-4 w-4 mr-2" />
-                  Saved
-                </TabsTrigger>
-              </TabsList>
               
-              {/* My Courses Tab */}
-              <TabsContent value="courses">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {courses.length > 0 ? (
-                    courses.map((course) => (
-                      <Card key={course.id} className="overflow-hidden">
-                        <div className="h-48 bg-gray-200 relative">
-                          {course.image ? (
+              {/* Profile Content */}
+              <Tabs defaultValue="courses" className="w-full">
+                <TabsList className="mb-8 flex flex-wrap justify-center sm:justify-start gap-2">
+                  <TabsTrigger value="courses" className="flex items-center text-sm sm:text-base">
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    My Courses
+                  </TabsTrigger>
+                  <TabsTrigger value="coins" className="flex items-center text-sm sm:text-base">
+                    <Shield className="h-4 w-4 mr-2" />
+                    My Coins
+                  </TabsTrigger>
+                  <TabsTrigger value="certificates" className="flex items-center text-sm sm:text-base">
+                    <Award className="h-4 w-4 mr-2" />
+                    Certificates
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="courses">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {userCourses.length > 0 ? (
+                      userCourses.map((course) => (
+                        <Card key={course.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                          <div className="h-40 relative">
                             <img 
                               src={course.image} 
                               alt={course.title} 
                               className="w-full h-full object-cover"
                             />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-royal/10">
-                              <BookOpen className="h-12 w-12 text-royal/50" />
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                              <h3 className="text-white font-bold">{course.title}</h3>
                             </div>
-                          )}
-                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200">
+                          </div>
+                          <CardContent className="p-6">
+                            <div className="flex justify-between items-center mb-3">
+                              <span className="text-sm text-gray-600">
+                                Last activity: {new Date(course.lastActivity).toLocaleDateString()}
+                              </span>
+                              <span className="font-medium text-royal">{course.progress}% complete</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2.5">
+                              <div 
+                                className="bg-royal h-2.5 rounded-full" 
+                                style={{ width: `${course.progress}%` }}
+                              ></div>
+                            </div>
+                            <Button className="w-full mt-4">Continue Learning</Button>
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                      <div className="col-span-full text-center py-12">
+                        <div className="w-16 h-16 bg-royal/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <BookOpen className="h-8 w-8 text-royal" />
+                        </div>
+                        <h3 className="text-xl font-bold text-royal mb-2">No Courses Yet</h3>
+                        <p className="text-gray-600 mb-6">
+                          You haven't enrolled in any courses yet. Explore our course catalog to get started.
+                        </p>
+                        <Link to="/courses">
+                          <Button>Browse Courses</Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="coins">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {userCoins.length > 0 ? (
+                      userCoins.map((coin) => (
+                        <Card key={coin.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                          <div className="h-40 relative">
+                            <img 
+                              src={coin.image} 
+                              alt={coin.title} 
+                              className="w-full h-full object-cover"
+                            />
                             <div 
-                              className="h-full bg-gold" 
-                              style={{ width: `${course.progress}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-lg">{course.title}</CardTitle>
-                          <p className="text-sm text-gray-500">
-                            Instructor: {course.instructor}
-                          </p>
-                        </CardHeader>
-                        <CardContent className="pb-4">
-                          <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                            {course.description}
-                          </p>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-royal">
-                              {course.progress}% Complete
-                            </span>
-                            <Button size="sm">Continue</Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
-                  ) : (
-                    <div className="col-span-full text-center py-12">
-                      <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-xl font-medium text-gray-600 mb-2">No courses yet</h3>
-                      <p className="text-gray-500 mb-6">
-                        You haven't enrolled in any courses yet.
-                      </p>
-                      <Button>Browse Courses</Button>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-              
-              {/* My Listings Tab */}
-              <TabsContent value="listings">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {listings.length > 0 ? (
-                    listings.map((listing) => (
-                      <Card key={listing.id} className="overflow-hidden">
-                        <div className="h-48 bg-gray-200">
-                          {listing.image ? (
-                            <img 
-                              src={listing.image} 
-                              alt={listing.title} 
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-royal/10">
-                              <ShoppingCart className="h-12 w-12 text-royal/50" />
+                              className={`absolute top-3 right-3 text-xs font-bold px-2 py-1 rounded ${
+                                coin.status === 'Verified' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : coin.status === 'Pending' 
+                                    ? 'bg-amber-100 text-amber-800' 
+                                    : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {coin.status}
                             </div>
-                          )}
-                        </div>
-                        <CardHeader className="pb-2">
-                          <div className="flex justify-between items-start">
-                            <CardTitle className="text-lg">{listing.title}</CardTitle>
-                            <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">
-                              {listing.status}
-                            </span>
                           </div>
-                          <p className="text-sm font-bold text-royal">
-                            ${listing.price.toFixed(2)}
-                          </p>
-                        </CardHeader>
-                        <CardContent className="pb-4">
-                          <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                            {listing.description}
-                          </p>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-500">
-                              Listed on {new Date(listing.created_at).toLocaleDateString()}
-                            </span>
-                            <Button size="sm">Edit</Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
-                  ) : (
-                    <div className="col-span-full text-center py-12">
-                      <ShoppingCart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-xl font-medium text-gray-600 mb-2">No listings yet</h3>
-                      <p className="text-gray-500 mb-6">
-                        You haven't created any coin listings yet.
-                      </p>
-                      <Button>Create Listing</Button>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-              
-              {/* Saved Items Tab */}
-              <TabsContent value="saved">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {savedItems.length > 0 ? (
-                    savedItems.map((item) => (
-                      <Card key={item.id} className="overflow-hidden">
-                        <div className="h-48 bg-gray-200">
-                          {item.image ? (
-                            <img 
-                              src={item.image} 
-                              alt={item.title} 
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-royal/10">
-                              <Heart className="h-12 w-12 text-royal/50" />
-                            </div>
-                          )}
-                          <div className="absolute top-2 right-2 p-1 rounded-full bg-white shadow-sm">
-                            <Heart className="h-4 w-4 text-rose-500 fill-rose-500" />
-                          </div>
-                        </div>
-                        <CardHeader className="pb-2">
-                          <div className="flex justify-between items-start">
-                            <CardTitle className="text-lg">{item.title}</CardTitle>
-                            <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">
-                              {item.type}
-                            </span>
-                          </div>
-                          {item.price && (
-                            <p className="text-sm font-bold text-royal">
-                              ${item.price.toFixed(2)}
+                          <CardContent className="p-6">
+                            <h3 className="font-bold text-lg text-royal mb-2">{coin.title}</h3>
+                            <p className="text-sm text-gray-600 mb-4">
+                              Submitted: {new Date(coin.submittedDate).toLocaleDateString()}
                             </p>
-                          )}
-                        </CardHeader>
-                        <CardContent className="pb-4">
-                          <Button size="sm" variant="outline" className="w-full">
-                            View Details
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))
+                            <Button 
+                              variant={coin.status === 'Verified' ? 'default' : 'outline'} 
+                              className="w-full"
+                            >
+                              {coin.status === 'Verified' 
+                                ? 'View Certificate' 
+                                : coin.status === 'Pending' 
+                                  ? 'Check Status' 
+                                  : 'View Details'}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                      <div className="col-span-full text-center py-12">
+                        <div className="w-16 h-16 bg-royal/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Shield className="h-8 w-8 text-royal" />
+                        </div>
+                        <h3 className="text-xl font-bold text-royal mb-2">No Coins Submitted</h3>
+                        <p className="text-gray-600 mb-6">
+                          You haven't submitted any coins for verification yet.
+                        </p>
+                        <Link to="/marketplace">
+                          <Button>Verify Your Coins</Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="certificates">
+                  {certificates.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {certificates.map((cert) => (
+                        <Card key={cert.id} className="overflow-hidden border-gold/20">
+                          <CardHeader className="bg-royal/5 border-b border-gold/10">
+                            <CardTitle className="text-royal">{cert.title}</CardTitle>
+                            <CardDescription>
+                              Issued: {new Date(cert.issueDate).toLocaleDateString()} • Instructor: {cert.instructor}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="p-6 flex justify-between items-center">
+                            <div className="flex items-center">
+                              <Award className="h-8 w-8 text-gold mr-3" />
+                              <span className="text-gray-600">Certificate of Completion</span>
+                            </div>
+                            <Button variant="outline" size="sm">
+                              Download
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
                   ) : (
-                    <div className="col-span-full text-center py-12">
-                      <Heart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-xl font-medium text-gray-600 mb-2">No saved items</h3>
-                      <p className="text-gray-500 mb-6">
-                        You haven't saved any courses or listings yet.
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-royal/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Award className="h-8 w-8 text-royal" />
+                      </div>
+                      <h3 className="text-xl font-bold text-royal mb-2">No Certificates Yet</h3>
+                      <p className="text-gray-600 mb-6">
+                        Complete courses to earn certificates and showcase your expertise.
                       </p>
-                      <Button>Explore Content</Button>
+                      <Link to="/courses">
+                        <Button>Browse Courses</Button>
+                      </Link>
                     </div>
                   )}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </motion.div>
+                </TabsContent>
+              </Tabs>
+            </>
+          )}
         </div>
       </main>
       <Footer />

@@ -13,10 +13,16 @@ import About from "./pages/About";
 import Profile from "./pages/Profile";
 import Authenticate from "./pages/Authenticate";
 import NotFound from "./pages/NotFound";
+import WelcomeModal from "./components/WelcomeModal";
+import { createClient } from '@supabase/supabase-js';
+import LegalPage from "./pages/LegalPage";
+import Mentors from "./pages/Mentors";
+import Articles from "./pages/Articles";
 
 // Create a context to indicate if Supabase is properly configured
 export const ConfigContext = createContext({
   supabaseConfigured: false,
+  supabaseClient: null as any,
 });
 
 const App = () => {
@@ -24,18 +30,31 @@ const App = () => {
   const [queryClient] = useState(() => new QueryClient());
   
   // Check if Supabase environment variables are available
-  const supabaseConfigured = Boolean(
-    import.meta.env.VITE_SUPABASE_URL && 
-    import.meta.env.VITE_SUPABASE_ANON_KEY
-  );
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const supabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+  
+  // Initialize Supabase client if configured
+  const [supabaseClient] = useState(() => {
+    if (supabaseConfigured) {
+      return createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+        }
+      });
+    }
+    return null;
+  });
 
   return (
-    <ConfigContext.Provider value={{ supabaseConfigured }}>
+    <ConfigContext.Provider value={{ supabaseConfigured, supabaseClient }}>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <WelcomeModal />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/courses" element={<Courses />} />
@@ -45,7 +64,17 @@ const App = () => {
               <Route path="/profile" element={<Profile />} />
               <Route path="/authenticate" element={<Authenticate />} />
               <Route path="/login" element={<Authenticate />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="/mentors" element={<Mentors />} />
+              <Route path="/articles" element={<Articles />} />
+              
+              {/* Legal Pages */}
+              <Route path="/legal/privacy-policy" element={<LegalPage type="privacy" />} />
+              <Route path="/legal/terms-of-service" element={<LegalPage type="terms" />} />
+              <Route path="/legal/refund-policy" element={<LegalPage type="refund" />} />
+              <Route path="/legal/verification-process" element={<LegalPage type="verification" />} />
+              <Route path="/legal/cookie-policy" element={<LegalPage type="cookie" />} />
+              
+              {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

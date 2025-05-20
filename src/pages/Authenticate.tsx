@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Eye, EyeOff, GitHub, Mail } from 'lucide-react';
+import { Eye, EyeOff, Github, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -130,7 +130,7 @@ const Authenticate = () => {
                       Google
                     </Button>
                     <Button variant="outline" className="w-full">
-                      <GitHub className="h-5 w-5 mr-2" />
+                      <Github className="h-5 w-5 mr-2" />
                       GitHub
                     </Button>
                   </div>
@@ -218,7 +218,7 @@ const Authenticate = () => {
                       Google
                     </Button>
                     <Button variant="outline" className="w-full">
-                      <GitHub className="h-5 w-5 mr-2" />
+                      <Github className="h-5 w-5 mr-2" />
                       GitHub
                     </Button>
                   </div>

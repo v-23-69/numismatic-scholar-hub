@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Upload, Shield, Check, Clock, Coin } from 'lucide-react';
+import { Upload, Shield, Check, Clock, Coins } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 
@@ -133,7 +133,7 @@ const CoinAuthenticationFeature = () => {
                       <span className="text-gray-600">24-hour turnaround</span>
                     </div>
                     <div className="flex items-center space-x-1 text-sm">
-                      <Coin className="h-4 w-4 text-gold" />
+                      <Coins className="h-4 w-4 text-gold" />
                       <span className="text-gray-600">All coin types accepted</span>
                     </div>
                   </div>

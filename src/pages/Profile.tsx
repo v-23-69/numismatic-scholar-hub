@@ -26,6 +26,9 @@ import Footer from "@/components/layout/Footer";
 import { ConfigContext } from "@/App";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
+import ProfileCompletion from '@/components/profile/ProfileCompletion';
+import AvatarUploader from '@/components/profile/AvatarUploader';
+import ProfileThemeSelector from '@/components/profile/ProfileThemeSelector';
 
 const Profile = () => {
   const { supabaseClient, supabaseConfigured } = useContext(ConfigContext);
@@ -35,12 +38,14 @@ const Profile = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   
   // Profile form state
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [phone, setPhone] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [themeColor, setThemeColor] = useState('#0B2C5E'); // Default royal blue
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   
   // Sample data for demo purposes (in a real app, this would come from Supabase)
@@ -134,6 +139,7 @@ const Profile = () => {
             setBio(profile.bio || '');
             setPhone(profile.phone || '');
             setAvatarUrl(profile.avatar_url || '');
+            setThemeColor(profile.theme_color || '#0B2C5E');
           } else {
             // Set defaults from auth metadata if profile doesn't exist yet
             setName(session.user.user_metadata?.full_name || '');
@@ -164,6 +170,7 @@ const Profile = () => {
           setName('Demo User');
           setBio('Passionate coin collector with interests in ancient Roman and Indian coinage.');
           setPhone('+91 98765 43210');
+          setThemeColor('#0B2C5E');
           setLoading(false);
         }, 1000);
       }
@@ -201,18 +208,9 @@ const Profile = () => {
     }
   };
   
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      setAvatarFile(file);
-      
-      // Create a preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setAvatarUrl(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleAvatarChange = (file: File, previewUrl: string) => {
+    setAvatarFile(file);
+    setAvatarUrl(previewUrl);
   };
   
   const handleProfileUpdate = async () => {
@@ -225,6 +223,7 @@ const Profile = () => {
       
       // Upload avatar if changed
       if (avatarFile) {
+        setUploadingAvatar(true);
         const fileExt = avatarFile.name.split('.').pop();
         const filePath = `avatars/${user.id}-${Date.now()}.${fileExt}`;
         
@@ -242,6 +241,7 @@ const Profile = () => {
           .getPublicUrl(filePath);
           
         newAvatarUrl = urlData.publicUrl;
+        setUploadingAvatar(false);
       }
       
       // Update profile
@@ -253,6 +253,7 @@ const Profile = () => {
           bio,
           phone,
           avatar_url: newAvatarUrl,
+          theme_color: themeColor,
           updated_at: new Date().toISOString()
         });
         
@@ -272,7 +273,17 @@ const Profile = () => {
       });
     } finally {
       setLoading(false);
+      setUploadingAvatar(false);
     }
+  };
+
+  // Create a profile object for the ProfileCompletion component
+  const profileData = {
+    full_name: name,
+    bio,
+    phone,
+    avatar_url: avatarUrl,
+    theme_color: themeColor
   };
 
   return (
@@ -305,32 +316,27 @@ const Profile = () => {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5 }}
+                    className="flex flex-col items-center space-y-4"
                   >
-                    <div className="relative group">
-                      <Avatar className="h-32 w-32 border-4 border-white shadow-md">
-                        {avatarUrl ? (
-                          <AvatarImage src={avatarUrl} alt={name} />
-                        ) : (
-                          <AvatarFallback className="bg-royal text-white text-4xl">
-                            {name ? name.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                      {editMode && (
-                        <label 
-                          htmlFor="avatar-upload" 
-                          className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center text-white text-sm cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          Change Photo
-                          <input 
-                            id="avatar-upload" 
-                            type="file" 
-                            accept="image/*" 
-                            className="hidden" 
-                            onChange={handleAvatarChange}
-                          />
-                        </label>
-                      )}
+                    <AvatarUploader
+                      avatarUrl={avatarUrl}
+                      onAvatarChange={handleAvatarChange}
+                      isUploading={uploadingAvatar}
+                      name={name}
+                      email={user.email}
+                    />
+                    
+                    {!editMode && (
+                      <div 
+                        className="w-4 h-4 rounded-full border-2 border-white" 
+                        style={{ backgroundColor: themeColor }}
+                        title="Your theme color"
+                      />
+                    )}
+                    
+                    {/* Profile Completion Component */}
+                    <div className="w-full md:w-48">
+                      <ProfileCompletion profile={profileData} />
                     </div>
                   </motion.div>
                   
@@ -349,7 +355,9 @@ const Profile = () => {
                           className="text-3xl font-bold text-royal mb-2 max-w-md"
                         />
                       ) : (
-                        <h1 className="text-3xl font-bold text-royal mb-2">{name || 'Unnamed User'}</h1>
+                        <h1 className="text-3xl font-bold mb-2" style={{ color: themeColor || '#0B2C5E' }}>
+                          {name || 'Unnamed User'}
+                        </h1>
                       )}
                       
                       <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-gray-600 mb-4">
@@ -385,13 +393,30 @@ const Profile = () => {
                         </p>
                       )}
                       
+                      {editMode && (
+                        <div className="mb-6 max-w-md">
+                          <Input 
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="Your Phone Number"
+                            className="mb-4"
+                          />
+                          
+                          {/* Theme Color Selector */}
+                          <ProfileThemeSelector 
+                            selectedColor={themeColor}
+                            onChange={setThemeColor}
+                          />
+                        </div>
+                      )}
+                      
                       <div className="flex flex-wrap items-center gap-2">
                         {editMode ? (
                           <>
                             <Button 
                               onClick={handleProfileUpdate} 
                               className="bg-royal hover:bg-royal-light text-white"
-                              disabled={loading}
+                              disabled={loading || uploadingAvatar}
                             >
                               <Save className="h-4 w-4 mr-2" />
                               Save Changes
@@ -408,6 +433,8 @@ const Profile = () => {
                           <Button 
                             variant="outline" 
                             onClick={() => setEditMode(true)}
+                            style={{ borderColor: themeColor, color: themeColor }}
+                            className="hover:bg-royal/10"
                           >
                             <Edit className="h-4 w-4 mr-2" />
                             Edit Profile

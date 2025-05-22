@@ -145,6 +145,59 @@
   }
 }
 
+/* Custom hover effects and transitions */
+@layer components {
+  /* Button hover effects */
+  .btn-hover-blue {
+    @apply hover:bg-blue-600 hover:border-blue-600 hover:text-white transition-colors duration-200;
+  }
+  
+  .btn-hover-royal {
+    @apply hover:bg-royal hover:border-royal hover:text-white transition-colors duration-200;
+  }
+  
+  /* Navbar link hover effect */
+  .nav-link {
+    @apply relative overflow-hidden;
+  }
+  
+  .nav-link::after {
+    @apply content-[''] absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 ease-in-out;
+  }
+  
+  .nav-link:hover::after {
+    @apply w-full;
+  }
+  
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-md;
+  }
+  
+  .card-image-hover {
+    @apply transition-transform duration-500 hover:scale-105;
+  }
+}
+
+/* Cart badge animation */
+@keyframes cartPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.cart-badge-animate {
+  animation: cartPulse 0.5s ease-in-out;
+}
+
+/* Profile theme colors */
+.theme-royal { color: #0B2C5E; }
+.theme-gold { color: #D4AF37; }
+.theme-burgundy { color: #800020; }
+.theme-emerald { color: #046307; }
+.theme-purple { color: #4B0082; }
+.theme-rust { color: #B7410E; }
+
 @keyframes shine {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }

@@ -233,20 +233,6 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-
-      {/* Command Dialog for Search */}
-      <CommandDialog open={isCommandDialogOpen} onOpenChange={setIsCommandDialogOpen}>
-        <CommandInput placeholder="Search courses, coins, mentors..." />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Courses">
-            {/* Course results will appear here */}
-          </CommandGroup>
-          <CommandGroup heading="Coins">
-            {/* Coin results will appear here */}
-          </CommandGroup>
-        </CommandList>
-      </CommandDialog>
     </header>
   );
 };

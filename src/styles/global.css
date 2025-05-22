@@ -53,6 +53,11 @@
   .royal-button-outline {
     @apply border border-royal text-royal hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors duration-200;
   }
+
+  /* Search result hover styles */
+  .search-result-hover {
+    @apply hover:bg-royal/10 rounded-md transition-colors duration-150;
+  }
 }
 
 /* Cart badge animation */
@@ -92,4 +97,18 @@
 /* Buy Now button effects */
 .buy-now-button {
   @apply transform transition-transform duration-200 hover:scale-105;
+}
+
+/* Search dropdown styles */
+.search-dropdown {
+  @apply bg-white border border-gray-200 rounded-md shadow-lg z-50;
+}
+
+.search-dropdown-item {
+  @apply px-3 py-2 hover:bg-royal/10 cursor-pointer flex items-center;
+}
+
+/* Make sure dropdowns are visible */
+.dropdown-menu, .dropdown-content {
+  @apply bg-white shadow-lg z-50 !important;
 }

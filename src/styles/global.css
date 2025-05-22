@@ -35,6 +35,15 @@
   .card-image-hover {
     @apply transition-transform duration-500 hover:scale-105;
   }
+  
+  /* Royal theme buttons */
+  .royal-button {
+    @apply bg-royal text-white hover:bg-blue-600 transition-colors duration-200;
+  }
+  
+  .royal-button-outline {
+    @apply border border-royal text-royal hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors duration-200;
+  }
 }
 
 /* Cart badge animation */
@@ -55,3 +64,23 @@
 .theme-emerald { color: #046307; }
 .theme-purple { color: #4B0082; }
 .theme-rust { color: #B7410E; }
+
+/* Royal Card Styles */
+.royal-card {
+  @apply bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300;
+}
+
+/* Fixed prices to have proper spacing */
+.price-tag {
+  @apply font-bold text-royal whitespace-nowrap;
+}
+
+/* Wishlist button effects */
+.wishlist-button {
+  @apply transition-all duration-200 hover:scale-110;
+}
+
+/* Buy Now button effects */
+.buy-now-button {
+  @apply transform transition-transform duration-200 hover:scale-105;
+}

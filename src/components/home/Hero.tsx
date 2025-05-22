@@ -1,12 +1,14 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { motion } from 'framer-motion';
+import EnhancedSearchBar from '../search/EnhancedSearchBar';
 
 const Hero = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  const navigate = useNavigate();
   
   return (
     <div className="bg-gradient-to-b from-royal/5 to-white relative overflow-hidden">
@@ -56,26 +58,17 @@ const Hero = () => {
             unite to learn, trade, and celebrate the art and history of numismatics.
           </motion.p>
           
-          {/* Animated Search Bar */}
+          {/* Enhanced Search Bar */}
           <motion.div 
             initial={{ y: 20, opacity: 0, width: "80%" }}
             animate={{ y: 0, opacity: 1, width: "100%" }}
             transition={{ delay: 0.6, duration: 0.5 }}
             className="relative w-full max-w-2xl mb-8"
           >
-            <div className="flex items-center bg-white border-2 border-gold/30 focus-within:border-gold rounded-full px-4 py-3 shadow-lg">
-              <Search className="h-5 w-5 text-gold mr-2" />
-              <input 
-                type="text" 
-                placeholder="Search courses, coins, or mentors..."
-                className="flex-grow bg-transparent outline-none"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <Button className="bg-royal hover:bg-royal-light text-white px-6">
-                Search
-              </Button>
-            </div>
+            <EnhancedSearchBar 
+              expanded={searchExpanded}
+              onExpand={() => setSearchExpanded(true)}
+            />
           </motion.div>
           
           {/* Feature Badges */}

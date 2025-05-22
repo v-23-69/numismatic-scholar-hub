@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+
+import { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, BookOpen, User, ShoppingCart, LogIn, Heart } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -6,41 +7,29 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
 import { CommandDialog } from "@/components/ui/command";
 import { CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ConfigContext } from "@/App";
 import EnhancedSearchBar from '@/components/search/EnhancedSearchBar';
 import { useWishlist } from '@/context/WishlistContext';
 
-// Initialize Supabase client only if environment variables are available
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Create a placeholder or mock auth state when Supabase isn't configured
+// Create a more reliable auth state hook
 const useAuthState = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { supabaseClient, supabaseConfigured } = useContext(ConfigContext);
 
   useEffect(() => {
-    // Only attempt to initialize Supabase if we have the required credentials
-    if (supabaseUrl && supabaseAnonKey) {
-      const initSupabase = async () => {
+    // Only attempt to check auth if we have Supabase configured
+    if (supabaseClient && supabaseConfigured) {
+      setLoading(true);
+      
+      const checkAuthStatus = async () => {
         try {
-          // Dynamically import Supabase only when needed
-          const { createClient } = await import('@supabase/supabase-js');
-          // Enable session persistence with autoRefreshToken set to true
-          const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-            auth: {
-              persistSession: true,
-              autoRefreshToken: true,
-            }
-          });
-          
-          setLoading(true);
-          const { data } = await supabase.auth.getSession();
+          const { data } = await supabaseClient.auth.getSession();
           setUser(data.session?.user || null);
           setLoading(false);
           
-          const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+          const { data: authListener } = supabaseClient.auth.onAuthStateChange((_event, session) => {
             setUser(session?.user || null);
           });
           
@@ -48,7 +37,7 @@ const useAuthState = () => {
             authListener.subscription.unsubscribe();
           };
         } catch (error) {
-          console.error("Failed to initialize Supabase:", error);
+          console.error("Failed to check auth status:", error);
           toast({
             title: "Authentication Error",
             description: "Could not connect to authentication service.",
@@ -58,12 +47,11 @@ const useAuthState = () => {
         }
       };
       
-      initSupabase();
+      checkAuthStatus();
     } else {
-      console.warn("Supabase environment variables are not set.");
       setLoading(false);
     }
-  }, [toast]);
+  }, [supabaseClient, supabaseConfigured, toast]);
   
   return { user, loading };
 };
@@ -71,10 +59,7 @@ const useAuthState = () => {
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchActive, setSearchActive] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [isCommandDialogOpen, setIsCommandDialogOpen] = useState(false);
-  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const { user, loading } = useAuthState();
   const { wishlist } = useWishlist();
   
@@ -92,31 +77,10 @@ const Navbar = () => {
     }
   })();
 
-  // General categories for quick navigation
-  const categories = [
-    { id: "courses", title: "Courses", path: "/courses" },
-    { id: "coins", title: "Verify Your Coins", path: "/marketplace" },
-    { id: "community", title: "Community", path: "/community" },
-    { id: "mentors", title: "Mentors", path: "/mentors" },
-  ];
-  
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchInputRef.current && !searchInputRef.current.contains(event.target as Node)) {
-        setShowSearchSuggestions(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Courses", path: "/courses" },
+    { name: "Coins", path: "/coins" },
     { name: "Verify Your Coins", path: "/marketplace" },
     { name: "Community", path: "/community" },
     { name: "About", path: "/about" },
@@ -139,7 +103,7 @@ const Navbar = () => {
             <Link 
               key={link.name} 
               to={link.path} 
-              className="px-3 py-2 text-gray-700 hover:text-blue-600 transition-colors duration-300"
+              className="px-3 py-2 text-gray-700 nav-link-blue"
             >
               {link.name}
             </Link>
@@ -272,23 +236,15 @@ const Navbar = () => {
 
       {/* Command Dialog for Search */}
       <CommandDialog open={isCommandDialogOpen} onOpenChange={setIsCommandDialogOpen}>
-        <CommandInput 
-          placeholder="Search courses, coins, mentors..." 
-          value={searchQuery}
-          onValueChange={setSearchQuery}
-        />
+        <CommandInput placeholder="Search courses, coins, mentors..." />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
-          {searchQuery && (
-            <>
-              <CommandGroup heading="Courses">
-                
-              </CommandGroup>
-              <CommandGroup heading="Coins">
-                
-              </CommandGroup>
-            </>
-          )}
+          <CommandGroup heading="Courses">
+            {/* Course results will appear here */}
+          </CommandGroup>
+          <CommandGroup heading="Coins">
+            {/* Coin results will appear here */}
+          </CommandGroup>
         </CommandList>
       </CommandDialog>
     </header>

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Plus, Upload, Shield, ArrowUpDown, Heart, ShoppingCart } from 'lucide-react';
+import { Search, Filter, Plus, Upload, Shield, ArrowUpDown, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { useWishlist } from '@/context/WishlistContext';
-import PaymentModal from '@/components/marketplace/PaymentModal';
-import { useToast } from "@/components/ui/use-toast";
+import { ConfigContext } from "@/App";
+import EnhancedSearchBar from '@/components/search/EnhancedSearchBar';
 
 // Types for coin listings
 interface CoinListing {
@@ -78,131 +77,6 @@ const sampleCoins: CoinListing[] = [
     }
   },
 ];
-
-const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
-  const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlist();
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const { toast } = useToast();
-  
-  const toggleWishlist = () => {
-    if (isInWishlist(coin.id)) {
-      removeFromWishlist(coin.id);
-      toast({
-        title: "Removed from wishlist",
-        description: `${coin.title} has been removed from your wishlist`,
-      });
-    } else {
-      addToWishlist({
-        id: coin.id,
-        title: coin.title,
-        description: coin.description,
-        image: coin.image,
-        value: coin.value,
-        type: 'coin'
-      });
-      toast({
-        title: "Added to wishlist",
-        description: `${coin.title} has been added to your wishlist`,
-      });
-    }
-  };
-  
-  const handleBuyNow = () => {
-    setIsPaymentModalOpen(true);
-  };
-  
-  const handlePaymentSuccess = () => {
-    // If item was in wishlist, remove it as it's now purchased
-    if (isInWishlist(coin.id)) {
-      removeFromWishlist(coin.id);
-    }
-    
-    // Close the payment modal
-    setIsPaymentModalOpen(false);
-  };
-  
-  return (
-    <>
-      <motion.div 
-        initial={{ y: 20, opacity: 0 }}
-        whileInView={{ y: 0, opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: index * 0.1 }}
-        className="royal-card overflow-hidden group"
-      >
-        <div className="relative h-48 overflow-hidden">
-          <img 
-            src={coin.image} 
-            alt={coin.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-          {coin.verified && (
-            <div className="absolute top-3 right-3 bg-gold text-royal-dark text-xs font-bold px-2 py-1 rounded flex items-center">
-              <Shield className="h-3 w-3 mr-1" />
-              VERIFIED
-            </div>
-          )}
-          <button 
-            onClick={toggleWishlist}
-            className={`absolute top-3 left-3 p-2 rounded-full ${
-              isInWishlist(coin.id) 
-                ? 'bg-red-500 text-white' 
-                : 'bg-white text-gray-500 hover:text-red-500'
-            } transition-colors shadow-md`}
-          >
-            <Heart className="h-4 w-4" fill={isInWishlist(coin.id) ? "currentColor" : "none"} />
-          </button>
-        </div>
-        
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gold">{coin.region}</span>
-            <span className="text-sm text-gray-600">{coin.mintDate}</span>
-          </div>
-          
-          <h3 className="text-xl font-bold mb-2 text-royal group-hover:text-gold transition-colors">
-            {coin.title}
-          </h3>
-          
-          <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-            {coin.description}
-          </p>
-          
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium">Rarity: <span className="text-royal">{coin.rarity}</span></span>
-            <span className="text-royal font-bold">₹{coin.value}</span>
-          </div>
-          
-          <div className="flex items-center justify-between border-t pt-4">
-            <div className="flex items-center">
-              <div className="w-6 h-6 bg-royal rounded-full flex items-center justify-center text-white text-xs mr-2">
-                {coin.seller.name.charAt(0)}
-              </div>
-              <span className="text-sm text-gray-700">{coin.seller.name}</span>
-            </div>
-            <div className="flex space-x-2">
-              <Button 
-                onClick={handleBuyNow}
-                className="text-white bg-royal hover:bg-royal-light text-sm"
-              >
-                <ShoppingCart className="h-3 w-3 mr-1" />
-                Buy Now
-              </Button>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-      
-      {/* Payment Modal */}
-      <PaymentModal
-        open={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
-        coin={coin}
-        onSuccess={handlePaymentSuccess}
-      />
-    </>
-  );
-};
 
 const CoinUploadForm = () => {
   // Form state (in a real app, would be managed by React Hook Form or similar)
@@ -324,7 +198,20 @@ const CoinUploadForm = () => {
 
 const Marketplace = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // In a real app, this would come from auth state
+  const { supabaseClient } = useContext(ConfigContext);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check if user is authenticated
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      if (supabaseClient) {
+        const { data } = await supabaseClient.auth.getSession();
+        setIsAuthenticated(!!data.session);
+      }
+    };
+    
+    checkAuthStatus();
+  }, [supabaseClient]);
 
   // Filter coins based on search query
   const filteredCoins = sampleCoins.filter(coin => 
@@ -343,21 +230,17 @@ const Marketplace = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold font-playfair text-royal mb-4">
-                Numismatic Marketplace
+                Verification Services
               </h1>
               <p className="text-lg text-gray-600 mb-8">
-                Discover authenticated coins from trusted sellers or list your own collection for our community of passionate collectors.
+                Get your coins authenticated by our experts or list your own collection for verification.
               </p>
               
               <div className="relative max-w-xl mx-auto">
-                <Input
-                  type="text"
-                  placeholder="Search for coins by name, region, or date..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pr-10"
+                <EnhancedSearchBar
+                  expanded={true}
+                  placeholder="Search for verification services..."
                 />
-                <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
               
               <div className="flex flex-wrap justify-center mt-6 space-x-0 space-y-2 sm:space-x-4 sm:space-y-0">
@@ -376,7 +259,7 @@ const Marketplace = () => {
                           Fill in the details about your coin to create a new listing.
                         </DialogDescription>
                       </DialogHeader>
-                      <CoinUploadForm />
+                      {/* <CoinUploadForm /> */}
                     </DialogContent>
                   </Dialog>
                 ) : (
@@ -392,10 +275,10 @@ const Marketplace = () => {
                   Verification Services
                 </Button>
                 
-                <Link to="/wishlist">
+                <Link to="/coins">
                   <Button variant="outline" className="border-royal text-royal hover:bg-royal hover:text-white">
                     <Heart className="h-4 w-4 mr-2" />
-                    View Wishlist
+                    View All Coins
                   </Button>
                 </Link>
               </div>
@@ -403,44 +286,7 @@ const Marketplace = () => {
           </div>
         </section>
         
-        {/* Main Content */}
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-bold font-playfair text-royal">
-                Featured Coins
-              </h2>
-              
-              <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" className="flex items-center">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                </Button>
-                <Button variant="outline" size="sm" className="flex items-center">
-                  <ArrowUpDown className="h-4 w-4 mr-2" />
-                  Sort
-                </Button>
-              </div>
-            </div>
-            
-            {filteredCoins.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredCoins.map((coin, index) => (
-                  <CoinCard key={coin.id} coin={coin} index={index} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <h3 className="text-xl font-bold text-gray-700 mb-2">No coins found</h3>
-                <p className="text-gray-600">
-                  Try adjusting your search or filter criteria to find what you're looking for.
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
-        
-        {/* Authentication Feature */}
+        {/* The rest of your Marketplace page content */}
         <section className="bg-royal/5 py-16">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">

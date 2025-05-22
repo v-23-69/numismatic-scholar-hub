@@ -8,6 +8,7 @@ import { useState, createContext } from "react";
 import Index from "./pages/Index";
 import Courses from "./pages/Courses";
 import Marketplace from "./pages/Marketplace";
+import Coins from "./pages/Coins";
 import Community from "./pages/Community";
 import About from "./pages/About";
 import Profile from "./pages/Profile";
@@ -62,7 +63,10 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/courses" element={<Courses />} />
+                <Route path="/courses/:courseId" element={<Courses />} />
                 <Route path="/marketplace" element={<Marketplace />} />
+                <Route path="/coins" element={<Coins />} />
+                <Route path="/coins/:coinId" element={<Coins />} />
                 <Route path="/community" element={<Community />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/profile" element={<Profile />} />
@@ -72,6 +76,7 @@ const App = () => {
                 <Route path="/articles" element={<Articles />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/purchases" element={<Purchases />} />
+                <Route path="/search" element={<NotFound />} />
                 
                 {/* Legal Pages */}
                 <Route path="/legal/privacy-policy" element={<LegalPage type="privacy" />} />

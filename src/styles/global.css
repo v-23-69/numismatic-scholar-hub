@@ -27,6 +27,15 @@
     @apply w-full;
   }
   
+  /* Updated navbar link hover styles */
+  .nav-link-blue {
+    @apply hover:text-blue-600 transition-colors duration-200;
+  }
+  
+  .nav-link-red {
+    @apply hover:text-red-500 transition-colors duration-200;
+  }
+  
   /* Card hover effects */
   .card-hover {
     @apply transition-all duration-300 hover:shadow-md;

@@ -1,32 +1,9 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, BookOpen, ShoppingCart } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-
-// Sample data for search suggestions
-const coursesSuggestions = [
-  { id: "course-1", title: "Ancient Coin Authentication" },
-  { id: "course-2", title: "Modern Collectible Grading" },
-  { id: "course-3", title: "European Coinage History" },
-  { id: "course-4", title: "Numismatic Photography" },
-  { id: "course-5", title: "Investing in Rare Coins" },
-];
-  
-const coinsSuggestions = [
-  { id: "coin-1", title: "1854 Gold Double Eagle" },
-  { id: "coin-2", title: "Ancient Roman Denarius" },
-  { id: "coin-3", title: "Mughal Empire Gold Mohur" },
-  { id: "coin-4", title: "Byzantine Solidus" },
-  { id: "coin-5", title: "Canadian Gold Maple Leaf" },
-];
-
-// General categories for quick navigation
-const categories = [
-  { id: "courses", title: "Courses", path: "/courses" },
-  { id: "coins", title: "Verify Your Coins", path: "/marketplace" },
-  { id: "community", title: "Community", path: "/community" },
-  { id: "mentors", title: "Mentors", path: "/mentors" },
-];
+import { getFilteredSuggestions, getBestMatchRoute, getRouteFromSuggestion, SearchSuggestion } from '@/services/SearchService';
 
 interface EnhancedSearchBarProps {
   className?: string;
@@ -66,74 +43,25 @@ const EnhancedSearchBar = ({
     };
   }, []);
 
-  // Filter suggestions based on search query with fuzzy logic
-  const getFilteredSuggestions = () => {
-    const query = searchQuery.toLowerCase().trim();
-    
-    if (!query) {
-      return {
-        courses: [],
-        coins: [],
-        categories: []
-      };
-    }
-    
-    // If query starts with specific prefixes, prioritize those categories
-    if (query.startsWith("cour")) {
-      return {
-        courses: coursesSuggestions.filter(course => 
-          course.title.toLowerCase().includes(query.replace("cour", ""))
-        ),
-        coins: [],
-        categories: categories.filter(cat => cat.id === "courses")
-      };
-    } else if (query.startsWith("coi")) {
-      return {
-        courses: [],
-        coins: coinsSuggestions.filter(coin => 
-          coin.title.toLowerCase().includes(query.replace("coi", ""))
-        ),
-        categories: categories.filter(cat => cat.id === "coins" || cat.title.toLowerCase().includes("coin"))
-      };
-    }
-    
-    // Otherwise, search across all categories with fuzzy matching
-    return {
-      courses: coursesSuggestions.filter(course => 
-        course.title.toLowerCase().includes(query)
-      ),
-      coins: coinsSuggestions.filter(coin => 
-        coin.title.toLowerCase().includes(query)
-      ),
-      categories: categories.filter(cat => 
-        cat.title.toLowerCase().includes(query) ||
-        cat.id.toLowerCase().includes(query)
-      )
-    };
-  };
-
-  const { courses, coins, categories: filteredCategories } = getFilteredSuggestions();
-  const hasResults = courses.length > 0 || coins.length > 0 || filteredCategories.length > 0;
+  const { courses, coins, categories, pages } = getFilteredSuggestions(searchQuery);
+  const hasResults = courses.length > 0 || coins.length > 0 || categories.length > 0 || pages.length > 0;
 
   // Handle search submission
   const handleSearch = (term: string = searchQuery) => {
     if (!term.trim()) return;
     
-    // First check if it's a category match
-    const categoryMatch = categories.find(cat => 
-      cat.title.toLowerCase() === term.toLowerCase() ||
-      cat.id.toLowerCase() === term.toLowerCase()
-    );
-    
-    if (categoryMatch) {
-      navigate(categoryMatch.path);
+    const bestMatchRoute = getBestMatchRoute(term);
+    if (bestMatchRoute) {
+      navigate(bestMatchRoute);
       setSearchQuery('');
       setShowSuggestions(false);
-      return;
     }
-    
-    // Otherwise, navigate to search results
-    navigate(`/search?q=${encodeURIComponent(term)}`);
+  };
+
+  // Handle clicking a suggestion
+  const handleSuggestionClick = (suggestion: SearchSuggestion) => {
+    const route = getRouteFromSuggestion(suggestion);
+    navigate(route);
     setSearchQuery('');
     setShowSuggestions(false);
   };
@@ -205,20 +133,33 @@ const EnhancedSearchBar = ({
             </div>
           ) : (
             <>
-              {filteredCategories.length > 0 && (
+              {pages.length > 0 && (
+                <div className="mb-2">
+                  <div className={`px-3 py-1 text-xs font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase`}>
+                    Pages
+                  </div>
+                  {pages.map(page => (
+                    <div
+                      key={page.id}
+                      className={`px-3 py-2 ${dropdownHoverBgColor} rounded-md cursor-pointer flex items-center ${dropdownTextColor}`}
+                      onClick={() => handleSuggestionClick(page)}
+                    >
+                      <span className="font-medium">{page.title}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            
+              {categories.length > 0 && (
                 <div className="mb-2">
                   <div className={`px-3 py-1 text-xs font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase`}>
                     Categories
                   </div>
-                  {filteredCategories.map(category => (
+                  {categories.map(category => (
                     <div
                       key={category.id}
                       className={`px-3 py-2 ${dropdownHoverBgColor} rounded-md cursor-pointer flex items-center ${dropdownTextColor}`}
-                      onClick={() => {
-                        navigate(category.path);
-                        setSearchQuery('');
-                        setShowSuggestions(false);
-                      }}
+                      onClick={() => handleSuggestionClick(category)}
                     >
                       <span className="font-medium">{category.title}</span>
                     </div>
@@ -235,11 +176,7 @@ const EnhancedSearchBar = ({
                     <div
                       key={course.id}
                       className={`px-3 py-2 ${dropdownHoverBgColor} rounded-md cursor-pointer flex items-center ${dropdownTextColor}`}
-                      onClick={() => {
-                        navigate(`/courses/${course.id}`);
-                        setSearchQuery('');
-                        setShowSuggestions(false);
-                      }}
+                      onClick={() => handleSuggestionClick(course)}
                     >
                       <BookOpen className="h-4 w-4 text-gray-500 mr-2" />
                       <span>{course.title}</span>
@@ -257,11 +194,7 @@ const EnhancedSearchBar = ({
                     <div
                       key={coin.id}
                       className={`px-3 py-2 ${dropdownHoverBgColor} rounded-md cursor-pointer flex items-center ${dropdownTextColor}`}
-                      onClick={() => {
-                        navigate(`/marketplace/${coin.id}`);
-                        setSearchQuery('');
-                        setShowSuggestions(false);
-                      }}
+                      onClick={() => handleSuggestionClick(coin)}
                     >
                       <ShoppingCart className="h-4 w-4 text-gray-500 mr-2" />
                       <span>{coin.title}</span>

@@ -22,6 +22,11 @@ import Articles from "./pages/Articles";
 import Wishlist from "./pages/Wishlist";
 import Purchases from "./pages/Purchases";
 import { WishlistProvider } from "./context/WishlistContext";
+import CreateCourse from "./pages/CreateCourse";
+import Dashboard from "./pages/Dashboard";
+import VerifyCoin from "./pages/VerifyCoin";
+import EnrolledCourses from "./pages/EnrolledCourses";
+import UploadedCourses from "./pages/UploadedCourses";
 
 // Create a context to indicate if Supabase is properly configured
 export const ConfigContext = createContext({
@@ -64,7 +69,9 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/courses" element={<Courses />} />
                 <Route path="/courses/:courseId" element={<Courses />} />
+                <Route path="/create-course" element={<CreateCourse />} />
                 <Route path="/marketplace" element={<Marketplace />} />
+                <Route path="/verify" element={<VerifyCoin />} />
                 <Route path="/coins" element={<Coins />} />
                 <Route path="/coins/:coinId" element={<Coins />} />
                 <Route path="/community" element={<Community />} />
@@ -76,6 +83,9 @@ const App = () => {
                 <Route path="/articles" element={<Articles />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/purchases" element={<Purchases />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/enrolled-courses" element={<EnrolledCourses />} />
+                <Route path="/uploaded-courses" element={<UploadedCourses />} />
                 <Route path="/search" element={<NotFound />} />
                 
                 {/* Legal Pages */}

@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, BookOpen, User, ShoppingCart, LogIn, Heart } from 'lucide-react';
+import { Menu, X, Search, BookOpen, User, ShoppingCart, LogIn, Heart, Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
@@ -113,12 +113,48 @@ const Navbar = () => {
         {/* Search and User Actions */}
         <div className="hidden md:flex items-center space-x-3">
           <div className="relative">
-            {/* Enhanced Search Bar for desktop */}
-            <EnhancedSearchBar
-              expanded={searchActive}
-              onExpand={() => setSearchActive(!searchActive)}
-            />
+            {/* Compact Search Bar for desktop */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-gray-500 hover:text-blue-600"
+              onClick={() => setIsCommandDialogOpen(true)}
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+            
+            {/* Command Dialog for search */}
+            <CommandDialog open={isCommandDialogOpen} onOpenChange={setIsCommandDialogOpen}>
+              <CommandInput placeholder="Search courses, coins, or pages..." />
+              <CommandList>
+                <CommandEmpty>No results found.</CommandEmpty>
+                <CommandGroup heading="Suggestions">
+                  <CommandItem onSelect={() => {
+                    navigate("/courses");
+                    setIsCommandDialogOpen(false);
+                  }}>
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    <span>Courses</span>
+                  </CommandItem>
+                  <CommandItem onSelect={() => {
+                    navigate("/coins");
+                    setIsCommandDialogOpen(false);
+                  }}>
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    <span>Coins</span>
+                  </CommandItem>
+                </CommandGroup>
+              </CommandList>
+            </CommandDialog>
           </div>
+          
+          {user && (
+            <Link to="/create-course">
+              <Button variant="outline" size="icon" className="text-royal border-royal hover:bg-royal hover:text-white">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </Link>
+          )}
           
           <Link to="/wishlist" className="p-2 text-gray-500 hover:text-blue-600 transition-colors duration-200 relative">
             <Heart className="h-5 w-5" />
@@ -141,7 +177,7 @@ const Navbar = () => {
           {loading ? (
             <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
           ) : user ? (
-            <Link to="/profile" className="flex items-center">
+            <Link to="/dashboard" className="flex items-center">
               <Avatar className="h-8 w-8">
                 {user.user_metadata?.avatar_url ? (
                   <AvatarImage src={user.user_metadata.avatar_url} alt="Profile" />
@@ -164,7 +200,7 @@ const Navbar = () => {
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center space-x-3">
-          <Link to="/wishlist" className="p-2 text-gray-500 hover:text-royal">
+          <Link to="/wishlist" className="p-2 text-gray-500 hover:text-royal relative">
             <Heart className="h-5 w-5" />
             {wishlist.length > 0 && (
               <span className="absolute -top-1 -right-1 bg-gold text-xs text-white rounded-full h-4 w-4 flex items-center justify-center">
@@ -172,7 +208,7 @@ const Navbar = () => {
               </span>
             )}
           </Link>
-          <Link to="/purchases" className="p-2 text-gray-500 hover:text-royal">
+          <Link to="/purchases" className="p-2 text-gray-500 hover:text-royal relative">
             <ShoppingCart className="h-5 w-5" />
             {purchaseCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-gold text-xs text-white rounded-full h-4 w-4 flex items-center justify-center">
@@ -180,7 +216,7 @@ const Navbar = () => {
               </span>
             )}
           </Link>
-          <button onClick={() => setSearchActive(!searchActive)} className="p-2 text-gray-500 hover:text-royal">
+          <button onClick={() => setIsCommandDialogOpen(true)} className="p-2 text-gray-500 hover:text-royal">
             <Search className="h-5 w-5" />
           </button>
           <button onClick={toggleNav} className="p-2 text-gray-500 hover:text-royal">
@@ -188,11 +224,6 @@ const Navbar = () => {
           </button>
         </div>
       </nav>
-
-      {/* Mobile Search */}
-      <div className={`${searchActive ? 'block' : 'hidden'} md:hidden px-4 py-2 border-b`}>
-        <EnhancedSearchBar expanded={true} />
-      </div>
 
       {/* Mobile Navigation */}
       <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} bg-white shadow-md border-b`}>
@@ -208,12 +239,23 @@ const Navbar = () => {
             </Link>
           ))}
           
+          {user && (
+            <Link 
+              to="/create-course" 
+              className="block px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              onClick={toggleNav}
+            >
+              <Plus className="h-4 w-4 mr-2 inline" />
+              Create Course
+            </Link>
+          )}
+          
           <div className="mt-4 flex space-x-2 px-3">
             {user ? (
-              <Link to="/profile" className="w-full">
+              <Link to="/dashboard" className="w-full">
                 <Button className="w-full bg-royal hover:bg-blue-600 text-white transition-colors">
                   <User className="h-4 w-4 mr-2" />
-                  My Profile
+                  Dashboard
                 </Button>
               </Link>
             ) : (

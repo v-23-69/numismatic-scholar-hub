@@ -56,14 +56,16 @@ const Hero = () => {
               
               <div className="mt-6 flex items-center">
                 <div className="flex -space-x-2 mr-3">
-                  {[1, 2, 3, 4].map(i => (
+                  {[1, 2, 3].map(i => (
                     <div key={i} className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center overflow-hidden">
                       <span className="text-xs font-semibold text-gray-600">{i}</span>
                     </div>
                   ))}
                 </div>
                 <p className="text-sm text-gray-600">
-                  <span className="font-semibold">4,200+</span> students already learning
+                  <span className="font-semibold">1,000+</span> Coins Verified<br/>
+                  Expert-Led Courses<br/>
+                  Trusted Community
                 </p>
               </div>
             </motion.div>

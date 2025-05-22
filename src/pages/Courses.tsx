@@ -232,6 +232,11 @@ const CourseCreatorForm = () => {
     setImage('');
   };
   
+  // Add a handler function for the checkbox
+  const handleFeaturedChange = (checked: boolean | "indeterminate") => {
+    setFeatured(checked === true);
+  };
+  
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
@@ -370,7 +375,11 @@ const CourseCreatorForm = () => {
       </div>
       
       <div className="flex items-center space-x-2">
-        <Checkbox id="featured" checked={featured} onCheckedChange={setFeatured} />
+        <Checkbox 
+          id="featured" 
+          checked={featured} 
+          onCheckedChange={handleFeaturedChange} 
+        />
         <Label htmlFor="featured">Featured Course</Label>
       </div>
       

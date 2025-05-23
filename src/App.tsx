@@ -3,12 +3,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, createContext } from "react";
 import Index from "./pages/Index";
 import Courses from "./pages/Courses";
 import Marketplace from "./pages/Marketplace";
-import Coins from "./pages/Coins";
 import Community from "./pages/Community";
 import About from "./pages/About";
 import Profile from "./pages/Profile";
@@ -19,14 +18,6 @@ import { createClient } from '@supabase/supabase-js';
 import LegalPage from "./pages/LegalPage";
 import Mentors from "./pages/Mentors";
 import Articles from "./pages/Articles";
-import Wishlist from "./pages/Wishlist";
-import Purchases from "./pages/Purchases";
-import { WishlistProvider } from "./context/WishlistContext";
-import CreateCourse from "./pages/CreateCourse";
-import Dashboard from "./pages/Dashboard";
-import VerifyCoin from "./pages/VerifyCoin";
-import EnrolledCourses from "./pages/EnrolledCourses";
-import UploadedCourses from "./pages/UploadedCourses";
 
 // Create a context to indicate if Supabase is properly configured
 export const ConfigContext = createContext({
@@ -60,46 +51,33 @@ const App = () => {
     <ConfigContext.Provider value={{ supabaseConfigured, supabaseClient }}>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <WishlistProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <WelcomeModal />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/courses" element={<Courses />} />
-                <Route path="/courses/:courseId" element={<Courses />} />
-                <Route path="/create-course" element={<CreateCourse />} />
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/verify" element={<VerifyCoin />} />
-                <Route path="/coins" element={<Coins />} />
-                <Route path="/coins/:coinId" element={<Coins />} />
-                <Route path="/community" element={<Community />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/authenticate" element={<Authenticate />} />
-                <Route path="/login" element={<Authenticate />} />
-                <Route path="/mentors" element={<Mentors />} />
-                <Route path="/articles" element={<Articles />} />
-                <Route path="/wishlist" element={<Wishlist />} />
-                <Route path="/purchases" element={<Purchases />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/enrolled-courses" element={<EnrolledCourses />} />
-                <Route path="/uploaded-courses" element={<UploadedCourses />} />
-                <Route path="/search" element={<NotFound />} />
-                
-                {/* Legal Pages */}
-                <Route path="/legal/privacy-policy" element={<LegalPage type="privacy" />} />
-                <Route path="/legal/terms-of-service" element={<LegalPage type="terms" />} />
-                <Route path="/legal/refund-policy" element={<LegalPage type="refund" />} />
-                <Route path="/legal/verification-process" element={<LegalPage type="verification" />} />
-                <Route path="/legal/cookie-policy" element={<LegalPage type="cookie" />} />
-                
-                {/* Catch-all */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </WishlistProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <WelcomeModal />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/courses" element={<Courses />} />
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/community" element={<Community />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/authenticate" element={<Authenticate />} />
+              <Route path="/login" element={<Authenticate />} />
+              <Route path="/mentors" element={<Mentors />} />
+              <Route path="/articles" element={<Articles />} />
+              
+              {/* Legal Pages */}
+              <Route path="/legal/privacy-policy" element={<LegalPage type="privacy" />} />
+              <Route path="/legal/terms-of-service" element={<LegalPage type="terms" />} />
+              <Route path="/legal/refund-policy" element={<LegalPage type="refund" />} />
+              <Route path="/legal/verification-process" element={<LegalPage type="verification" />} />
+              <Route path="/legal/cookie-policy" element={<LegalPage type="cookie" />} />
+              
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
         </TooltipProvider>
       </QueryClientProvider>
     </ConfigContext.Provider>

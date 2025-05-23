@@ -23,13 +23,13 @@ const CallToAction = () => {
               marketplace, and our active community of enthusiasts and experts.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link to="/authenticate?tab=register">
+              <Link to="/register">
                 <Button className="bg-gold hover:bg-gold-light text-royal font-medium px-8 py-6 text-lg">
                   Join Now
                 </Button>
               </Link>
               <Link to="/about">
-                <Button className="bg-gold hover:bg-gold-light text-royal font-medium px-8 py-6 text-lg">
+                <Button variant="outline" className="border-white text-white hover:bg-white/10 px-8 py-6 text-lg">
                   Learn More
                 </Button>
               </Link>

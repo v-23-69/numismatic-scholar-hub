@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
-import HomeSearchDropdown from '@/components/search/HomeSearchDropdown';
+import SearchDropdown from '@/components/search/SearchDropdown';
 
 const Hero = () => {
   return (
@@ -56,14 +56,15 @@ const Hero = () => {
             unite to learn, trade, and celebrate the art and history of numismatics.
           </motion.p>
           
-          {/* Search Bar with Dropdown */}
+          {/* Enhanced Search Bar */}
           <motion.div 
             initial={{ y: 20, opacity: 0, width: "80%" }}
             animate={{ y: 0, opacity: 1, width: "100%" }}
             transition={{ delay: 0.6, duration: 0.5 }}
             className="relative w-full max-w-2xl mb-8"
           >
-            <HomeSearchDropdown 
+            <SearchDropdown 
+              expanded={true}
               placeholder="Search for courses, coins, or mentors..."
             />
           </motion.div>

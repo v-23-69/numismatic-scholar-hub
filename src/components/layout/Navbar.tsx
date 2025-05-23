@@ -1,10 +1,11 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, User, ShoppingCart, LogIn, Heart, Search } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X, User, ShoppingCart, LogIn, Heart } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
+import SearchDropdown from '@/components/search/SearchDropdown';
 import { useWishlist } from '@/context/WishlistContext';
 
 // Initialize Supabase client only if environment variables are available
@@ -67,11 +68,12 @@ const useAuthState = () => {
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchActive, setSearchActive] = useState(false);
   const { user, loading } = useAuthState();
   const { wishlist } = useWishlist();
-  const navigate = useNavigate();
-  const location = useLocation();
   
+  const navigate = useNavigate();
+
   const toggleNav = () => setIsOpen(!isOpen);
   
   // Get count of purchases from localStorage
@@ -110,20 +112,24 @@ const Navbar = () => {
             <Link 
               key={link.name} 
               to={link.path} 
-              className={`px-3 py-2 transition-colors duration-300 ${location.pathname === link.path ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`}
+              className="px-3 py-2 text-gray-700 hover:text-blue-600 transition-colors duration-300"
             >
               {link.name}
             </Link>
           ))}
         </div>
 
-        {/* User Actions */}
+        {/* Search and User Actions */}
         <div className="hidden md:flex items-center space-x-3">
-          <Link to="/search" className="p-2 text-gray-500 hover:text-royal">
-            <Search className="h-5 w-5" />
-          </Link>
+          <div className="relative">
+            {/* Enhanced Search Dropdown for desktop */}
+            <SearchDropdown
+              expanded={searchActive}
+              onExpand={() => setSearchActive(!searchActive)}
+            />
+          </div>
           
-          <Link to="/wishlist" className="p-2 text-gray-500 hover:text-royal relative">
+          <Link to="/wishlist" className="p-2 text-gray-500 hover:text-blue-600 transition-colors duration-200 relative">
             <Heart className="h-5 w-5" />
             {wishlist.length > 0 && (
               <span className="absolute -top-1 -right-1 bg-gold text-xs text-white rounded-full h-4 w-4 flex items-center justify-center">
@@ -132,7 +138,7 @@ const Navbar = () => {
             )}
           </Link>
           
-          <Link to="/purchases" className="p-2 text-gray-500 hover:text-royal relative">
+          <Link to="/purchases" className="p-2 text-gray-500 hover:text-blue-600 transition-colors duration-200 relative">
             <ShoppingCart className="h-5 w-5" />
             {purchaseCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-gold text-xs text-white rounded-full h-4 w-4 flex items-center justify-center">
@@ -167,7 +173,7 @@ const Navbar = () => {
 
         {/* Mobile Menu Button */}
         <div className="md:flex lg:hidden items-center space-x-3">
-          <Link to="/wishlist" className="p-2 text-gray-500 hover:text-royal relative">
+          <Link to="/wishlist" className="p-2 text-gray-500 hover:text-royal">
             <Heart className="h-5 w-5" />
             {wishlist.length > 0 && (
               <span className="absolute -top-1 -right-1 bg-gold text-xs text-white rounded-full h-4 w-4 flex items-center justify-center">
@@ -175,7 +181,7 @@ const Navbar = () => {
               </span>
             )}
           </Link>
-          <Link to="/purchases" className="p-2 text-gray-500 hover:text-royal relative">
+          <Link to="/purchases" className="p-2 text-gray-500 hover:text-royal">
             <ShoppingCart className="h-5 w-5" />
             {purchaseCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-gold text-xs text-white rounded-full h-4 w-4 flex items-center justify-center">
@@ -183,14 +189,19 @@ const Navbar = () => {
               </span>
             )}
           </Link>
-          <Link to="/search" className="p-2 text-gray-500 hover:text-royal">
-            <Search className="h-5 w-5" />
-          </Link>
+          <button onClick={() => setSearchActive(!searchActive)} className="p-2 text-gray-500 hover:text-royal">
+            <SearchDropdown expanded={false} onExpand={() => setSearchActive(true)} />
+          </button>
           <button onClick={toggleNav} className="p-2 text-gray-500 hover:text-royal">
             {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </nav>
+
+      {/* Mobile Search */}
+      <div className={`${searchActive ? 'block' : 'hidden'} md:hidden px-4 py-2 border-b`}>
+        <SearchDropdown expanded={true} />
+      </div>
 
       {/* Mobile Navigation */}
       <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} bg-white shadow-md border-b`}>
@@ -199,7 +210,7 @@ const Navbar = () => {
             <Link 
               key={link.name} 
               to={link.path} 
-              className={`block px-3 py-2 rounded-md hover:bg-blue-50 transition-colors ${location.pathname === link.path ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:text-blue-600'}`}
+              className="block px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
               onClick={toggleNav}
             >
               {link.name}
@@ -208,7 +219,7 @@ const Navbar = () => {
           
           <div className="mt-4 flex space-x-2 px-3">
             {user ? (
-              <Link to="/profile" className="w-full" onClick={toggleNav}>
+              <Link to="/profile" className="w-full">
                 <Button className="w-full bg-royal hover:bg-blue-600 text-white transition-colors">
                   <User className="h-4 w-4 mr-2" />
                   My Profile
@@ -216,12 +227,12 @@ const Navbar = () => {
               </Link>
             ) : (
               <>
-                <Link to="/authenticate" className="w-1/2" onClick={toggleNav}>
+                <Link to="/authenticate" className="w-1/2">
                   <Button variant="outline" className="w-full border-royal text-royal hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors">
                     Sign In
                   </Button>
                 </Link>
-                <Link to="/authenticate?tab=register" className="w-1/2" onClick={toggleNav}>
+                <Link to="/authenticate?tab=register" className="w-1/2">
                   <Button className="w-full bg-royal hover:bg-blue-600 text-white transition-colors">
                     Register
                   </Button>

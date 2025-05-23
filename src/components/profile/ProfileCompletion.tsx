@@ -3,7 +3,7 @@ import React from 'react';
 import { Progress } from "@/components/ui/progress";
 
 interface ProfileCompletionProps {
-  profile?: {
+  profile: {
     full_name?: string;
     bio?: string;
     phone?: string;
@@ -12,7 +12,7 @@ interface ProfileCompletionProps {
   };
 }
 
-const ProfileCompletion: React.FC<ProfileCompletionProps> = ({ profile = {} }) => {
+const ProfileCompletion: React.FC<ProfileCompletionProps> = ({ profile }) => {
   // Calculate completion percentage based on filled profile fields
   const calculateCompletion = () => {
     const fields = [

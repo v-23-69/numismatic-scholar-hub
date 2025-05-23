@@ -1,7 +1,6 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Plus, Upload, Shield, ArrowUpDown } from 'lucide-react';
+import { Search, Filter, Plus, Upload, Shield, ArrowUpDown, Heart, ShoppingCart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { useWishlist } from '@/context/WishlistContext';
+import PaymentModal from '@/components/marketplace/PaymentModal';
+import { useToast } from "@/components/ui/use-toast";
 
 // Types for coin listings
 interface CoinListing {
@@ -78,63 +80,127 @@ const sampleCoins: CoinListing[] = [
 ];
 
 const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
+  const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlist();
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const { toast } = useToast();
+  
+  const toggleWishlist = () => {
+    if (isInWishlist(coin.id)) {
+      removeFromWishlist(coin.id);
+      toast({
+        title: "Removed from wishlist",
+        description: `${coin.title} has been removed from your wishlist`,
+      });
+    } else {
+      addToWishlist({
+        id: coin.id,
+        title: coin.title,
+        description: coin.description,
+        image: coin.image,
+        value: coin.value,
+        type: 'coin'
+      });
+      toast({
+        title: "Added to wishlist",
+        description: `${coin.title} has been added to your wishlist`,
+      });
+    }
+  };
+  
+  const handleBuyNow = () => {
+    setIsPaymentModalOpen(true);
+  };
+  
+  const handlePaymentSuccess = () => {
+    // If item was in wishlist, remove it as it's now purchased
+    if (isInWishlist(coin.id)) {
+      removeFromWishlist(coin.id);
+    }
+    
+    // Close the payment modal
+    setIsPaymentModalOpen(false);
+  };
+  
   return (
-    <motion.div 
-      initial={{ y: 20, opacity: 0 }}
-      whileInView={{ y: 0, opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="royal-card overflow-hidden group"
-    >
-      <div className="relative h-48 overflow-hidden">
-        <img 
-          src={coin.image} 
-          alt={coin.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        />
-        {coin.verified && (
-          <div className="absolute top-3 right-3 bg-gold text-royal-dark text-xs font-bold px-2 py-1 rounded flex items-center">
-            <Shield className="h-3 w-3 mr-1" />
-            VERIFIED
-          </div>
-        )}
-      </div>
-      
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gold">{coin.region}</span>
-          <span className="text-sm text-gray-600">{coin.mintDate}</span>
-        </div>
-        
-        <h3 className="text-xl font-bold mb-2 text-royal group-hover:text-gold transition-colors">
-          {coin.title}
-        </h3>
-        
-        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-          {coin.description}
-        </p>
-        
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-medium">Rarity: <span className="text-royal">{coin.rarity}</span></span>
-          <span className="text-royal font-bold">₹{coin.value}</span>
-        </div>
-        
-        <div className="flex items-center justify-between border-t pt-4">
-          <div className="flex items-center">
-            <div className="w-6 h-6 bg-royal rounded-full flex items-center justify-center text-white text-xs mr-2">
-              {coin.seller.name.charAt(0)}
+    <>
+      <motion.div 
+        initial={{ y: 20, opacity: 0 }}
+        whileInView={{ y: 0, opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: index * 0.1 }}
+        className="royal-card overflow-hidden group"
+      >
+        <div className="relative h-48 overflow-hidden">
+          <img 
+            src={coin.image} 
+            alt={coin.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          {coin.verified && (
+            <div className="absolute top-3 right-3 bg-gold text-royal-dark text-xs font-bold px-2 py-1 rounded flex items-center">
+              <Shield className="h-3 w-3 mr-1" />
+              VERIFIED
             </div>
-            <span className="text-sm text-gray-700">{coin.seller.name}</span>
-          </div>
-          <Link 
-            to={`/marketplace/${coin.id}`} 
-            className="text-royal hover:text-gold text-sm font-medium"
+          )}
+          <button 
+            onClick={toggleWishlist}
+            className={`absolute top-3 left-3 p-2 rounded-full ${
+              isInWishlist(coin.id) 
+                ? 'bg-red-500 text-white' 
+                : 'bg-white text-gray-500 hover:text-red-500'
+            } transition-colors shadow-md`}
           >
-            View Details
-          </Link>
+            <Heart className="h-4 w-4" fill={isInWishlist(coin.id) ? "currentColor" : "none"} />
+          </button>
         </div>
-      </div>
-    </motion.div>
+        
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gold">{coin.region}</span>
+            <span className="text-sm text-gray-600">{coin.mintDate}</span>
+          </div>
+          
+          <h3 className="text-xl font-bold mb-2 text-royal group-hover:text-gold transition-colors">
+            {coin.title}
+          </h3>
+          
+          <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+            {coin.description}
+          </p>
+          
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm font-medium">Rarity: <span className="text-royal">{coin.rarity}</span></span>
+            <span className="text-royal font-bold">₹{coin.value}</span>
+          </div>
+          
+          <div className="flex items-center justify-between border-t pt-4">
+            <div className="flex items-center">
+              <div className="w-6 h-6 bg-royal rounded-full flex items-center justify-center text-white text-xs mr-2">
+                {coin.seller.name.charAt(0)}
+              </div>
+              <span className="text-sm text-gray-700">{coin.seller.name}</span>
+            </div>
+            <div className="flex space-x-2">
+              <Button 
+                onClick={handleBuyNow}
+                className="text-white bg-royal hover:bg-royal-light text-sm"
+              >
+                <ShoppingCart className="h-3 w-3 mr-1" />
+                Buy Now
+              </Button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+      
+      {/* Payment Modal */}
+      <PaymentModal
+        open={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        coin={coin}
+        onSuccess={handlePaymentSuccess}
+      />
+    </>
   );
 };
 
@@ -294,7 +360,7 @@ const Marketplace = () => {
                 <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
               
-              <div className="flex justify-center mt-6 space-x-4">
+              <div className="flex flex-wrap justify-center mt-6 space-x-0 space-y-2 sm:space-x-4 sm:space-y-0">
                 {isAuthenticated ? (
                   <Dialog>
                     <DialogTrigger asChild>
@@ -325,6 +391,13 @@ const Marketplace = () => {
                   <Shield className="h-4 w-4 mr-2" />
                   Verification Services
                 </Button>
+                
+                <Link to="/wishlist">
+                  <Button variant="outline" className="border-royal text-royal hover:bg-royal hover:text-white">
+                    <Heart className="h-4 w-4 mr-2" />
+                    View Wishlist
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

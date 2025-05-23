@@ -8,6 +8,15 @@ export interface SearchItem {
   tags?: string[];
 }
 
+// Interface for grouped search results
+export interface GroupedSearchResults {
+  course: SearchItem[];
+  coin: SearchItem[];
+  mentor: SearchItem[];
+  article: SearchItem[];
+  category: SearchItem[];
+}
+
 // Mock data for search results
 const searchData: SearchItem[] = [
   {
@@ -51,6 +60,34 @@ export function performSearch(query: string): SearchItem[] {
       item.tags?.some(tag => tag.toLowerCase().includes(lowercaseQuery))
     );
   });
+}
+
+// Function to group search results by type
+export function groupSearchResults(results: SearchItem[]): GroupedSearchResults {
+  const grouped: GroupedSearchResults = {
+    course: [],
+    coin: [],
+    mentor: [],
+    article: [],
+    category: []
+  };
+  
+  results.forEach(item => {
+    if (item.type === 'course') {
+      grouped.course.push(item);
+    } else if (item.type === 'coin') {
+      grouped.coin.push(item);
+    } else if (item.type === 'mentor') {
+      grouped.mentor.push(item);
+    } else if (item.type === 'article') {
+      grouped.article.push(item);
+    } else {
+      // Handle any other types as category
+      grouped.category.push(item);
+    }
+  });
+  
+  return grouped;
 }
 
 // Get best match route for search query (used in Hero component)

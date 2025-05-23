@@ -29,16 +29,16 @@ const Hero = () => {
           transition={{ duration: 0.7 }}
           className="max-w-3xl mx-auto"
         >
-          <div className="flex justify-center items-center mb-6">
+          <div className="flex justify-center items-center mb-6 relative">
             <div className="h-16 w-16 bg-royal rounded-full flex items-center justify-center">
               <span className="text-gold text-2xl font-bold">NS</span>
             </div>
-            <div className="bg-gold text-xs text-royal-dark font-bold px-3 py-1 rounded-full -ml-4 mt-8">
+            <div className="absolute bg-gold text-xs text-royal-dark font-bold px-3 py-1 rounded-full" style={{bottom: '-10px', transform: 'translateX(-50%)'}}>
               TRUSTED
             </div>
           </div>
           
-          <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold font-playfair text-royal leading-tight mb-4">
+          <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold font-playfair text-royal leading-tight mb-4 mt-6">
             The Trusted Home of<br />
             <span className="text-gold">Coin Knowledge</span>
           </h1>
@@ -49,11 +49,21 @@ const Hero = () => {
           </p>
           
           <div className="max-w-xl mx-auto mb-8">
-            <EnhancedSearchBar
-              expanded={true}
-              className="w-full"
-              placeholder="Search courses, coins, or mentors..."
-            />
+            <div className="flex items-center relative">
+              <div className="relative w-full">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                  <Search className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  className="pl-12 pr-4 py-3 w-full rounded-full border border-gray-300 focus:outline-none focus:border-royal"
+                  placeholder="Search courses, coins, or mentors..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                />
+              </div>
+            </div>
           </div>
           
           <div className="flex justify-center items-center gap-6 mt-6">

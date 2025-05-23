@@ -1,6 +1,7 @@
 
 import { motion } from 'framer-motion';
 import { Shield, Award, BookOpen, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -38,9 +39,11 @@ const About = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
               >
-                <Button className="bg-gold text-royal hover:bg-gold-light">
-                  Explore Our Courses
-                </Button>
+                <Link to="/courses">
+                  <Button className="bg-gold text-royal hover:bg-gold-light">
+                    Explore Our Courses
+                  </Button>
+                </Link>
               </motion.div>
             </div>
           </div>

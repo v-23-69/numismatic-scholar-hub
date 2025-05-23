@@ -21,6 +21,7 @@ import Mentors from "./pages/Mentors";
 import Articles from "./pages/Articles";
 import Wishlist from "./pages/Wishlist";
 import Purchases from "./pages/Purchases";
+import Search from "./pages/Search";
 import { WishlistProvider } from "./context/WishlistContext";
 
 // Create a context to indicate if Supabase is properly configured
@@ -78,6 +79,7 @@ const App = () => {
                 <Route path="/articles/:articleId" element={<Articles />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/purchases" element={<Purchases />} />
+                <Route path="/search" element={<Search />} />
                 
                 {/* Legal Pages */}
                 <Route path="/legal/privacy-policy" element={<LegalPage type="privacy" />} />
@@ -85,9 +87,6 @@ const App = () => {
                 <Route path="/legal/refund-policy" element={<LegalPage type="refund" />} />
                 <Route path="/legal/verification-process" element={<LegalPage type="verification" />} />
                 <Route path="/legal/cookie-policy" element={<LegalPage type="cookie" />} />
-                
-                {/* Search Results */}
-                <Route path="/search" element={<Index />} />
                 
                 {/* Catch-all */}
                 <Route path="*" element={<NotFound />} />

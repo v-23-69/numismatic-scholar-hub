@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Separator } from "@/components/ui/separator";
 import { ConfigContext } from "@/App";
 import { useToast } from "@/hooks/use-toast";
-import CourseCard from "@/components/courses/CourseCard";
+import CourseCard, { Course } from "@/components/courses/CourseCard";
 
 // Sample course data (in a real application, this would be fetched from Supabase)
 const courses = [
@@ -420,7 +420,7 @@ const Courses = () => {
   });
   
   // Cart state
-  const [cart, setCart] = useState<typeof courses[0][]>([]);
+  const [cart, setCart] = useState<Course[]>([]);
   const { toast } = useToast();
   
   // Load cart from localStorage on mount
@@ -466,7 +466,9 @@ const Courses = () => {
         case 'rating':
           return b.rating - a.rating;
         case 'newest':
-          return b.id - a.id;
+          // Fix: Convert string IDs to numbers for comparison, or compare as strings
+          // Using parseInt to handle numeric comparison safely
+          return parseInt(b.id.toString()) - parseInt(a.id.toString());
         case 'featured':
         default:
           return b.featured ? 1 : -1;

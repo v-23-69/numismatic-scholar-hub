@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect, useContext } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { 
-  Users, Book, Coins, PieChart, BarChart3, Clock, User, 
+  Users, Book as BookOpen, Coins as CoinsIcon, PieChart, BarChart3, Clock, User, 
   FileCheck, CreditCard, ChevronRight, FileClock, BadgeCheck, 
-  CoinsIcon, Settings, Plus 
+  Settings, Plus, Heart, CheckCircle, X, List 
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

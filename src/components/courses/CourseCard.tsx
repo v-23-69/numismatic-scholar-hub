@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { ConfigContext } from "@/App";
 
 export interface Course {
@@ -59,7 +59,7 @@ export default function CourseCard({ course }: { course: Course }) {
     } else {
       addToWishlist({
         id: course.id,
-        type: 'course',
+        type: 'course',  // This is correct as 'course' should be a valid type in the wishlist context
         title: course.title,
         price: course.price,
         image: course.image,

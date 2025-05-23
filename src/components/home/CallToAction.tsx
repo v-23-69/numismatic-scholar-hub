@@ -29,7 +29,7 @@ const CallToAction = () => {
                 </Button>
               </Link>
               <Link to="/about">
-                <Button className="bg-royal-light border-2 border-white text-white hover:bg-white hover:text-royal px-8 py-6 text-lg">
+                <Button className="bg-gold hover:bg-gold-light text-royal font-medium px-8 py-6 text-lg">
                   Learn More
                 </Button>
               </Link>

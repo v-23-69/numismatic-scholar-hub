@@ -4,10 +4,11 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 export interface WishlistItem {
   id: number;
   title: string;
-  description: string;
-  image: string;
-  value: string;
-  type: 'coin';
+  description?: string;
+  image?: string;
+  price: number;
+  type: 'coin' | 'course';
+  value?: string;
 }
 
 interface WishlistContextType {

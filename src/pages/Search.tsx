@@ -7,7 +7,7 @@ import HomeSearchDropdown from '@/components/search/HomeSearchDropdown';
 import { performSearch, SearchItem } from '@/services/SearchService';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Coins, Users, FileText, Category } from 'lucide-react';
+import { BookOpen, Coins, Users, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Search = () => {
@@ -21,11 +21,11 @@ const Search = () => {
   
   useEffect(() => {
     if (initialQuery) {
-      performSearch();
+      handleSearch();
     }
   }, [initialQuery]);
   
-  const performSearch = () => {
+  const handleSearch = () => {
     const searchResults = performSearch(searchQuery);
     setResults(searchResults);
   };
@@ -44,8 +44,6 @@ const Search = () => {
         return <Users className="h-5 w-5 text-green-600" />;
       case 'article':
         return <FileText className="h-5 w-5 text-blue-500" />;
-      case 'category':
-        return <Category className="h-5 w-5 text-purple-600" />;
       default:
         return null;
     }
@@ -68,12 +66,11 @@ const Search = () => {
           {results.length > 0 && (
             <>
               <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="mb-8">
-                <TabsList className="grid grid-cols-5 mb-8">
+                <TabsList className="grid grid-cols-4 mb-8">
                   <TabsTrigger value="all">All Results</TabsTrigger>
                   <TabsTrigger value="course">Courses</TabsTrigger>
                   <TabsTrigger value="coin">Coins</TabsTrigger>
                   <TabsTrigger value="mentor">Mentors</TabsTrigger>
-                  <TabsTrigger value="article">Articles</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value={activeTab}>

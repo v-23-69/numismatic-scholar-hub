@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,14 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Heart, BookOpen, Coins, Star } from 'lucide-react';
 import { useWishlist } from '@/context/WishlistContext';
-
-type WishlistItem = {
-  id: number;
-  title: string;
-  price: number;
-  image?: string;
-  type: string;
-};
+import type { WishlistItem } from '@/context/WishlistContext';
 
 type PurchaseItem = {
   id: number;
@@ -21,7 +13,7 @@ type PurchaseItem = {
   price: number;
   purchaseDate: string;
   image?: string;
-  type: string;
+  type: 'course' | 'coin';
 };
 
 const UserDashboardView = () => {

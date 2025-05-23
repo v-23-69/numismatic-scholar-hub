@@ -1,25 +1,19 @@
-
-import { useState, useContext, useEffect } from "react";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Users, Book, Coins, PieChart, BarChart3, Clock, User, 
+  FileCheck, CreditCard, ChevronRight, FileClock, BadgeCheck, 
+  CoinsIcon, Settings, Plus 
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ConfigContext } from "@/App";
-import { 
-  BookOpen, 
-  Coins, 
-  Users, 
-  CheckCircle,
-  Clock,
-  X,
-  User,
-  Heart,
-  FileCheck,
-  List
-} from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as ReChart, Pie, Cell, Legend, BarChart, Bar } from "recharts";
+import { ConfigContext } from "@/App";
 
 const Dashboard = () => {
   const { supabaseClient, supabaseConfigured } = useContext(ConfigContext);

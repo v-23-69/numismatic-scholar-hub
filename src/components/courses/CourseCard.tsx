@@ -18,7 +18,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ConfigContext } from "@/App";
 
 export interface Course {
-  id: string;
+  id: string | number;
   title: string;
   instructor: string;
   rating: number;

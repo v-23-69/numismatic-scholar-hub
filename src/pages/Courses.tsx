@@ -20,172 +20,184 @@ import CourseCard from "@/components/courses/CourseCard";
 // Sample course data (in a real application, this would be fetched from Supabase)
 const courses = [
   {
-    id: 1,
+    id: "1",
     title: "Ancient Coin Authentication",
     instructor: "Dr. Eleanor Davies",
     instructorTitle: "Museum Curator & Historian",
     level: "Intermediate",
     duration: "6 weeks",
     rating: 4.9,
-    reviews: 124,
+    numReviews: 124,
     price: 2499,
     category: "Authentication",
     featured: true,
-    image: "https://images.unsplash.com/photo-1583485088034-697b5bc1b13a?w=600&auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1583485088034-697b5bc1b13a?w=600&auto=format&fit=crop&q=80",
+    description: "Learn to authenticate ancient coins with expert techniques and historical context."
   },
   {
-    id: 2,
+    id: "2",
     title: "Modern Collectible Grading",
     instructor: "James Wilson",
     instructorTitle: "Master Grader & Collector",
     level: "All Levels",
     duration: "8 weeks",
     rating: 4.8,
-    reviews: 97,
+    numReviews: 97,
     price: 1999,
     category: "Grading",
     featured: true,
-    image: "https://images.unsplash.com/photo-1566753323558-f4e0952af115?w=600&auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1566753323558-f4e0952af115?w=600&auto=format&fit=crop&q=80",
+    description: "Master the art of grading modern collectible coins with industry-standard techniques."
   },
   {
-    id: 3,
+    id: "3",
     title: "European Coinage History",
     instructor: "Professor Henry Dubois",
     instructorTitle: "History Department Head",
     level: "Beginner",
     duration: "10 weeks",
     rating: 4.7,
-    reviews: 112,
+    numReviews: 112,
     price: 2999,
     category: "History",
     featured: false,
-    image: "https://images.unsplash.com/photo-1621786899979-53a042943b99?w=600&auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1621786899979-53a042943b99?w=600&auto=format&fit=crop&q=80",
+    description: "Explore the rich history of European coinage from ancient times to modern day."
   },
   {
-    id: 4,
+    id: "4",
     title: "Numismatic Photography",
     instructor: "Isabella Rossi",
     instructorTitle: "Professional Photographer",
     level: "Intermediate",
     duration: "4 weeks",
     rating: 4.6,
-    reviews: 88,
+    numReviews: 88,
     price: 1499,
     category: "Photography",
     featured: false,
-    image: "https://images.unsplash.com/photo-1638987759999-bb37e1685452?w=600&auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1638987759999-bb37e1685452?w=600&auto=format&fit=crop&q=80",
+    description: "Learn professional photography techniques specifically for capturing numismatic items."
   },
   {
-    id: 5,
+    id: "5",
     title: "Investing in Rare Coins",
     instructor: "Charles Lee",
     instructorTitle: "Financial Advisor & Collector",
     level: "Advanced",
     duration: "12 weeks",
     rating: 4.9,
-    reviews: 145,
+    numReviews: 145,
     price: 3499,
     category: "Investment",
     featured: true,
-    image: "https://images.unsplash.com/photo-1563783446488-a6e3b399c41a?w=600&auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1563783446488-a6e3b399c41a?w=600&auto=format&fit=crop&q=80",
+    description: "Discover strategies for building and managing a valuable coin investment portfolio."
   },
   {
-    id: 6,
+    id: "6",
     title: "Cleaning and Preservation",
     instructor: "Sophia Nguyen",
     instructorTitle: "Conservation Specialist",
     level: "All Levels",
     duration: "6 weeks",
     rating: 4.5,
-    reviews: 76,
+    numReviews: 76,
     price: 1799,
     category: "Preservation",
     featured: false,
-    image: "https://images.unsplash.com/photo-1623842345403-4e2c25899c46?w=600&auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1623842345403-4e2c25899c46?w=600&auto=format&fit=crop&q=80",
+    description: "Learn proper techniques for cleaning and preserving coins without damaging their value."
   },
   {
-    id: 7,
+    id: "7",
     title: "Ancient Greek Coinage",
     instructor: "Dr. Marcus Antonius",
     instructorTitle: "Classical Historian",
     level: "Intermediate",
     duration: "8 weeks",
     rating: 4.8,
-    reviews: 102,
+    numReviews: 102,
     price: 2799,
     category: "History",
     featured: false,
-    image: "https://images.unsplash.com/photo-1574786540994-c9553a0149e3?w=600&auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1574786540994-c9553a0149e3?w=600&auto=format&fit=crop&q=80",
+    description: "Explore the fascinating world of ancient Greek coinage and its historical significance."
   },
   {
-    id: 8,
+    id: "8",
     title: "Error Coin Identification",
     instructor: "Emily Carter",
     instructorTitle: "Error Coin Specialist",
     level: "Advanced",
     duration: "10 weeks",
     rating: 4.7,
-    reviews: 93,
+    numReviews: 93,
     price: 2299,
     category: "Grading",
     featured: false,
-    image: "https://plus.unsplash.com/premium_photo-1669643749457-d44a891c6b0f?w=600&auto=format&fit=crop&q=80"
+    image: "https://plus.unsplash.com/premium_photo-1669643749457-d44a891c6b0f?w=600&auto=format&fit=crop&q=80",
+    description: "Learn how to identify and evaluate error coins that can be worth significant premiums."
   },
   {
-    id: 9,
+    id: "9",
     title: "Digital Numismatics",
     instructor: "David Chen",
     instructorTitle: "Digital Asset Expert",
     level: "All Levels",
     duration: "4 weeks",
     rating: 4.6,
-    reviews: 68,
+    numReviews: 68,
     price: 1299,
     category: "Technology",
     featured: false,
-    image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=600&auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=600&auto=format&fit=crop&q=80",
+    description: "Understand the intersection of traditional numismatics and emerging digital technologies."
   },
   {
-    id: 10,
+    id: "10",
     title: "World Banknote Collecting",
     instructor: "Aisha Khan",
     instructorTitle: "Banknote Collector",
     level: "Beginner",
     duration: "6 weeks",
     rating: 4.9,
-    reviews: 132,
+    numReviews: 132,
     price: 1999,
     category: "Collecting",
     featured: true,
-    image: "https://images.unsplash.com/photo-1583485088034-697b5bc1b13a?w=600&auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1583485088034-697b5bc1b13a?w=600&auto=format&fit=crop&q=80",
+    description: "Learn the essentials of collecting, preserving, and valuing international banknotes."
   },
   {
-    id: 11,
+    id: "11",
     title: "Numismatic Law and Ethics",
     instructor: "Robert Hughes",
     instructorTitle: "Legal Consultant",
     level: "Advanced",
     duration: "8 weeks",
     rating: 4.8,
-    reviews: 118,
+    numReviews: 118,
     price: 2499,
     category: "Legal",
     featured: false,
-    image: "https://images.unsplash.com/photo-1566753323558-f4e0952af115?w=600&auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1566753323558-f4e0952af115?w=600&auto=format&fit=crop&q=80",
+    description: "Explore the legal and ethical aspects of coin collecting, trading, and authentication."
   },
   {
-    id: 12,
+    id: "12",
     title: "Coin Grading Standards",
     instructor: "Linda Perez",
     instructorTitle: "Coin Grading Expert",
     level: "Intermediate",
     duration: "10 weeks",
     rating: 4.7,
-    reviews: 105,
+    numReviews: 105,
     price: 2999,
     category: "Grading",
     featured: false,
-    image: "https://images.unsplash.com/photo-1621786899979-53a042943b99?w=600&auto=format&fit=crop&q=80"
+    image: "https://images.unsplash.com/photo-1621786899979-53a042943b99?w=600&auto=format&fit=crop&q=80",
+    description: "Master professional coin grading standards used by major grading services."
   }
 ];
 
@@ -747,8 +759,11 @@ const Courses = () => {
                       {currentCourses.map((course, index) => (
                         <CourseCard 
                           key={course.id} 
-                          course={course} 
-                          index={index}
+                          course={{
+                            ...course,
+                            numReviews: course.numReviews || 0,
+                            description: course.description || ""
+                          }} 
                         />
                       ))}
                     </div>

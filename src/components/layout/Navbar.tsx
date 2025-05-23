@@ -1,13 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Search, BookOpen, User, ShoppingCart, LogIn, Heart } from 'lucide-react';
+import { Menu, X, User, ShoppingCart, LogIn, Heart } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
-import { CommandDialog } from "@/components/ui/command";
-import { CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import EnhancedSearchBar from '@/components/search/EnhancedSearchBar';
+import SearchDropdown from '@/components/search/SearchDropdown';
 import { useWishlist } from '@/context/WishlistContext';
 
 // Initialize Supabase client only if environment variables are available
@@ -71,10 +69,6 @@ const useAuthState = () => {
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchActive, setSearchActive] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isCommandDialogOpen, setIsCommandDialogOpen] = useState(false);
-  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const { user, loading } = useAuthState();
   const { wishlist } = useWishlist();
   
@@ -92,32 +86,11 @@ const Navbar = () => {
     }
   })();
 
-  // General categories for quick navigation
-  const categories = [
-    { id: "courses", title: "Courses", path: "/courses" },
-    { id: "coins", title: "Verify Your Coins", path: "/marketplace" },
-    { id: "community", title: "Community", path: "/community" },
-    { id: "mentors", title: "Mentors", path: "/mentors" },
-  ];
-  
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchInputRef.current && !searchInputRef.current.contains(event.target as Node)) {
-        setShowSearchSuggestions(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Courses", path: "/courses" },
-    { name: "Verify Your Coins", path: "/marketplace" },
+    { name: "Coins Market", path: "/coins-market" },
+    { name: "Verify Your Coins", path: "/verify-coins" },
     { name: "Community", path: "/community" },
     { name: "About", path: "/about" },
   ];
@@ -134,7 +107,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-1">
+        <div className="hidden lg:flex items-center space-x-1">
           {navLinks.map((link) => (
             <Link 
               key={link.name} 
@@ -149,8 +122,8 @@ const Navbar = () => {
         {/* Search and User Actions */}
         <div className="hidden md:flex items-center space-x-3">
           <div className="relative">
-            {/* Enhanced Search Bar for desktop */}
-            <EnhancedSearchBar
+            {/* Enhanced Search Dropdown for desktop */}
+            <SearchDropdown
               expanded={searchActive}
               onExpand={() => setSearchActive(!searchActive)}
             />
@@ -199,7 +172,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center space-x-3">
+        <div className="md:flex lg:hidden items-center space-x-3">
           <Link to="/wishlist" className="p-2 text-gray-500 hover:text-royal">
             <Heart className="h-5 w-5" />
             {wishlist.length > 0 && (
@@ -217,7 +190,7 @@ const Navbar = () => {
             )}
           </Link>
           <button onClick={() => setSearchActive(!searchActive)} className="p-2 text-gray-500 hover:text-royal">
-            <Search className="h-5 w-5" />
+            <SearchDropdown expanded={false} onExpand={() => setSearchActive(true)} />
           </button>
           <button onClick={toggleNav} className="p-2 text-gray-500 hover:text-royal">
             {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -227,7 +200,7 @@ const Navbar = () => {
 
       {/* Mobile Search */}
       <div className={`${searchActive ? 'block' : 'hidden'} md:hidden px-4 py-2 border-b`}>
-        <EnhancedSearchBar expanded={true} />
+        <SearchDropdown expanded={true} />
       </div>
 
       {/* Mobile Navigation */}
@@ -269,28 +242,6 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-
-      {/* Command Dialog for Search */}
-      <CommandDialog open={isCommandDialogOpen} onOpenChange={setIsCommandDialogOpen}>
-        <CommandInput 
-          placeholder="Search courses, coins, mentors..." 
-          value={searchQuery}
-          onValueChange={setSearchQuery}
-        />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          {searchQuery && (
-            <>
-              <CommandGroup heading="Courses">
-                
-              </CommandGroup>
-              <CommandGroup heading="Coins">
-                
-              </CommandGroup>
-            </>
-          )}
-        </CommandList>
-      </CommandDialog>
     </header>
   );
 };

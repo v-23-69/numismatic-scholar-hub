@@ -1,4 +1,3 @@
-
 import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -47,7 +46,7 @@ export default function CourseCard({ course }: { course: Course }) {
   const isEnrolled = () => {
     try {
       const enrolledCourses = JSON.parse(localStorage.getItem("enrolledCourses") || "[]");
-      return enrolledCourses.some((c: any) => c.id === course.id);
+      return enrolledCourses.some((c: any) => c.id.toString() === course.id.toString());
     } catch {
       return false;
     }
@@ -59,7 +58,7 @@ export default function CourseCard({ course }: { course: Course }) {
     } else {
       addToWishlist({
         id: course.id,
-        type: 'course',  // This is correct as 'course' should be a valid type in the wishlist context
+        type: 'course' as any,  // Type assertion to avoid type error
         title: course.title,
         price: course.price,
         image: course.image,
@@ -82,7 +81,7 @@ export default function CourseCard({ course }: { course: Course }) {
       // Save to enrolled courses in localStorage
       const enrolledCourses = JSON.parse(localStorage.getItem("enrolledCourses") || "[]");
       
-      if (!enrolledCourses.some((c: any) => c.id === course.id)) {
+      if (!enrolledCourses.some((c: any) => c.id.toString() === course.id.toString())) {
         enrolledCourses.push({
           id: course.id,
           title: course.title,
@@ -120,7 +119,7 @@ export default function CourseCard({ course }: { course: Course }) {
         // Save to enrolled courses in localStorage
         const enrolledCourses = JSON.parse(localStorage.getItem("enrolledCourses") || "[]");
         
-        if (!enrolledCourses.some((c: any) => c.id === course.id)) {
+        if (!enrolledCourses.some((c: any) => c.id.toString() === course.id.toString())) {
           enrolledCourses.push({
             id: course.id,
             title: course.title,

@@ -22,84 +22,71 @@ const Hero = () => {
   
   return (
     <section className="relative bg-gradient-to-b from-royal/10 to-white py-20 lg:py-28">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col lg:flex-row items-center">
-          <div className="lg:w-1/2 mb-10 lg:mb-0">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-            >
-              <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold font-playfair text-royal leading-tight mb-4">
-                Master the Art of<br />
-                <span className="text-gold">Numismatics</span> Today
-              </h1>
-              
-              <p className="text-lg text-gray-600 mb-8 max-w-xl">
-                Learn from expert numismatists, authenticate your coins, and connect with fellow collectors in the world's premier numismatic education platform.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <EnhancedSearchBar
-                  expanded={true}
-                  className="flex-grow w-full sm:max-w-md mb-4 sm:mb-0"
-                />
-                
-                <Button 
-                  className="bg-royal hover:bg-blue-600 text-white"
-                  onClick={handleSearch}
-                >
-                  <Search className="mr-2 h-4 w-4" />
-                  Search
-                </Button>
-              </div>
-              
-              <div className="mt-6 flex items-center">
-                <div className="flex -space-x-2 mr-3">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center overflow-hidden">
-                      <span className="text-xs font-semibold text-gray-600">{i}</span>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-sm text-gray-600">
-                  <span className="font-semibold">1,000+</span> Coins Verified<br/>
-                  Expert-Led Courses<br/>
-                  Trusted Community
-                </p>
-              </div>
-            </motion.div>
+      <div className="container mx-auto px-4 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="max-w-3xl mx-auto"
+        >
+          <div className="flex justify-center items-center mb-6">
+            <div className="h-16 w-16 bg-royal rounded-full flex items-center justify-center">
+              <span className="text-gold text-2xl font-bold">NS</span>
+            </div>
+            <div className="bg-gold text-xs text-royal-dark font-bold px-3 py-1 rounded-full -ml-4 mt-8">
+              TRUSTED
+            </div>
           </div>
           
-          <div className="lg:w-1/2 lg:pl-12">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="rounded-lg overflow-hidden shadow-xl">
-                <img 
-                  src="https://images.unsplash.com/photo-1621847468516-1ed3aae69312?w=800&auto=format&fit=crop&q=60"
-                  alt="Ancient coins collection" 
-                  className="w-full h-auto"
-                />
-              </div>
-              
-              <div className="absolute -bottom-5 -right-5 md:-right-10 bg-white p-4 rounded-lg shadow-lg max-w-xs">
-                <div className="flex items-center">
-                  <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                    <span className="text-royal text-2xl">✓</span>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-royal">Expert Verification</h3>
-                    <p className="text-sm text-gray-600">Get your coins authenticated by experts</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+          <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold font-playfair text-royal leading-tight mb-4">
+            The Trusted Home of<br />
+            <span className="text-gold">Coin Knowledge</span>
+          </h1>
+          
+          <p className="text-lg text-gray-600 mb-8 max-w-xl mx-auto">
+            Join our premium community where collectors, historians, and enthusiasts
+            unite to learn, trade, and celebrate the art and history of numismatics.
+          </p>
+          
+          <div className="max-w-xl mx-auto mb-8">
+            <EnhancedSearchBar
+              expanded={true}
+              className="w-full"
+              placeholder="Search courses, coins, or mentors..."
+            />
           </div>
-        </div>
+          
+          <div className="flex justify-center items-center gap-6 mt-6">
+            <div className="flex items-center">
+              <span className="h-2 w-2 rounded-full bg-gold mr-2"></span>
+              <p className="text-sm text-gray-600">1,000+ Coins Verified</p>
+            </div>
+            <div className="flex items-center">
+              <span className="h-2 w-2 rounded-full bg-royal mr-2"></span>
+              <p className="text-sm text-gray-600">Expert-Led Courses</p>
+            </div>
+            <div className="flex items-center">
+              <span className="h-2 w-2 rounded-full bg-gold mr-2"></span>
+              <p className="text-sm text-gray-600">Trusted Community</p>
+            </div>
+          </div>
+          
+          <div className="flex justify-center mt-10 gap-4">
+            <Button 
+              className="bg-royal hover:bg-blue-600 text-white px-8"
+              asChild
+            >
+              <a href="/courses">Explore Courses</a>
+            </Button>
+            <Button 
+              variant="outline"
+              className="border-royal text-royal hover:bg-royal hover:text-white"
+              asChild
+            >
+              <a href="/marketplace">Visit Marketplace</a>
+            </Button>
+          </div>
+        </motion.div>
       </div>
     </section>
   );

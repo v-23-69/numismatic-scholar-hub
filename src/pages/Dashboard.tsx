@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect, useContext } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { 
-  Users, Book as BookOpen, Coins as CoinsIcon, PieChart, BarChart3, Clock, User, 
+  Users, BookOpen, Coins, PieChart, BarChart3, Clock, User, 
   FileCheck, CreditCard, ChevronRight, FileClock, BadgeCheck, 
   Settings, Plus, Heart, CheckCircle, X, List 
 } from "lucide-react";
@@ -13,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as ReChart, Pie, Cell, Legend, BarChart, Bar } from "recharts";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ConfigContext } from "@/App";
 
 const Dashboard = () => {

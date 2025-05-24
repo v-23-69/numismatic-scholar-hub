@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Star, Clock, ChevronRight, Filter, Search, SlidersHorizontal, ShoppingCart, ChevronLeft, ChevronDown, Check, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
@@ -15,10 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Separator } from "@/components/ui/separator";
 import { ConfigContext } from "@/App";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from '@/hooks/useAuth';
-import { useCourses } from '@/hooks/useCourses';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users } from 'lucide-react';
+import CourseCard from "@/components/CourseCard";
 
 // Sample course data (in a real application, this would be fetched from Supabase)
 const courses = [
@@ -394,194 +391,455 @@ const CourseCreatorForm = () => {
 };
 
 const Courses = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { courses, isLoading, error } = useCourses();
-  const { toast } = useToast();
+  // State for search, filtering, and pagination
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedLevel, setSelectedLevel] = useState('all');
-
-  const categories = [
-    'all',
-    'ancient',
-    'medieval',
-    'modern',
-    'world',
-    'specialized',
-  ];
-
-  const levels = ['all', 'beginner', 'intermediate', 'advanced'];
-
-  const filteredCourses = courses?.filter((course) => {
-    const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || course.category === selectedCategory;
-    const matchesLevel = selectedLevel === 'all' || course.level === selectedLevel;
-    return matchesSearch && matchesCategory && matchesLevel;
+  const [selectedTab, setSelectedTab] = useState('browse');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [coursesPerPage, setCoursesPerPage] = useState(6);
+  const [sortBy, setSortBy] = useState('featured');
+  const [filterOpen, setFilterOpen] = useState(false);
+  
+  // Filter state
+  const [filters, setFilters] = useState({
+    levels: [] as string[],
+    price: { min: 0, max: 5000 },
+    categories: [] as string[],
+    rating: 0
   });
-
-  const handleEnroll = async (courseId: string) => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to enroll in courses.",
-        variant: "destructive",
-      });
-      navigate('/authenticate');
-      return;
+  
+  // Cart state
+  const [cart, setCart] = useState<typeof courses[0][]>([]);
+  const { toast } = useToast();
+  
+  // Load cart from localStorage on mount
+  useEffect(() => {
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      try {
+        setCart(JSON.parse(savedCart));
+      } catch (error) {
+        console.error('Error parsing cart data:', error);
+      }
     }
-
-    try {
-      // TODO: Implement enrollment logic
-      toast({
-        title: "Enrolled successfully",
-        description: "You have been enrolled in the course.",
-      });
-    } catch (error) {
-      toast({
-        title: "Enrollment failed",
-        description: "There was a problem enrolling in the course. Please try again.",
-        variant: "destructive",
-      });
-    }
+  }, []);
+  
+  // Filtering and sorting logic
+  const filteredCourses = courses
+    .filter(course => {
+      // Text search
+      const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           course.instructor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           course.category.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Level filter
+      const matchesLevel = filters.levels.length === 0 || filters.levels.includes(course.level);
+      
+      // Price filter
+      const matchesPrice = course.price >= filters.price.min && course.price <= filters.price.max;
+      
+      // Category filter
+      const matchesCategory = filters.categories.length === 0 || filters.categories.includes(course.category);
+      
+      // Rating filter
+      const matchesRating = course.rating >= filters.rating;
+      
+      return matchesSearch && matchesLevel && matchesPrice && matchesCategory && matchesRating;
+    })
+    .sort((a, b) => {
+      switch(sortBy) {
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'rating':
+          return b.rating - a.rating;
+        case 'newest':
+          return b.id - a.id;
+        case 'featured':
+        default:
+          return b.featured ? 1 : -1;
+      }
+    });
+    
+  // Pagination
+  const indexOfLastCourse = currentPage * coursesPerPage;
+  const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
+  const currentCourses = filteredCourses.slice(indexOfFirstCourse, indexOfLastCourse);
+  const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
+  
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filters, coursesPerPage, sortBy]);
+  
+  // Toggle filter for checkboxes
+  const toggleFilter = (type: 'levels' | 'categories', value: string) => {
+    setFilters(prev => {
+      const currentValues = prev[type];
+      return {
+        ...prev,
+        [type]: currentValues.includes(value)
+          ? currentValues.filter(v => v !== value)
+          : [...currentValues, value]
+      };
+    });
+  };
+  
+  // Clear all filters
+  const clearFilters = () => {
+    setFilters({
+      levels: [],
+      price: { min: 0, max: 5000 },
+      categories: [],
+      rating: 0
+    });
+    setSearchQuery('');
   };
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-royal"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Courses</h2>
-          <p className="text-foreground/60">{error.message}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Explore Our Courses</h1>
-          <p className="text-foreground/60 max-w-2xl mx-auto">
-            Discover comprehensive courses on numismatics, from ancient coins to modern currency.
-            Learn from expert instructors and enhance your knowledge.
-          </p>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="mb-8 space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground/40" />
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-grow">
+        {/* Hero Section */}
+        <section className="bg-royal/5 py-16">
+          <div className="container mx-auto px-4">
+            <div className="max-w-3xl mx-auto text-center">
+              <h1 className="text-4xl md:text-5xl font-bold font-playfair text-royal mb-4">
+                Expert-Led Courses in Numismatics
+              </h1>
+              <p className="text-lg text-gray-600 mb-8">
+                Elevate your knowledge with our curated selection of premium courses taught by industry experts and renowned collectors.
+              </p>
+              
+              <div className="relative max-w-xl mx-auto flex">
                 <Input
                   type="text"
-                  placeholder="Search courses..."
+                  placeholder="Search courses by title, instructor, or category..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pr-10"
                 />
+                {searchQuery && (
+                  <button 
+                    className="absolute right-10 top-2.5 text-gray-400 hover:text-gray-600"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                )}
+                <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
+              </div>
+              
+              <div className="flex justify-center mt-6 space-x-2">
+                <Button 
+                  variant={selectedTab === 'browse' ? 'default' : 'outline'} 
+                  onClick={() => setSelectedTab('browse')}
+                  className="flex items-center hover:bg-blue-600 hover:text-white transition-colors"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className="mr-2"
+                  >
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                  </svg>
+                  Browse Courses
+                </Button>
+                <Button 
+                  variant={selectedTab === 'create' ? 'default' : 'outline'} 
+                  onClick={() => setSelectedTab('create')}
+                  className="flex items-center hover:bg-blue-600 hover:text-white transition-colors"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className="mr-2"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  Create Course
+                </Button>
               </div>
             </div>
-            <div className="flex gap-4">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-4 py-2 rounded-md border border-border bg-background"
-              >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedLevel}
-                onChange={(e) => setSelectedLevel(e.target.value)}
-                className="px-4 py-2 rounded-md border border-border bg-background"
-              >
-                {levels.map((level) => (
-                  <option key={level} value={level}>
-                    {level.charAt(0).toUpperCase() + level.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
-        </div>
-
-        {/* Course Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCourses?.map((course) => (
-            <Card key={course.id} className="flex flex-col">
-              <CardHeader>
-                <div className="aspect-video relative mb-4 rounded-lg overflow-hidden">
-                  <img
-                    src={course.thumbnail_url}
-                    alt={course.title}
-                    className="object-cover w-full h-full"
-                  />
+        </section>
+        
+        {/* Main Content */}
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+              <TabsContent value="browse" className="mt-0">
+                {/* Filters and Sorting */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="flex items-center hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                          <Filter className="h-4 w-4 mr-2" />
+                          Filters
+                          {(filters.levels.length > 0 || filters.categories.length > 0 || filters.rating > 0) && (
+                            <Badge variant="secondary" className="ml-2">
+                              {filters.levels.length + filters.categories.length + (filters.rating > 0 ? 1 : 0)}
+                            </Badge>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-0" align="start">
+                        <div className="p-4 pb-0">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium">Filters</h3>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-auto p-0 text-sm text-muted-foreground"
+                              onClick={clearFilters}
+                            >
+                              Clear all
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <Separator />
+                        <div className="p-4">
+                          <h4 className="mb-2 font-semibold">Level</h4>
+                          <div className="space-y-1">
+                            {['Beginner', 'Intermediate', 'Advanced', 'All Levels'].map(level => (
+                              <div key={level} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`level-${level}`}
+                                  checked={filters.levels.includes(level)}
+                                  onCheckedChange={() => toggleFilter('levels', level)}
+                                />
+                                <Label htmlFor={`level-${level}`}>{level}</Label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <Separator />
+                        <div className="p-4">
+                          <h4 className="mb-2 font-semibold">Category</h4>
+                          <div className="space-y-1">
+                            {['History', 'Grading', 'Authentication', 'Investment', 'Preservation', 'Technology', 'Collecting', 'Legal'].map(category => (
+                              <div key={category} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`category-${category}`}
+                                  checked={filters.categories.includes(category)}
+                                  onCheckedChange={() => toggleFilter('categories', category)}
+                                />
+                                <Label htmlFor={`category-${category}`}>{category}</Label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <Separator />
+                        <div className="p-4">
+                          <h4 className="mb-2 font-semibold">Minimum Rating</h4>
+                          <div className="flex items-center space-x-2">
+                            {[4, 4.5, 5].map(rating => (
+                              <Button
+                                key={rating}
+                                variant={filters.rating === rating ? "default" : "outline"}
+                                size="sm"
+                                className={`mx-1 min-w-[36px] ${
+                                  filters.rating !== rating ? "hover:bg-blue-50 hover:text-blue-600 hover:border-blue-600" : ""
+                                } transition-colors`}
+                                onClick={() => setFilters(prev => ({ ...prev, rating }))}
+                              >
+                                {rating}+
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <Separator />
+                        <div className="p-4 flex justify-end">
+                          <Button
+                            onClick={() => setFilterOpen(false)}
+                            className="hover:bg-blue-600 transition-colors"
+                          >
+                            Apply Filters
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    
+                    {filters.levels.length > 0 && filters.levels.map(level => (
+                      <Badge key={level} variant="secondary" className="flex items-center gap-1">
+                        {level}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => toggleFilter('levels', level)} 
+                        />
+                      </Badge>
+                    ))}
+                    
+                    {filters.categories.length > 0 && filters.categories.map(category => (
+                      <Badge key={category} variant="secondary" className="flex items-center gap-1">
+                        {category}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => toggleFilter('categories', category)} 
+                        />
+                      </Badge>
+                    ))}
+                    
+                    {filters.rating > 0 && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        {filters.rating}+ <Star className="h-3 w-3 text-gold fill-gold" />
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => setFilters(prev => ({ ...prev, rating: 0 }))} 
+                        />
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className="w-[180px]">
+                        <SlidersHorizontal className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="Sort" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="featured">Featured</SelectItem>
+                        <SelectItem value="price-low">Price: Low to High</SelectItem>
+                        <SelectItem value="price-high">Price: High to Low</SelectItem>
+                        <SelectItem value="rating">Highest Rated</SelectItem>
+                        <SelectItem value="newest">Newest</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Link to="/cart">
+                      <Button variant="outline" className="relative hover:bg-blue-50 hover:text-blue-600 hover:border-blue-600 transition-colors">
+                        <ShoppingCart className="h-5 w-5" />
+                        {cart.length > 0 && (
+                          <span className="absolute -top-2 -right-2 bg-blue-600 text-white w-5 h-5 rounded-full text-xs flex items-center justify-center cart-badge-animate">
+                            {cart.length}
+                          </span>
+                        )}
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-xl mb-2">{course.title}</CardTitle>
-                    <CardDescription>{course.description}</CardDescription>
+                
+                {/* Course Grid */}
+                {filteredCourses.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {currentCourses.map((course, index) => (
+                        <CourseCard 
+                          key={course.id} 
+                          course={course} 
+                          index={index}
+                        />
+                      ))}
+                    </div>
+                    
+                    {/* Pagination Controls */}
+                    <div className="mt-12 flex flex-col md:flex-row justify-between items-center">
+                      <div className="flex items-center space-x-2 mb-4 md:mb-0">
+                        <span className="text-sm text-gray-600">Show</span>
+                        <Select 
+                          value={coursesPerPage.toString()} 
+                          onValueChange={(value) => setCoursesPerPage(Number(value))}
+                        >
+                          <SelectTrigger className="w-[70px]">
+                            <SelectValue placeholder="6" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="3">3</SelectItem>
+                            <SelectItem value="6">6</SelectItem>
+                            <SelectItem value="9">9</SelectItem>
+                            <SelectItem value="12">12</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <span className="text-sm text-gray-600">courses per page</span>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          disabled={currentPage === 1}
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-600 transition-colors"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        
+                        <div className="flex items-center">
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                            <Button
+                              key={page}
+                              variant={currentPage === page ? "default" : "outline"}
+                              size="sm"
+                              className={`mx-1 min-w-[36px] ${
+                                currentPage !== page ? "hover:bg-blue-50 hover:text-blue-600 hover:border-blue-600" : ""
+                              } transition-colors`}
+                              onClick={() => setCurrentPage(page)}
+                            >
+                              {page}
+                            </Button>
+                          ))}
+                        </div>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          disabled={currentPage === totalPages || totalPages === 0}
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                          className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-600 transition-colors"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-16">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Search className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-700 mb-2">No courses found</h3>
+                    <p className="text-gray-600 mb-6">
+                      No courses match your current search criteria. Try adjusting your filters or search term.
+                    </p>
+                    <Button onClick={clearFilters} className="hover:bg-blue-600 transition-colors">
+                      Clear All Filters
+                    </Button>
                   </div>
-                  <Badge variant="outline" className="ml-2">
-                    {course.level}
-                  </Badge>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="create" className="mt-6">
+                <div className="royal-card p-8">
+                  <h2 className="text-2xl font-bold font-playfair text-royal mb-6">Create a New Course</h2>
+                  <CourseCreatorForm />
                 </div>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <div className="space-y-2">
-                  <div className="flex items-center text-sm text-foreground/60">
-                    <Clock className="h-4 w-4 mr-2" />
-                    <span>{course.duration} hours</span>
-                  </div>
-                  <div className="flex items-center text-sm text-foreground/60">
-                    <Users className="h-4 w-4 mr-2" />
-                    <span>{course.enrolled_count} students</span>
-                  </div>
-                  <div className="flex items-center text-sm text-foreground/60">
-                    <Star className="h-4 w-4 mr-2" />
-                    <span>{course.rating.toFixed(1)} rating</span>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between items-center">
-                <div className="text-xl font-bold">${course.price}</div>
-                <Button
-                  onClick={() => handleEnroll(course.id)}
-                  className="bg-royal hover:bg-royal/90"
-                >
-                  Enroll Now
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-
-        {filteredCourses?.length === 0 && (
-          <div className="text-center py-12">
-            <h3 className="text-xl font-semibold mb-2">No courses found</h3>
-            <p className="text-foreground/60">
-              Try adjusting your search or filters to find what you're looking for.
-            </p>
+              </TabsContent>
+            </Tabs>
           </div>
-        )}
-      </div>
+        </section>
+      </main>
+      <Footer />
     </div>
   );
 };

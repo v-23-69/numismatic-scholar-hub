@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-
->>>>>>> 813d0fd0065b6f839cbd5b9921e4616d9d2a780c
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Mail } from 'lucide-react';

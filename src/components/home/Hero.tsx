@@ -1,81 +1,114 @@
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, BookOpen, Shield, ShoppingCart, Users } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { motion } from 'framer-motion';
+import EnhancedSearchBar from '../EnhancedSearchBar';
 
 const Hero = () => {
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  const navigate = useNavigate();
+  
   return (
-    <div className="relative overflow-hidden bg-background">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+    <div className="bg-gradient-to-b from-royal/5 to-white relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -right-24 -top-24 w-64 h-64 rounded-full bg-gold/5"></div>
+        <div className="absolute left-1/4 top-1/3 w-32 h-32 rounded-full bg-royal/5"></div>
+        <div className="absolute right-1/3 bottom-1/4 w-48 h-48 rounded-full bg-gold/5"></div>
+      </div>
       
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
-        <div className="text-center">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground mb-6">
-            Discover the World of{' '}
-            <span className="text-royal">Numismatics</span>
-          </h1>
-          <p className="mt-6 text-lg sm:text-xl text-foreground/60 max-w-3xl mx-auto">
-            Your gateway to ancient coins, expert verification, and a vibrant community of collectors.
-            Learn, trade, and authenticate with confidence.
-          </p>
+      <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
+        <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
+          {/* Royal Badge Logo */}
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="relative inline-block mb-6"
+          >
+            <div className="h-20 w-20 bg-royal rounded-full flex items-center justify-center">
+              <span className="text-gold font-bold text-3xl">NS</span>
+            </div>
+            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-gold text-xs text-royal px-2 py-0.5 rounded-full font-medium">
+              TRUSTED
+            </div>
+          </motion.div>
+
+          {/* Main Heading */}
+          <motion.h1 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="text-4xl md:text-6xl font-bold text-royal font-playfair mb-4"
+          >
+            The Trusted Home of<br />
+            <span className="text-gold">Coin Knowledge</span>
+          </motion.h1>
           
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+          {/* Subheading */}
+          <motion.p 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+            className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl"
+          >
+            Join our premium community where collectors, historians, and enthusiasts 
+            unite to learn, trade, and celebrate the art and history of numismatics.
+          </motion.p>
+          
+          {/* Enhanced Search Bar */}
+          <motion.div 
+            initial={{ y: 20, opacity: 0, width: "80%" }}
+            animate={{ y: 0, opacity: 1, width: "100%" }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+            className="relative w-full max-w-2xl mb-8"
+          >
+            <EnhancedSearchBar 
+              expanded={searchExpanded}
+              onExpand={() => setSearchExpanded(true)}
+            />
+          </motion.div>
+          
+          {/* Feature Badges */}
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            className="flex flex-wrap justify-center gap-4 mb-8"
+          >
+            <div className="py-1 px-3 bg-white border border-gold/20 rounded-full text-sm text-gray-600 shadow-sm flex items-center">
+              <span className="h-2 w-2 bg-gold rounded-full mr-2"></span>
+              1,000+ Coins Verified
+            </div>
+            <div className="py-1 px-3 bg-white border border-gold/20 rounded-full text-sm text-gray-600 shadow-sm flex items-center">
+              <span className="h-2 w-2 bg-royal rounded-full mr-2"></span>
+              Expert-Led Courses
+            </div>
+            <div className="py-1 px-3 bg-white border border-gold/20 rounded-full text-sm text-gray-600 shadow-sm flex items-center">
+              <span className="h-2 w-2 bg-gold rounded-full mr-2"></span>
+              Trusted Community
+            </div>
+          </motion.div>
+          
+          {/* CTA Buttons */}
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1, duration: 0.5 }}
+            className="flex flex-wrap justify-center gap-4"
+          >
             <Link to="/courses">
-              <Button size="lg" className="bg-royal hover:bg-royal/90 text-white">
-                <BookOpen className="mr-2 h-5 w-5" />
-                Start Learning
+              <Button className="bg-royal hover:bg-royal-light text-white px-8 py-6 text-lg">
+                Explore Courses
               </Button>
             </Link>
-            <Link to="/verify-coins">
-              <Button size="lg" variant="outline" className="border-royal text-royal hover:bg-royal/10">
-                <Shield className="mr-2 h-5 w-5" />
-                Verify Your Coins
+            <Link to="/marketplace">
+              <Button variant="outline" className="border-royal text-royal hover:bg-royal hover:text-white px-8 py-6 text-lg">
+                Visit Marketplace
               </Button>
             </Link>
-          </div>
-        </div>
-
-        {/* Feature Highlights */}
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="p-6 rounded-lg bg-foreground/5 border border-border">
-            <BookOpen className="h-8 w-8 text-royal mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">Expert Courses</h3>
-            <p className="text-foreground/60">
-              Learn from numismatic experts with comprehensive courses on coin history, grading, and authentication.
-            </p>
-          </div>
-          
-          <div className="p-6 rounded-lg bg-foreground/5 border border-border">
-            <Shield className="h-8 w-8 text-royal mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">Secure Verification</h3>
-            <p className="text-foreground/60">
-              Get your coins professionally verified with our state-of-the-art authentication system.
-            </p>
-          </div>
-          
-          <div className="p-6 rounded-lg bg-foreground/5 border border-border">
-            <Users className="h-8 w-8 text-royal mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">Vibrant Community</h3>
-            <p className="text-foreground/60">
-              Connect with fellow collectors, share knowledge, and participate in exclusive events.
-            </p>
-          </div>
-        </div>
-
-        {/* CTA Section */}
-        <div className="mt-20 text-center">
-          <h2 className="text-3xl font-bold text-foreground mb-4">
-            Ready to Start Your Journey?
-          </h2>
-          <p className="text-foreground/60 mb-8">
-            Join thousands of collectors who trust Numismatic Scholar Hub for their numismatic needs.
-          </p>
-          <Link to="/authenticate">
-            <Button size="lg" className="bg-royal hover:bg-royal/90 text-white">
-              Get Started
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+          </motion.div>
         </div>
       </div>
     </div>

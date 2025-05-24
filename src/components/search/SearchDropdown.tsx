@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-
->>>>>>> 813d0fd0065b6f839cbd5b9921e4616d9d2a780c
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -286,8 +282,4 @@ const SearchDropdown = ({
   );
 };
 
-<<<<<<< HEAD
 export default SearchDropdown; 
-=======
-export default SearchDropdown;
->>>>>>> 813d0fd0065b6f839cbd5b9921e4616d9d2a780c

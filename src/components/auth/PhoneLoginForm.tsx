@@ -5,14 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const PhoneLoginForm = () => {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const [errors, setErrors] = useState<{phone?: string; otp?: string}>({});
   
   const { isLoading, handlePhoneSignIn, handleVerifyOtp } = useSupabaseAuth();
+  const { toast } = useToast();
 
   const validatePhone = () => {
     if (!phone) {
@@ -36,10 +40,38 @@ const PhoneLoginForm = () => {
     return true;
   };
 
+  const checkExistingPhoneUser = async (phone: string) => {
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('phone', phone)
+        .single();
+      
+      return !!data;
+    } catch (error) {
+      return false;
+    }
+  };
+
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validatePhone()) return;
+    
+    // Check if this is for signup and phone already exists
+    if (isSignUp) {
+      const phoneExists = await checkExistingPhoneUser(phone);
+      if (phoneExists) {
+        toast({
+          title: "Account already exists",
+          description: "An account with this phone number already exists. Please sign in instead.",
+          variant: "destructive"
+        });
+        setIsSignUp(false);
+        return;
+      }
+    }
     
     const success = await handlePhoneSignIn(phone);
     if (success) {
@@ -54,7 +86,7 @@ const PhoneLoginForm = () => {
     
     const success = await handleVerifyOtp(phone, otp);
     if (!success) {
-      setOtp(''); // Clear OTP on failure
+      setOtp('');
     }
   };
 
@@ -82,6 +114,19 @@ const PhoneLoginForm = () => {
             <p className="mt-1 text-xs text-gray-500">
               Include country code (e.g., +1 for US)
             </p>
+          </div>
+          
+          <div className="flex items-center space-x-2 mb-4">
+            <input
+              type="checkbox"
+              id="signup-mode"
+              checked={isSignUp}
+              onChange={(e) => setIsSignUp(e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <label htmlFor="signup-mode" className="text-sm text-gray-600">
+              New user (Sign up)
+            </label>
           </div>
           
           <Button type="submit" className="w-full bg-royal hover:bg-royal/90 text-white rounded-lg" disabled={isLoading}>

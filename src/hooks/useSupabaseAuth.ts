@@ -17,8 +17,13 @@ export const useSupabaseAuth = () => {
         const { data } = await supabase.auth.getSession();
         setUser(data.session?.user || null);
         
-        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
           setUser(session?.user || null);
+          
+          // Handle profile creation on successful sign in
+          if (session?.user && _event === 'SIGNED_IN') {
+            await ensureProfileExists(session.user);
+          }
         });
         
         return () => {
@@ -36,6 +41,69 @@ export const useSupabaseAuth = () => {
     
     initializeAuth();
   }, [toast]);
+
+  // Ensure user profile exists in profiles table
+  const ensureProfileExists = async (user: any) => {
+    try {
+      // Check if profile already exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (!existingProfile) {
+        // Create new profile
+        const { error } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            phone: user.phone,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+          });
+
+        if (error) {
+          console.error('Error creating profile:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Error ensuring profile exists:', error);
+    }
+  };
+
+  // Check for existing user by email or phone
+  const checkExistingUser = async (email: string, phone?: string) => {
+    try {
+      const { data: emailExists } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (emailExists) {
+        return { exists: true, type: 'email' };
+      }
+
+      if (phone) {
+        const { data: phoneExists } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('phone', phone)
+          .single();
+
+        if (phoneExists) {
+          return { exists: true, type: 'phone' };
+        }
+      }
+
+      return { exists: false, type: null };
+    } catch (error) {
+      // If no records found, that's expected
+      return { exists: false, type: null };
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -71,14 +139,15 @@ export const useSupabaseAuth = () => {
       if (error) throw error;
       
       toast({
-        title: "Login successful!",
-        description: "Welcome back to NumismaticScholar.",
+        title: "Welcome back!",
+        description: "You have successfully signed in.",
+        className: "bg-green-50 border-green-200 text-green-800"
       });
       
       navigate('/profile');
     } catch (error: any) {
       toast({
-        title: "Login failed",
+        title: "Sign in failed",
         description: error.message || "Please check your credentials and try again.",
         variant: "destructive"
       });
@@ -90,6 +159,19 @@ export const useSupabaseAuth = () => {
   const handleEmailSignUp = async (email: string, password: string, fullName: string, phone: string) => {
     try {
       setIsLoading(true);
+      
+      // Check for existing user
+      const existingUser = await checkExistingUser(email, phone);
+      if (existingUser.exists) {
+        const fieldType = existingUser.type === 'email' ? 'email address' : 'phone number';
+        toast({
+          title: "Account already exists",
+          description: `An account with this ${fieldType} already exists. Please sign in instead.`,
+          variant: "destructive"
+        });
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -106,6 +188,7 @@ export const useSupabaseAuth = () => {
       toast({
         title: "Registration successful!",
         description: "Please check your email for verification.",
+        className: "bg-green-50 border-green-200 text-green-800"
       });
     } catch (error: any) {
       toast({
@@ -128,14 +211,15 @@ export const useSupabaseAuth = () => {
       if (error) throw error;
       
       toast({
-        title: "OTP sent",
-        description: "Please check your phone for the verification code.",
+        title: "Verification code sent",
+        description: "Please check your phone for the OTP code.",
+        className: "bg-blue-50 border-blue-200 text-blue-800"
       });
       
       return true;
     } catch (error: any) {
       toast({
-        title: "Failed to send OTP",
+        title: "Failed to send code",
         description: error.message || "Please check your phone number and try again.",
         variant: "destructive"
       });
@@ -157,8 +241,9 @@ export const useSupabaseAuth = () => {
       if (error) throw error;
       
       toast({
-        title: "Phone verification successful!",
-        description: "You are now logged in.",
+        title: "Welcome!",
+        description: "You have successfully signed in with your phone.",
+        className: "bg-green-50 border-green-200 text-green-800"
       });
       
       navigate('/profile');

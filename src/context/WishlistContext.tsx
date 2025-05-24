@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 813d0fd0065b6f839cbd5b9921e4616d9d2a780c
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface WishlistItem {
@@ -64,4 +68,8 @@ export const useWishlist = () => {
     throw new Error('useWishlist must be used within a WishlistProvider');
   }
   return context;
+<<<<<<< HEAD
 }; 
+=======
+};
+>>>>>>> 813d0fd0065b6f839cbd5b9921e4616d9d2a780c

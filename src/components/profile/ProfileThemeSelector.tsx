@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 813d0fd0065b6f839cbd5b9921e4616d9d2a780c
 import React from 'react';
 import { Check } from 'lucide-react';
 import { Label } from "@/components/ui/label";
@@ -47,4 +51,8 @@ const ProfileThemeSelector: React.FC<ProfileThemeSelectorProps> = ({
   );
 };
 
+<<<<<<< HEAD
 export default ProfileThemeSelector; 
+=======
+export default ProfileThemeSelector;
+>>>>>>> 813d0fd0065b6f839cbd5b9921e4616d9d2a780c

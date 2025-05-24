@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 813d0fd0065b6f839cbd5b9921e4616d9d2a780c
 import React from 'react';
 import { Progress } from "@/components/ui/progress";
 
@@ -48,4 +52,8 @@ const ProfileCompletion: React.FC<ProfileCompletionProps> = ({ profile }) => {
   );
 };
 
+<<<<<<< HEAD
 export default ProfileCompletion; 
+=======
+export default ProfileCompletion;
+>>>>>>> 813d0fd0065b6f839cbd5b9921e4616d9d2a780c

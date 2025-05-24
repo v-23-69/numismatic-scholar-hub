@@ -1,228 +1,222 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, User, ShoppingCart, LogIn, Heart } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useToast } from "@/components/ui/use-toast";
-import SearchDropdown from '@/components/search/SearchDropdown';
-import { useWishlist } from '@/context/WishlistContext';
-import supabase from '@/lib/supabaseClient';
-
-// Create a placeholder or mock auth state when Supabase isn't configured
-const useAuthState = () => {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const initSupabase = async () => {
-      try {
-        setLoading(true);
-        const { data } = await supabase.auth.getSession();
-        setUser(data.session?.user || null);
-        setLoading(false);
-        
-        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-          setUser(session?.user || null);
-        });
-        
-        return () => {
-          authListener.subscription.unsubscribe();
-        };
-      } catch (error) {
-        console.error("Failed to initialize Supabase:", error);
-        toast({
-          title: "Authentication Error",
-          description: "Could not connect to authentication service.",
-          variant: "destructive"
-        });
-        setLoading(false);
-      }
-    };
-    
-    initSupabase();
-  }, [toast]);
-  
-  return { user, loading };
-};
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Menu, X, User, LogOut, Settings, BookOpen, ShoppingCart, Heart, Shield } from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
+import { useProfileCompletion } from '@/hooks/useProfileCompletion';
+import { useToast } from '@/hooks/use-toast';
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchActive, setSearchActive] = useState(false);
-  const { user, loading } = useAuthState();
-  const { wishlist } = useWishlist();
-  
-  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const { profile, isLoading: isProfileLoading } = useProfile();
+  const { theme, toggleTheme } = useTheme();
+  const { completionPercentage } = useProfileCompletion();
+  const location = useLocation();
+  const { toast } = useToast();
 
-  const toggleNav = () => setIsOpen(!isOpen);
-  
-  // Get count of purchases from localStorage
-  const purchaseCount = (() => {
+  const handleSignOut = async () => {
     try {
-      const purchases = JSON.parse(localStorage.getItem('purchases') || '[]');
-      return purchases.length;
-    } catch {
-      return 0;
+      await signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error signing out",
+        description: "There was a problem signing out. Please try again.",
+        variant: "destructive",
+      });
     }
-  })();
+  };
+
+  const isActive = (path: string) => location.pathname === path;
 
   const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "Courses", path: "/courses" },
-    { name: "Coins Market", path: "/coins-market" },
-    { name: "Verify Your Coins", path: "/verify-coins" },
-    { name: "Community", path: "/community" },
-    { name: "About", path: "/about" },
+    { path: '/courses', label: 'Courses', icon: BookOpen },
+    { path: '/marketplace', label: 'Marketplace', icon: ShoppingCart },
+    { path: '/wishlist', label: 'Wishlist', icon: Heart },
+    { path: '/verify-coins', label: 'Verify Coins', icon: Shield },
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gold/10">
-      <nav className="container mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Logo */}
-        <Link to="/" className="flex items-center space-x-2">
-          <div className="h-10 w-10 bg-royal rounded-full flex items-center justify-center">
-            <span className="text-gold font-bold text-xl">NS</span>
+    <nav className="bg-background border-b border-border">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex items-center">
+            <Link to="/" className="flex-shrink-0 flex items-center">
+              <img
+                className="h-8 w-auto"
+                src="/logo.png"
+                alt="Numismatic Scholar Hub"
+              />
+              <span className="ml-2 text-xl font-bold text-foreground">NSH</span>
+            </Link>
           </div>
-          <span className="font-playfair text-royal font-bold text-xl tracking-tight">NumismaticScholar</span>
-        </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center space-x-1">
-          {navLinks.map((link) => (
-            <Link 
-              key={link.name} 
-              to={link.path} 
-              className="px-3 py-2 text-gray-700 hover:text-blue-600 transition-colors duration-300"
-            >
-              {link.name}
-            </Link>
-          ))}
-        </div>
-
-        {/* Search and User Actions */}
-        <div className="hidden md:flex items-center space-x-3">
-          <div className="relative">
-            {/* Enhanced Search Dropdown for desktop */}
-            <SearchDropdown
-              expanded={searchActive}
-              onExpand={() => setSearchActive(!searchActive)}
-            />
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex md:items-center md:space-x-4">
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-1 ${
+                    isActive(link.path)
+                      ? 'text-royal bg-royal/10'
+                      : 'text-foreground/60 hover:text-foreground hover:bg-foreground/5'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
           </div>
-          
-          <Link to="/wishlist" className="p-2 text-gray-500 hover:text-blue-600 transition-colors duration-200 relative">
-            <Heart className="h-5 w-5" />
-            {wishlist.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-gold text-xs text-white rounded-full h-4 w-4 flex items-center justify-center">
-                {wishlist.length}
-              </span>
-            )}
-          </Link>
-          
-          <Link to="/purchases" className="p-2 text-gray-500 hover:text-blue-600 transition-colors duration-200 relative">
-            <ShoppingCart className="h-5 w-5" />
-            {purchaseCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-gold text-xs text-white rounded-full h-4 w-4 flex items-center justify-center">
-                {purchaseCount}
-              </span>
-            )}
-          </Link>
-          
-          {loading ? (
-            <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
-          ) : user ? (
-            <Link to="/profile" className="flex items-center">
-              <Avatar className="h-8 w-8">
-                {user.user_metadata?.avatar_url ? (
-                  <AvatarImage src={user.user_metadata.avatar_url} alt="Profile" />
-                ) : (
-                  <AvatarFallback className="bg-royal text-white">
-                    {user.email?.charAt(0).toUpperCase() || 'U'}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-            </Link>
-          ) : (
-            <Link to="/authenticate">
-              <Button variant="outline" className="border-royal text-royal hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors duration-200">
-                <LogIn className="h-4 w-4 mr-2" />
-                Sign In
-              </Button>
-            </Link>
-          )}
-        </div>
 
-        {/* Mobile Menu Button */}
-        <div className="md:flex lg:hidden items-center space-x-3">
-          <Link to="/wishlist" className="p-2 text-gray-500 hover:text-royal">
-            <Heart className="h-5 w-5" />
-            {wishlist.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-gold text-xs text-white rounded-full h-4 w-4 flex items-center justify-center">
-                {wishlist.length}
-              </span>
-            )}
-          </Link>
-          <Link to="/purchases" className="p-2 text-gray-500 hover:text-royal">
-            <ShoppingCart className="h-5 w-5" />
-            {purchaseCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-gold text-xs text-white rounded-full h-4 w-4 flex items-center justify-center">
-                {purchaseCount}
-              </span>
-            )}
-          </Link>
-          <button onClick={() => setSearchActive(!searchActive)} className="p-2 text-gray-500 hover:text-royal">
-            <SearchDropdown expanded={false} onExpand={() => setSearchActive(true)} />
-          </button>
-          <button onClick={toggleNav} className="p-2 text-gray-500 hover:text-royal">
-            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile Search */}
-      <div className={`${searchActive ? 'block' : 'hidden'} md:hidden px-4 py-2 border-b`}>
-        <SearchDropdown expanded={true} />
-      </div>
-
-      {/* Mobile Navigation */}
-      <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} bg-white shadow-md border-b`}>
-        <div className="px-2 pt-2 pb-4">
-          {navLinks.map((link) => (
-            <Link 
-              key={link.name} 
-              to={link.path} 
-              className="block px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-              onClick={toggleNav}
-            >
-              {link.name}
-            </Link>
-          ))}
-          
-          <div className="mt-4 flex space-x-2 px-3">
+          <div className="hidden md:flex md:items-center md:space-x-4">
             {user ? (
-              <Link to="/profile" className="w-full">
-                <Button className="w-full bg-royal hover:bg-blue-600 text-white transition-colors">
-                  <User className="h-4 w-4 mr-2" />
-                  My Profile
+              <div className="relative">
+                <button
+                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                  className="flex items-center space-x-2 focus:outline-none"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={profile?.avatar_url} />
+                    <AvatarFallback>
+                      {profile?.full_name?.[0] || user.email?.[0] || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+
+                {isProfileMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-background border border-border">
+                    <div className="py-1">
+                      <Link
+                        to="/profile"
+                        className="flex items-center px-4 py-2 text-sm text-foreground hover:bg-foreground/5"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        Profile
+                      </Link>
+                      <Link
+                        to="/settings"
+                        className="flex items-center px-4 py-2 text-sm text-foreground hover:bg-foreground/5"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Settings
+                      </Link>
+                      <button
+                        onClick={() => {
+                          handleSignOut();
+                          setIsProfileMenuOpen(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-foreground/5"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link to="/authenticate">
+                <Button variant="default" className="bg-royal hover:bg-royal/90">
+                  Sign In
                 </Button>
               </Link>
-            ) : (
-              <>
-                <Link to="/authenticate" className="w-1/2">
-                  <Button variant="outline" className="w-full border-royal text-royal hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link to="/authenticate?tab=register" className="w-1/2">
-                  <Button className="w-full bg-royal hover:bg-blue-600 text-white transition-colors">
-                    Register
-                  </Button>
-                </Link>
-              </>
             )}
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="flex md:hidden items-center">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="inline-flex items-center justify-center p-2 rounded-md text-foreground/60 hover:text-foreground hover:bg-foreground/5 focus:outline-none"
+            >
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
           </div>
         </div>
       </div>
-    </header>
+
+      {/* Mobile menu */}
+      {isMenuOpen && (
+        <div className="md:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1">
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium ${
+                    isActive(link.path)
+                      ? 'text-royal bg-royal/10'
+                      : 'text-foreground/60 hover:text-foreground hover:bg-foreground/5'
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
+            {user ? (
+              <>
+                <Link
+                  to="/profile"
+                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-foreground/60 hover:text-foreground hover:bg-foreground/5"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <User className="h-5 w-5" />
+                  <span>Profile</span>
+                </Link>
+                <Link
+                  to="/settings"
+                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-foreground/60 hover:text-foreground hover:bg-foreground/5"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Settings className="h-5 w-5" />
+                  <span>Settings</span>
+                </Link>
+                <button
+                  onClick={() => {
+                    handleSignOut();
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center space-x-2 w-full px-3 py-2 rounded-md text-base font-medium text-foreground/60 hover:text-foreground hover:bg-foreground/5"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>Sign Out</span>
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/authenticate"
+                className="flex items-center justify-center px-3 py-2 rounded-md text-base font-medium text-white bg-royal hover:bg-royal/90"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Sign In
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+    </nav>
   );
 };
 

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 813d0fd0065b6f839cbd5b9921e4616d9d2a780c
 import { useState } from 'react';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -262,4 +266,8 @@ const VerifyCoins = () => {
   );
 };
 
+<<<<<<< HEAD
 export default VerifyCoins; 
+=======
+export default VerifyCoins;
+>>>>>>> 813d0fd0065b6f839cbd5b9921e4616d9d2a780c

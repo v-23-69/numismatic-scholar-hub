@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 813d0fd0065b6f839cbd5b9921e4616d9d2a780c
 import { useState } from 'react';
 import { Check, X } from 'lucide-react';
 import { 
@@ -130,4 +134,8 @@ const PaymentModal = ({ open, onClose, coin, onSuccess }: PaymentModalProps) => 
   );
 };
 
+<<<<<<< HEAD
 export default PaymentModal; 
+=======
+export default PaymentModal;
+>>>>>>> 813d0fd0065b6f839cbd5b9921e4616d9d2a780c

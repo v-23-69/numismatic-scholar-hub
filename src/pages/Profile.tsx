@@ -30,24 +30,33 @@ import { useNavigate } from 'react-router-dom';
 import ProfileCompletion from '@/components/profile/ProfileCompletion';
 import AvatarUploader from '@/components/profile/AvatarUploader';
 import ProfileThemeSelector from '@/components/profile/ProfileThemeSelector';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
+import { useProfileCompletion } from '@/hooks/useProfileCompletion';
 
 const Profile = () => {
   const { supabaseClient, supabaseConfigured } = useContext(ConfigContext);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { profile, updateProfile, isLoading } = useProfile();
+  const { completionPercentage } = useProfileCompletion();
   
-  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   
   // Profile form state
-  const [name, setName] = useState('');
-  const [bio, setBio] = useState('');
-  const [phone, setPhone] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
-  const [themeColor, setThemeColor] = useState('#0B2C5E'); // Default royal blue
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [formData, setFormData] = useState({
+    full_name: profile?.full_name || '',
+    bio: profile?.bio || '',
+    phone: profile?.phone || '',
+    avatarUrl: profile?.avatar_url || '',
+    themeColor: profile?.theme_color || '#0B2C5E',
+    avatarFile: null as File | null,
+    location: profile?.location || '',
+    website: profile?.website || '',
+  });
   
   // Sample data for demo purposes (in a real app, this would come from Supabase)
   const userCourses = [
@@ -133,18 +142,15 @@ const Profile = () => {
             throw profileError;
           }
           
-          setUser(session.user);
-          
-          if (profile) {
-            setName(profile.full_name || '');
-            setBio(profile.bio || '');
-            setPhone(profile.phone || '');
-            setAvatarUrl(profile.avatar_url || '');
-            setThemeColor(profile.theme_color || '#0B2C5E');
-          } else {
-            // Set defaults from auth metadata if profile doesn't exist yet
-            setName(session.user.user_metadata?.full_name || '');
-          }
+          setFormData({
+            full_name: profile.full_name || '',
+            bio: profile.bio || '',
+            phone: profile.phone || '',
+            avatarUrl: profile.avatar_url || '',
+            themeColor: profile.theme_color || '#0B2C5E',
+            location: profile.location || '',
+            website: profile.website || '',
+          });
         } catch (error: any) {
           console.error('Error fetching user data:', error);
           toast({
@@ -167,11 +173,15 @@ const Profile = () => {
             }
           };
           
-          setUser(demoUser);
-          setName('Demo User');
-          setBio('Passionate coin collector with interests in ancient Roman and Indian coinage.');
-          setPhone('+91 98765 43210');
-          setThemeColor('#0B2C5E');
+          setFormData({
+            full_name: 'Demo User',
+            bio: 'Passionate coin collector with interests in ancient Roman and Indian coinage.',
+            phone: '+91 98765 43210',
+            avatarUrl: '',
+            themeColor: '#0B2C5E',
+            location: '',
+            website: '',
+          });
           setLoading(false);
         }, 1000);
       }
@@ -210,82 +220,35 @@ const Profile = () => {
   };
   
   const handleAvatarChange = (file: File, previewUrl: string) => {
-    setAvatarFile(file);
-    setAvatarUrl(previewUrl);
+    setFormData(prev => ({ ...prev, avatarFile: file, avatarUrl: previewUrl }));
   };
   
-  const handleProfileUpdate = async () => {
-    if (!supabaseClient || !user) return;
-    
-    setLoading(true);
-    
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      let newAvatarUrl = avatarUrl;
-      
-      // Upload avatar if changed
-      if (avatarFile) {
-        setUploadingAvatar(true);
-        const fileExt = avatarFile.name.split('.').pop();
-        const filePath = `avatars/${user.id}-${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabaseClient
-          .storage
-          .from('profiles')
-          .upload(filePath, avatarFile);
-          
-        if (uploadError) throw uploadError;
-        
-        // Get the public URL
-        const { data: urlData } = supabaseClient
-          .storage
-          .from('profiles')
-          .getPublicUrl(filePath);
-          
-        newAvatarUrl = urlData.publicUrl;
-        setUploadingAvatar(false);
-      }
-      
-      // Update profile
-      const { error } = await supabaseClient
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          full_name: name,
-          bio,
-          phone,
-          avatar_url: newAvatarUrl,
-          theme_color: themeColor,
-          updated_at: new Date().toISOString()
-        });
-        
-      if (error) throw error;
-      
+      await updateProfile(formData);
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully.",
       });
-      
       setEditMode(false);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error updating profile",
-        description: error.message,
-        variant: "destructive"
+        description: "There was a problem updating your profile. Please try again.",
+        variant: "destructive",
       });
-    } finally {
-      setLoading(false);
-      setUploadingAvatar(false);
     }
   };
 
-  // Create a profile object for the ProfileCompletion component
-  const profileData = {
-    full_name: name,
-    bio,
-    phone,
-    avatar_url: avatarUrl,
-    theme_color: themeColor
-  };
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -320,24 +283,24 @@ const Profile = () => {
                     className="flex flex-col items-center space-y-4"
                   >
                     <AvatarUploader
-                      avatarUrl={avatarUrl}
+                      avatarUrl={formData.avatarUrl}
                       onAvatarChange={handleAvatarChange}
                       isUploading={uploadingAvatar}
-                      name={name}
+                      name={formData.full_name}
                       email={user.email}
                     />
                     
                     {!editMode && (
                       <div 
                         className="w-4 h-4 rounded-full border-2 border-white" 
-                        style={{ backgroundColor: themeColor }}
+                        style={{ backgroundColor: formData.themeColor }}
                         title="Your theme color"
                       />
                     )}
                     
                     {/* Profile Completion Component */}
                     <div className="w-full md:w-48">
-                      <ProfileCompletion profile={profileData} />
+                      <ProfileCompletion />
                     </div>
                   </motion.div>
                   
@@ -350,14 +313,15 @@ const Profile = () => {
                     <div className="text-center md:text-left">
                       {editMode ? (
                         <Input 
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
+                          value={formData.full_name}
+                          onChange={handleInputChange}
                           placeholder="Your Name"
                           className="text-3xl font-bold text-royal mb-2 max-w-md"
+                          name="full_name"
                         />
                       ) : (
-                        <h1 className="text-3xl font-bold mb-2" style={{ color: themeColor || '#0B2C5E' }}>
-                          {name || 'Unnamed User'}
+                        <h1 className="text-3xl font-bold mb-2" style={{ color: formData.themeColor || '#0B2C5E' }}>
+                          {formData.full_name || 'Unnamed User'}
                         </h1>
                       )}
                       
@@ -366,10 +330,10 @@ const Profile = () => {
                           <Mail className="h-4 w-4 mr-1" />
                           <span>{user.email}</span>
                         </div>
-                        {phone && (
+                        {formData.phone && (
                           <div className="flex items-center">
                             <Phone className="h-4 w-4 mr-1" />
-                            <span>{phone}</span>
+                            <span>{formData.phone}</span>
                           </div>
                         )}
                         {user.created_at && (
@@ -382,31 +346,33 @@ const Profile = () => {
                       
                       {editMode ? (
                         <Textarea 
-                          value={bio}
-                          onChange={(e) => setBio(e.target.value)}
+                          value={formData.bio}
+                          onChange={handleInputChange}
                           placeholder="Tell us about yourself and your collection..."
                           className="mb-4 max-w-md"
                           rows={3}
+                          name="bio"
                         />
                       ) : (
                         <p className="text-gray-700 mb-4 max-w-2xl">
-                          {bio || 'No bio provided yet.'}
+                          {formData.bio || 'No bio provided yet.'}
                         </p>
                       )}
                       
                       {editMode && (
                         <div className="mb-6 max-w-md">
                           <Input 
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
+                            value={formData.phone}
+                            onChange={handleInputChange}
                             placeholder="Your Phone Number"
                             className="mb-4"
+                            name="phone"
                           />
                           
                           {/* Theme Color Selector */}
                           <ProfileThemeSelector 
-                            selectedColor={themeColor}
-                            onChange={setThemeColor}
+                            selectedColor={formData.themeColor}
+                            onChange={(color) => setFormData(prev => ({ ...prev, themeColor: color }))}
                           />
                         </div>
                       )}
@@ -415,7 +381,7 @@ const Profile = () => {
                         {editMode ? (
                           <>
                             <Button 
-                              onClick={handleProfileUpdate} 
+                              onClick={handleSubmit} 
                               className="bg-royal hover:bg-royal-light text-white"
                               disabled={loading || uploadingAvatar}
                             >
@@ -424,7 +390,18 @@ const Profile = () => {
                             </Button>
                             <Button 
                               variant="outline" 
-                              onClick={() => setEditMode(false)}
+                              onClick={() => {
+                                setEditMode(false);
+                                setFormData({
+                                  full_name: profile?.full_name || '',
+                                  bio: profile?.bio || '',
+                                  phone: profile?.phone || '',
+                                  avatarUrl: profile?.avatar_url || '',
+                                  themeColor: profile?.theme_color || '#0B2C5E',
+                                  location: profile?.location || '',
+                                  website: profile?.website || '',
+                                });
+                              }}
                               disabled={loading}
                             >
                               Cancel
@@ -434,7 +411,7 @@ const Profile = () => {
                           <Button 
                             variant="outline" 
                             onClick={() => setEditMode(true)}
-                            style={{ borderColor: themeColor, color: themeColor }}
+                            style={{ borderColor: formData.themeColor, color: formData.themeColor }}
                             className="hover:bg-royal/10"
                           >
                             <Edit className="h-4 w-4 mr-2" />

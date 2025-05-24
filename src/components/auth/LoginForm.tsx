@@ -1,101 +1,48 @@
 
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Github } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Eye, EyeOff, Mail } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
-interface LoginFormProps {
-  supabaseClient: any | null;
-  isLoading: boolean;
-  setIsLoading: (isLoading: boolean) => void;
-}
-
-const LoginForm = ({ supabaseClient, isLoading, setIsLoading }: LoginFormProps) => {
+const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [errors, setErrors] = useState<{email?: string; password?: string}>({});
   
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const { isLoading, handleEmailSignIn, handleGoogleSignIn } = useSupabaseAuth();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const validateForm = () => {
+    const newErrors: {email?: string; password?: string} = {};
+    
+    if (!email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Invalid email format';
+    }
+    
+    if (!password) {
+      newErrors.password = 'Password is required';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!supabaseClient) {
-      toast({
-        title: "Authentication Error",
-        description: "Authentication service is not available.",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!validateForm()) return;
     
-    setIsLoading(true);
-    
-    try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Login successful!",
-        description: "Welcome back to NumismaticScholar.",
-      });
-      
-      navigate('/profile');
-    } catch (error: any) {
-      toast({
-        title: "Login failed",
-        description: error.message || "Please check your credentials and try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    if (!supabaseClient) {
-      toast({
-        title: "Authentication Error",
-        description: "Authentication service is not available.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      const { data, error } = await supabaseClient.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/profile`
-        }
-      });
-      
-      if (error) throw error;
-      
-    } catch (error: any) {
-      toast({
-        title: "Google sign in failed",
-        description: error.message || "Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
+    await handleEmailSignIn(email, password);
   };
 
   return (
-    <form onSubmit={handleLogin} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">
           Email
@@ -104,11 +51,15 @@ const LoginForm = ({ supabaseClient, isLoading, setIsLoading }: LoginFormProps) 
           id="login-email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (errors.email) setErrors({...errors, email: undefined});
+          }}
           placeholder="your@email.com"
-          required
           disabled={isLoading}
+          className={errors.email ? "border-red-500" : ""}
         />
+        {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
       </div>
       
       <div>
@@ -125,15 +76,18 @@ const LoginForm = ({ supabaseClient, isLoading, setIsLoading }: LoginFormProps) 
             id="login-password"
             type={showPassword ? "text" : "password"}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (errors.password) setErrors({...errors, password: undefined});
+            }}
             placeholder="••••••••"
-            required
             disabled={isLoading}
+            className={errors.password ? "border-red-500" : ""}
           />
           <button
             type="button"
             className="absolute inset-y-0 right-0 pr-3 flex items-center"
-            onClick={togglePasswordVisibility}
+            onClick={() => setShowPassword(!showPassword)}
           >
             {showPassword ? (
               <EyeOff className="h-5 w-5 text-gray-400" />
@@ -142,6 +96,7 @@ const LoginForm = ({ supabaseClient, isLoading, setIsLoading }: LoginFormProps) 
             )}
           </button>
         </div>
+        {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
       </div>
       
       <div className="flex items-center space-x-2">
@@ -156,7 +111,7 @@ const LoginForm = ({ supabaseClient, isLoading, setIsLoading }: LoginFormProps) 
         </label>
       </div>
       
-      <Button type="submit" className="w-full bg-royal hover:bg-royal-light text-white" disabled={isLoading}>
+      <Button type="submit" className="w-full bg-royal hover:bg-royal/90 text-white rounded-lg" disabled={isLoading}>
         {isLoading ? "Signing In..." : "Sign In"}
       </Button>
       
@@ -169,16 +124,10 @@ const LoginForm = ({ supabaseClient, isLoading, setIsLoading }: LoginFormProps) 
         </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-4">
-        <Button type="button" variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
-          <Mail className="h-5 w-5 mr-2" />
-          Google
-        </Button>
-        <Button type="button" variant="outline" className="w-full" disabled={isLoading}>
-          <Github className="h-5 w-5 mr-2" />
-          GitHub
-        </Button>
-      </div>
+      <Button type="button" variant="outline" className="w-full rounded-lg" onClick={handleGoogleSignIn} disabled={isLoading}>
+        <Mail className="h-5 w-5 mr-2" />
+        Google
+      </Button>
     </form>
   );
 };

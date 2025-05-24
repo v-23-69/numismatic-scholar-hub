@@ -8,6 +8,7 @@ export interface WishlistItem {
   image: string;
   value: string;
   type: 'coin';
+  price?: string; // Optional price field
 }
 
 interface WishlistContextType {

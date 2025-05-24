@@ -3,150 +3,150 @@ import { useState } from 'react';
 import { Phone } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from 'react-router-dom';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
-interface PhoneLoginFormProps {
-  supabaseClient: any | null;
-  isLoading: boolean;
-  setIsLoading: (isLoading: boolean) => void;
-}
-
-const PhoneLoginForm = ({ supabaseClient, isLoading, setIsLoading }: PhoneLoginFormProps) => {
+const PhoneLoginForm = () => {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
+  const [errors, setErrors] = useState<{phone?: string; otp?: string}>({});
   
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const { isLoading, handlePhoneSignIn, handleVerifyOtp } = useSupabaseAuth();
 
-  const handlePhoneLogin = async (e: React.FormEvent) => {
+  const validatePhone = () => {
+    if (!phone) {
+      setErrors({phone: 'Phone number is required'});
+      return false;
+    }
+    if (!/^\+[1-9]\d{1,14}$/.test(phone)) {
+      setErrors({phone: 'Please include country code (e.g., +1)'});
+      return false;
+    }
+    setErrors({});
+    return true;
+  };
+
+  const validateOtp = () => {
+    if (!otp || otp.length !== 6) {
+      setErrors({otp: 'Please enter the 6-digit code'});
+      return false;
+    }
+    setErrors({});
+    return true;
+  };
+
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!supabaseClient) {
-      toast({
-        title: "Authentication Error",
-        description: "Authentication service is not available.",
-        variant: "destructive"
-      });
-      return;
+    if (!validatePhone()) return;
+    
+    const success = await handlePhoneSignIn(phone);
+    if (success) {
+      setIsOtpSent(true);
     }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    setIsLoading(true);
+    if (!validateOtp()) return;
     
-    if (!isOtpSent) {
-      // Send OTP
-      try {
-        const { data, error } = await supabaseClient.auth.signInWithOtp({
-          phone,
-        });
-        
-        if (error) throw error;
-        
-        setIsOtpSent(true);
-        toast({
-          title: "OTP sent",
-          description: "Please check your phone for the verification code.",
-        });
-      } catch (error: any) {
-        toast({
-          title: "Failed to send OTP",
-          description: error.message || "Please check your phone number and try again.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      // Verify OTP
-      try {
-        const { data, error } = await supabaseClient.auth.verifyOtp({
-          phone,
-          token: otp,
-          type: 'sms'
-        });
-        
-        if (error) throw error;
-        
-        toast({
-          title: "Phone verification successful!",
-          description: "You are now logged in.",
-        });
-        
-        navigate('/profile');
-      } catch (error: any) {
-        toast({
-          title: "Verification failed",
-          description: error.message || "Invalid code. Please try again.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
+    const success = await handleVerifyOtp(phone, otp);
+    if (!success) {
+      setOtp(''); // Clear OTP on failure
     }
   };
 
   return (
-    <form onSubmit={handlePhoneLogin} className="space-y-4">
-      <div>
-        <label htmlFor="phone-number" className="block text-sm font-medium text-gray-700 mb-1">
-          Phone Number
-        </label>
-        <Input
-          id="phone-number"
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="+1 (555) 555-5555"
-          required
-          disabled={isLoading || isOtpSent}
-        />
-        <p className="mt-1 text-xs text-gray-500">
-          Include country code (e.g., +1 for US)
-        </p>
-      </div>
-      
-      {isOtpSent && (
-        <div>
-          <label htmlFor="otp-code" className="block text-sm font-medium text-gray-700 mb-1">
-            Verification Code
-          </label>
-          <Input
-            id="otp-code"
-            type="text"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            placeholder="123456"
-            required
+    <div className="space-y-4">
+      {!isOtpSent ? (
+        <form onSubmit={handleSendOtp} className="space-y-4">
+          <div>
+            <label htmlFor="phone-number" className="block text-sm font-medium text-gray-700 mb-1">
+              Phone Number
+            </label>
+            <Input
+              id="phone-number"
+              type="tel"
+              value={phone}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                if (errors.phone) setErrors({...errors, phone: undefined});
+              }}
+              placeholder="+1 (555) 555-5555"
+              disabled={isLoading}
+              className={errors.phone ? "border-red-500" : ""}
+            />
+            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+            <p className="mt-1 text-xs text-gray-500">
+              Include country code (e.g., +1 for US)
+            </p>
+          </div>
+          
+          <Button type="submit" className="w-full bg-royal hover:bg-royal/90 text-white rounded-lg" disabled={isLoading}>
+            {isLoading ? "Sending..." : "Send Verification Code"}
+          </Button>
+        </form>
+      ) : (
+        <form onSubmit={handleVerifyCode} className="space-y-4">
+          <div>
+            <label htmlFor="otp-code" className="block text-sm font-medium text-gray-700 mb-1">
+              Verification Code
+            </label>
+            <div className="flex justify-center mb-2">
+              <InputOTP
+                value={otp}
+                onChange={(value) => {
+                  setOtp(value);
+                  if (errors.otp) setErrors({...errors, otp: undefined});
+                }}
+                maxLength={6}
+                disabled={isLoading}
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+            {errors.otp && <p className="text-red-500 text-xs mt-1">{errors.otp}</p>}
+            <p className="text-xs text-gray-500 text-center">
+              Enter the 6-digit code sent to {phone}
+            </p>
+          </div>
+          
+          <Button type="submit" className="w-full bg-royal hover:bg-royal/90 text-white rounded-lg" disabled={isLoading}>
+            {isLoading ? "Verifying..." : "Verify Code"}
+          </Button>
+          
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="w-full rounded-lg" 
+            onClick={() => {
+              setIsOtpSent(false);
+              setOtp('');
+              setErrors({});
+            }}
             disabled={isLoading}
-            maxLength={6}
-          />
-        </div>
-      )}
-      
-      <Button type="submit" className="w-full bg-royal hover:bg-royal-light text-white" disabled={isLoading}>
-        {isLoading ? "Processing..." : isOtpSent ? "Verify Code" : "Send Verification Code"}
-      </Button>
-      
-      {isOtpSent && (
-        <Button 
-          type="button" 
-          variant="outline" 
-          className="w-full mt-2" 
-          onClick={() => setIsOtpSent(false)}
-          disabled={isLoading}
-        >
-          Change Phone Number
-        </Button>
+          >
+            Change Phone Number
+          </Button>
+        </form>
       )}
       
       <div className="flex items-center justify-center space-x-2 mt-4">
         <Phone className="h-5 w-5 text-royal" />
         <p className="text-sm text-gray-600">
-          We'll send a one-time code to your phone
+          {isOtpSent ? "Code sent to your phone" : "We'll send a one-time code to your phone"}
         </p>
       </div>
-    </form>
+    </div>
   );
 };
 

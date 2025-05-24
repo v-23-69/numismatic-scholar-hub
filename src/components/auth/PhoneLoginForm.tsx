@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Phone } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,8 @@ const PhoneLoginForm = () => {
 
   const checkExistingPhoneUser = async (phone: string) => {
     try {
-      const { data } = await supabase
+      // Using type assertion to bypass type issues with read-only types file
+      const { data } = await (supabase as any)
         .from('profiles')
         .select('id')
         .eq('phone', phone)

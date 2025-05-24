@@ -45,16 +45,16 @@ export const useSupabaseAuth = () => {
   // Ensure user profile exists in profiles table
   const ensureProfileExists = async (user: any) => {
     try {
-      // Check if profile already exists
-      const { data: existingProfile } = await supabase
+      // Check if profile already exists - using type assertion to bypass type issues
+      const { data: existingProfile } = await (supabase as any)
         .from('profiles')
         .select('id')
         .eq('id', user.id)
         .single();
 
       if (!existingProfile) {
-        // Create new profile
-        const { error } = await supabase
+        // Create new profile - using type assertion to bypass type issues
+        const { error } = await (supabase as any)
           .from('profiles')
           .insert({
             id: user.id,
@@ -76,7 +76,7 @@ export const useSupabaseAuth = () => {
   // Check for existing user by email or phone
   const checkExistingUser = async (email: string, phone?: string) => {
     try {
-      const { data: emailExists } = await supabase
+      const { data: emailExists } = await (supabase as any)
         .from('profiles')
         .select('id')
         .eq('email', email)
@@ -87,7 +87,7 @@ export const useSupabaseAuth = () => {
       }
 
       if (phone) {
-        const { data: phoneExists } = await supabase
+        const { data: phoneExists } = await (supabase as any)
           .from('profiles')
           .select('id')
           .eq('phone', phone)

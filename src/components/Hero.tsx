@@ -1,115 +1,134 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { Button } from "@/components/ui/button";
-import SearchDropdown from '@/components/search/SearchDropdown';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, BookOpen, Coins } from 'lucide-react';
 
 const Hero = () => {
   return (
-    <div className="bg-gradient-to-b from-royal/5 to-white relative overflow-hidden">
-      {/* Background decorative elements */}
+    <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden bg-gradient-to-b from-background to-muted/20">
+      {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -right-24 -top-24 w-64 h-64 rounded-full bg-gold/5"></div>
-        <div className="absolute left-1/4 top-1/3 w-32 h-32 rounded-full bg-royal/5"></div>
-        <div className="absolute right-1/3 bottom-1/4 w-48 h-48 rounded-full bg-gold/5"></div>
+        <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/80 to-background" />
       </div>
-      
-      <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
-        <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
-          {/* Royal Badge Logo */}
-          <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="relative inline-block mb-6"
+
+      {/* Content */}
+      <div className="container relative z-10 px-4 py-16 mx-auto">
+        <div className="grid gap-8 lg:grid-cols-2">
+          {/* Left Column - Text Content */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col justify-center space-y-6"
           >
-            <div className="flex flex-col items-center">
-              <div className="h-20 w-20 bg-royal rounded-full flex items-center justify-center">
-                <span className="text-gold font-bold text-3xl">NS</span>
-              </div>
-              <div className="bg-gold text-xs text-royal px-3 py-1 rounded-full font-bold mt-1">
-                TRUSTED
-              </div>
+            <div className="space-y-4">
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl"
+              >
+                Discover the World of{' '}
+                <span className="text-primary">Numismatics</span>
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="text-lg text-muted-foreground"
+              >
+                Your gateway to ancient coins, expert knowledge, and a vibrant
+                community of collectors and scholars.
+              </motion.p>
             </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              className="flex flex-col gap-4 sm:flex-row"
+            >
+              <Button asChild size="lg" className="gap-2">
+                <Link to="/courses">
+                  <BookOpen className="w-5 h-5" />
+                  Explore Courses
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="gap-2">
+                <Link to="/marketplace">
+                  <Coins className="w-5 h-5" />
+                  Browse Marketplace
+                </Link>
+              </Button>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.8 }}
+              className="flex items-center gap-2 text-sm text-muted-foreground"
+            >
+              <span>Trusted by 10,000+ collectors</span>
+              <span>•</span>
+              <span>Expert-curated content</span>
+              <span>•</span>
+              <span>24/7 support</span>
+            </motion.div>
           </motion.div>
 
-          {/* Main Heading */}
-          <motion.h1 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-4xl md:text-6xl font-bold text-royal font-playfair mb-4"
+          {/* Right Column - Image/Illustration */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="relative flex items-center justify-center"
           >
-            The Trusted Home of<br />
-            <span className="text-gold">Coin Knowledge</span>
-          </motion.h1>
-          
-          {/* Subheading */}
-          <motion.p 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-            className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl"
-          >
-            Join our premium community where collectors, historians, and enthusiasts 
-            unite to learn, trade, and celebrate the art and history of numismatics.
-          </motion.p>
-          
-          {/* Enhanced Search Bar */}
-          <motion.div 
-            initial={{ y: 20, opacity: 0, width: "80%" }}
-            animate={{ y: 0, opacity: 1, width: "100%" }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-            className="relative w-full max-w-2xl mb-8"
-          >
-            <SearchDropdown 
-              expanded={true}
-              placeholder="Search for courses, coins, or mentors..."
-            />
-          </motion.div>
-          
-          {/* Feature Badges */}
-          <motion.div 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.5 }}
-            className="flex flex-wrap justify-center gap-4 mb-8"
-          >
-            <div className="py-1 px-3 bg-white border border-gold/20 rounded-full text-sm text-gray-600 shadow-sm flex items-center">
-              <span className="h-2 w-2 bg-gold rounded-full mr-2"></span>
-              1,000+ Coins Verified
+            <div className="relative w-full max-w-lg aspect-square">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full blur-3xl" />
+              <div className="relative p-8 bg-card rounded-2xl shadow-lg border">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Coins className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Ancient Coins</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Discover rare specimens
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <BookOpen className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Expert Knowledge</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Learn from specialists
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <ArrowRight className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Start Your Journey</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Join our community
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="py-1 px-3 bg-white border border-gold/20 rounded-full text-sm text-gray-600 shadow-sm flex items-center">
-              <span className="h-2 w-2 bg-royal rounded-full mr-2"></span>
-              Expert-Led Courses
-            </div>
-            <div className="py-1 px-3 bg-white border border-gold/20 rounded-full text-sm text-gray-600 shadow-sm flex items-center">
-              <span className="h-2 w-2 bg-gold rounded-full mr-2"></span>
-              Trusted Community
-            </div>
-          </motion.div>
-          
-          {/* CTA Buttons */}
-          <motion.div 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 1, duration: 0.5 }}
-            className="flex flex-wrap justify-center gap-4"
-          >
-            <Link to="/courses">
-              <Button className="bg-royal hover:bg-royal-light text-white px-8 py-6 text-lg">
-                Explore Courses
-              </Button>
-            </Link>
-            <Link to="/coins-market">
-              <Button variant="outline" className="border-royal text-royal hover:bg-royal hover:text-white px-8 py-6 text-lg">
-                Visit Coins Market
-              </Button>
-            </Link>
           </motion.div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

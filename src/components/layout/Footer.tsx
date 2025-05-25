@@ -1,6 +1,6 @@
 
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Youtube, Mail, Shield, Award, Globe } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Youtube, Mail, Shield, Award, Globe, Phone, Linkedin } from 'lucide-react';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -49,17 +49,14 @@ const Footer = () => {
               The trusted home for coin knowledge, collecting, and community — bringing together enthusiasts, experts, and institutions.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-white/70 hover:text-gold transition-colors">
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-gold transition-colors">
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="#" className="text-white/70 hover:text-gold transition-colors">
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-gold transition-colors">
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" className="text-white/70 hover:text-gold transition-colors">
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-white/70 hover:text-gold transition-colors">
-                <Youtube className="h-5 w-5" />
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-gold transition-colors">
+                <Linkedin className="h-5 w-5" />
               </a>
             </div>
           </div>
@@ -69,10 +66,10 @@ const Footer = () => {
             <h3 className="text-lg font-bold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li><Link to="/courses" className="text-white/70 hover:text-gold transition-colors">Courses</Link></li>
-              <li><Link to="/marketplace" className="text-white/70 hover:text-gold transition-colors">Marketplace</Link></li>
+              <li><Link to="/coins-market" className="text-white/70 hover:text-gold transition-colors">Marketplace</Link></li>
               <li><Link to="/mentors" className="text-white/70 hover:text-gold transition-colors">Mentors</Link></li>
               <li><Link to="/community" className="text-white/70 hover:text-gold transition-colors">Community</Link></li>
-              <li><Link to="/blog" className="text-white/70 hover:text-gold transition-colors">Articles & Blog</Link></li>
+              <li><Link to="/articles" className="text-white/70 hover:text-gold transition-colors">Articles & Blog</Link></li>
             </ul>
           </div>
           
@@ -80,11 +77,11 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-bold mb-4">Legal</h3>
             <ul className="space-y-2">
-              <li><Link to="/privacy" className="text-white/70 hover:text-gold transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="text-white/70 hover:text-gold transition-colors">Terms of Service</Link></li>
-              <li><Link to="/refund" className="text-white/70 hover:text-gold transition-colors">Refund Policy</Link></li>
-              <li><Link to="/verification" className="text-white/70 hover:text-gold transition-colors">Verification Process</Link></li>
-              <li><Link to="/cookies" className="text-white/70 hover:text-gold transition-colors">Cookie Policy</Link></li>
+              <li><Link to="/legal/privacy-policy" className="text-white/70 hover:text-gold transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/legal/terms-of-service" className="text-white/70 hover:text-gold transition-colors">Terms of Service</Link></li>
+              <li><Link to="/legal/refund-policy" className="text-white/70 hover:text-gold transition-colors">Refund Policy</Link></li>
+              <li><Link to="/legal/verification-process" className="text-white/70 hover:text-gold transition-colors">Verification Process</Link></li>
+              <li><Link to="/legal/cookie-policy" className="text-white/70 hover:text-gold transition-colors">Cookie Policy</Link></li>
             </ul>
           </div>
           
@@ -92,15 +89,22 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-bold mb-4">Contact Us</h3>
             <p className="text-white/70 mb-4">Have questions or need assistance? Reach out to our team.</p>
+            <div className="space-y-2 mb-4">
+              <div className="flex items-center space-x-2">
+                <Phone className="h-4 w-4 text-gold" />
+                <span className="text-sm text-white/70">+91-9876543210</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Mail className="h-4 w-4 text-gold" />
+                <span className="text-sm text-white/70">support@numismaticscholar.com</span>
+              </div>
+            </div>
             <Link 
               to="/contact" 
               className="inline-flex items-center px-4 py-2 bg-gold text-royal font-medium rounded-md hover:bg-gold-light transition-colors"
             >
               Contact Support
             </Link>
-            <p className="mt-4 text-sm text-white/70">
-              Email: support@numismaticscholar.com
-            </p>
           </div>
         </div>
         

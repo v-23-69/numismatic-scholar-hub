@@ -23,13 +23,13 @@ const CallToAction = () => {
               marketplace, and our active community of enthusiasts and experts.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link to="/register">
+              <Link to="/community">
                 <Button className="bg-gold hover:bg-gold-light text-royal font-medium px-8 py-6 text-lg">
                   Join Now
                 </Button>
               </Link>
-              <Link to="/about">
-                <Button variant="outline" className="border-white text-white hover:bg-white/10 px-8 py-6 text-lg">
+              <Link to="/courses">
+                <Button className="bg-yellow-600 hover:bg-yellow-700 text-white px-8 py-6 text-lg">
                   Learn More
                 </Button>
               </Link>
@@ -55,9 +55,11 @@ const CallToAction = () => {
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-md focus:outline-none focus:ring-2 focus:ring-gold text-white placeholder-white/50"
                 />
               </div>
-              <Button className="w-full bg-gold hover:bg-gold-light text-royal font-medium">
-                Subscribe
-              </Button>
+              <Link to="/subscribe">
+                <Button className="w-full bg-gold hover:bg-gold-light text-royal font-medium">
+                  Subscribe
+                </Button>
+              </Link>
             </form>
           </motion.div>
         </div>

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
@@ -55,7 +56,7 @@ const Hero = () => {
           >
             Join our premium community where collectors, historians, and enthusiasts 
             unite to learn, trade, and celebrate the art and history of numismatics.
-          </motion.p>
+          </p>
           
           {/* Enhanced Search Bar */}
           <motion.div 
@@ -103,7 +104,7 @@ const Hero = () => {
                 Explore Courses
               </Button>
             </Link>
-            <Link to="/marketplace">
+            <Link to="/coins-market">
               <Button variant="outline" className="border-royal text-royal hover:bg-royal hover:text-white px-8 py-6 text-lg">
                 Visit Marketplace
               </Button>

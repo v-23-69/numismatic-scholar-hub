@@ -32,6 +32,21 @@ export type Database = {
           created_at?: string | null
           updated_at?: string | null
         }
+      },
+      newsletter_subscriptions: {
+        Row: {
+          id: number;
+          email: string;
+          subscribed_at: string;
+        };
+        Insert: {
+          email: string;
+          subscribed_at?: string;
+        };
+        Update: {
+          email?: string;
+          subscribed_at?: string;
+        };
       }
     }
     Views: {}

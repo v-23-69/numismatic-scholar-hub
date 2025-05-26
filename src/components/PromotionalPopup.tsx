@@ -19,7 +19,7 @@ const PromotionalPopup = () => {
   const offers: PopupOffer[] = [
     {
       id: 'course-offer',
-      icon: <BookOpen className="h-6 w-6 text-gold" />,
+      icon: <BookOpen className="h-6 w-6 text-blue-600" />,
       title: '📚 25% OFF on Rare Coin Courses',
       description: 'Today Only! Learn from expert numismatists',
       buttonText: 'Explore Courses',
@@ -58,8 +58,8 @@ const PromotionalPopup = () => {
     // Show popup after 3 seconds on page load
     const initialTimer = setTimeout(showRandomPopup, 3000);
 
-    // Show popup every 30 seconds
-    const intervalTimer = setInterval(showRandomPopup, 30000);
+    // Show popup every 45 seconds
+    const intervalTimer = setInterval(showRandomPopup, 45000);
 
     return () => {
       clearTimeout(initialTimer);
@@ -74,20 +74,20 @@ const PromotionalPopup = () => {
   if (!showPopup || !currentPopup) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 pointer-events-none">
-      <div className="bg-gray-900 text-white rounded-lg shadow-2xl border border-gray-700 max-w-sm w-full pointer-events-auto animate-slide-in-bottom">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+      <div className="bg-white rounded-xl shadow-2xl border border-gray-100 max-w-sm w-full pointer-events-auto animate-scale-in">
         <div className="p-6">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center space-x-3">
               {currentPopup.icon}
               <div>
-                <h3 className="font-bold text-lg">{currentPopup.title}</h3>
-                <p className="text-gray-300 text-sm">{currentPopup.description}</p>
+                <h3 className="font-bold text-lg text-gray-900">{currentPopup.title}</h3>
+                <p className="text-gray-600 text-sm">{currentPopup.description}</p>
               </div>
             </div>
             <button
               onClick={closePopup}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1"
             >
               <X className="h-5 w-5" />
             </button>
@@ -96,14 +96,14 @@ const PromotionalPopup = () => {
           <div className="flex space-x-2">
             <Button
               onClick={currentPopup.action}
-              className="flex-1 bg-gold hover:bg-gold/80 text-gray-900 font-medium"
+              className="flex-1 bg-royal hover:bg-blue-600 text-white font-medium"
             >
               {currentPopup.buttonText}
             </Button>
             <Button
               onClick={closePopup}
               variant="outline"
-              className="border-gray-600 text-gray-300 hover:bg-gray-800"
+              className="border-gray-300 text-gray-600 hover:bg-gray-50"
             >
               Later
             </Button>

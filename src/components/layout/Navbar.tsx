@@ -107,8 +107,8 @@ const Navbar = () => {
                 onClick={() => handleNavClick(link.path)}
                 className={`px-4 py-2 rounded-md transition-all duration-300 font-medium ${
                   isActive 
-                    ? 'bg-royal text-white' 
-                    : 'text-gray-700 hover:bg-royal hover:text-white'
+                    ? 'text-blue-600 bg-blue-50' 
+                    : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
                 }`}
               >
                 {link.name}

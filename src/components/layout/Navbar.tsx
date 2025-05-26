@@ -105,16 +105,13 @@ const Navbar = () => {
               <button 
                 key={link.name} 
                 onClick={() => handleNavClick(link.path)}
-                className={`px-3 py-2 transition-all duration-300 relative ${
+                className={`px-4 py-2 rounded-md transition-all duration-300 font-medium ${
                   isActive 
-                    ? 'text-royal font-medium' 
-                    : 'text-gray-700 hover:text-blue-600'
+                    ? 'bg-royal text-white' 
+                    : 'text-gray-700 hover:bg-royal hover:text-white'
                 }`}
               >
                 {link.name}
-                {isActive && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-royal rounded-full"></div>
-                )}
               </button>
             );
           })}

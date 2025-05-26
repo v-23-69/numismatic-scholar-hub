@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,6 +25,8 @@ import TermsOfService from "./pages/TermsOfService";
 import RefundPolicy from "./pages/RefundPolicy";
 import VerificationProcess from "./pages/VerificationProcess";
 import CookiePolicy from "./pages/CookiePolicy";
+import AgentSupport from "./pages/AgentSupport";
+import PromotionalPopup from "./components/PromotionalPopup";
 import { WishlistProvider } from "./context/WishlistContext";
 import supabase from '@/lib/supabaseClient';
 
@@ -51,6 +54,7 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               <WelcomeModal />
+              <PromotionalPopup />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/courses" element={<Courses />} />
@@ -69,6 +73,7 @@ const App = () => {
                 <Route path="/articles/:articleId" element={<Articles />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/purchases" element={<Purchases />} />
+                <Route path="/agent-support" element={<AgentSupport />} />
                 
                 {/* Legal Pages - New individual pages */}
                 <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />

@@ -92,6 +92,10 @@ const CoinAuthenticationFeature = () => {
                   <span className="text-green-600 font-bold">✓ Verified</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span className="font-medium">Grade</span>
+                  <span className="font-bold text-royal">MS-65</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <span className="font-medium">Est. Value</span>
                   <span className="font-bold text-gold">₹2,500 - ₹3,200</span>
                 </div>

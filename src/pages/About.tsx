@@ -1,11 +1,10 @@
 
 import { motion } from 'framer-motion';
-import { Shield, Award, BookOpen, Users, Phone, Mail, Instagram } from 'lucide-react';
+import { Shield, Award, BookOpen, Users } from 'lucide-react';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import FloatingActionButton from "@/components/FloatingActionButton";
 
 const About = () => {
   return (
@@ -159,55 +158,8 @@ const About = () => {
             </div>
           </div>
         </section>
-        
-        {/* Contact Section */}
-        <section id="contact" className="py-16 bg-gradient-to-b from-royal/5 to-white">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-12">
-                <h2 className="font-playfair text-3xl font-bold text-royal mb-4">Contact Support</h2>
-                <p className="text-gray-600 max-w-2xl mx-auto">
-                  Have questions about our services or need assistance with your account? Our support team is here to help.
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="bg-white p-6 rounded-lg shadow-md border border-gold/10 text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-royal/10 text-royal mb-4">
-                    <Phone className="h-8 w-8" />
-                  </div>
-                  <h3 className="text-xl font-bold text-royal mb-2">Phone</h3>
-                  <a href="tel:+919876543210" className="text-gray-700 hover:text-royal">
-                    +91-9876543210
-                  </a>
-                </div>
-                
-                <div className="bg-white p-6 rounded-lg shadow-md border border-gold/10 text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-royal/10 text-royal mb-4">
-                    <Mail className="h-8 w-8" />
-                  </div>
-                  <h3 className="text-xl font-bold text-royal mb-2">Email</h3>
-                  <a href="mailto:support@coinglobe.in" className="text-gray-700 hover:text-royal">
-                    support@coinglobe.in
-                  </a>
-                </div>
-                
-                <div className="bg-white p-6 rounded-lg shadow-md border border-gold/10 text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-pink-100 text-pink-600 mb-4">
-                    <Instagram className="h-8 w-8" />
-                  </div>
-                  <h3 className="text-xl font-bold text-royal mb-2">Instagram</h3>
-                  <a href="https://instagram.com/coinglobe" target="_blank" rel="noopener noreferrer" className="text-gray-700 hover:text-royal">
-                    @coinglobe
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
       <Footer />
-      <FloatingActionButton />
     </div>
   );
 };

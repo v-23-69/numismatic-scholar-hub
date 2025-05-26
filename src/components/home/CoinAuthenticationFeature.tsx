@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Upload, Shield, Check, Clock, Coins } from 'lucide-react';
@@ -67,14 +68,14 @@ const CoinAuthenticationFeature = () => {
             </div>
             
             <div className="flex flex-wrap gap-4">
-              <Link to="/verify-coins">
+              <Link to="/authentication">
                 <Button className="bg-gold hover:bg-gold-light text-royal">
                   <Upload className="h-4 w-4 mr-2" />
                   Upload Coin for ₹20
                 </Button>
               </Link>
               
-              <Link to="/courses">
+              <Link to="/marketplace">
                 <Button variant="outline" className="border-royal text-royal hover:bg-royal hover:text-white">
                   <Shield className="h-4 w-4 mr-2" />
                   Learn More
@@ -167,7 +168,7 @@ const CoinAuthenticationFeature = () => {
                   <p className="text-white/80 text-sm">Service fee</p>
                   <p className="text-white font-bold text-2xl">₹20</p>
                 </div>
-                <Link to="/verify-coins">
+                <Link to="/authentication">
                   <Button className="bg-gold hover:bg-gold-light text-royal">
                     Get Started Now
                   </Button>

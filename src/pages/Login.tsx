@@ -1,26 +1,50 @@
+import { useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
 
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import supabase from '../lib/supabaseClient';
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-const Login = () => {
-  const navigate = useNavigate();
+  const handleLogin = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) alert(error.message);
+    else alert("Logged in!");
+    setLoading(false);
+  };
 
-  useEffect(() => {
-    // Check if user is already logged in
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/profile');
-      } else {
-        navigate('/authenticate');
-      }
-    };
-    
-    checkAuth();
-  }, [navigate]);
+  const handleSignup = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) alert(error.message);
+    else alert("Check your email for confirmation.");
+    setLoading(false);
+  };
 
-  return null; // This component just redirects
-};
-
-export default Login;
+  return (
+    <div className="p-6 max-w-sm mx-auto">
+      <h2 className="text-xl font-bold mb-4">Login / Sign Up</h2>
+      <input
+        className="border p-2 w-full mb-2"
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+      />
+      <input
+        className="border p-2 w-full mb-2"
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={e => setPassword(e.target.value)}
+      />
+      <button onClick={handleLogin} className="bg-blue-500 text-white p-2 w-full mb-2" disabled={loading}>
+        Login
+      </button>
+      <button onClick={handleSignup} className="bg-green-500 text-white p-2 w-full" disabled={loading}>
+        Sign Up
+      </button>
+    </div>
+  );
+}

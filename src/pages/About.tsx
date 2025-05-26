@@ -1,6 +1,6 @@
 
 import { motion } from 'framer-motion';
-import { Shield, Award, BookOpen, Users } from 'lucide-react';
+import { Shield, Award, BookOpen, Users, Mail, Phone, Instagram } from 'lucide-react';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -153,6 +153,49 @@ const About = () => {
                   </div>
                   <p className="text-3xl font-bold text-royal font-playfair">25+</p>
                   <p className="text-gray-600">Certified Mentors</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Contact Us Section */}
+        <section id="contact" className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="font-playfair text-3xl font-bold text-royal mb-4">Need Help? Get in Touch</h2>
+                <p className="text-gray-600 max-w-2xl mx-auto">
+                  Our support team is here to help you with any questions about our courses, marketplace, or community features.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gold/10 text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-royal/10 text-royal mb-4">
+                    <Phone className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-royal mb-2">Phone Support</h3>
+                  <p className="text-gray-600">+91-9876543210</p>
+                  <p className="text-sm text-gray-500 mt-2">Mon-Fri, 9AM-6PM IST</p>
+                </div>
+                
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gold/10 text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-royal/10 text-royal mb-4">
+                    <Mail className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-royal mb-2">Email Support</h3>
+                  <p className="text-gray-600">support@coinglobe.in</p>
+                  <p className="text-sm text-gray-500 mt-2">Response within 24 hours</p>
+                </div>
+                
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gold/10 text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-pink-100 text-pink-600 mb-4">
+                    <Instagram className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-royal mb-2">Social Media</h3>
+                  <p className="text-gray-600">@coinglobe</p>
+                  <p className="text-sm text-gray-500 mt-2">Follow us for updates</p>
                 </div>
               </div>
             </div>

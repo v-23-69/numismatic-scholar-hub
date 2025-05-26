@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, User, ShoppingCart, LogIn, Heart } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -51,6 +52,7 @@ const Navbar = () => {
   const [searchActive, setSearchActive] = useState(false);
   const { user, loading } = useAuthState();
   const { wishlist } = useWishlist();
+  const location = useLocation();
   
   const navigate = useNavigate();
 
@@ -66,6 +68,15 @@ const Navbar = () => {
     }
   })();
 
+  // Handle navigation with scroll-to-top for same page
+  const handleNavClick = (path: string) => {
+    if (location.pathname === path) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      navigate(path);
+    }
+  };
+
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Courses", path: "/courses" },
@@ -79,24 +90,34 @@ const Navbar = () => {
     <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gold/10">
       <nav className="container mx-auto px-4 py-3 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center space-x-2">
+        <button onClick={() => handleNavClick('/')} className="flex items-center space-x-2">
           <div className="h-10 w-10 bg-royal rounded-full flex items-center justify-center">
             <span className="text-gold font-bold text-xl">NS</span>
           </div>
           <span className="font-playfair text-royal font-bold text-xl tracking-tight">NumismaticScholar</span>
-        </Link>
+        </button>
 
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center space-x-1">
-          {navLinks.map((link) => (
-            <Link 
-              key={link.name} 
-              to={link.path} 
-              className="px-3 py-2 text-gray-700 hover:text-blue-600 transition-colors duration-300"
-            >
-              {link.name}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const isActive = location.pathname === link.path;
+            return (
+              <button 
+                key={link.name} 
+                onClick={() => handleNavClick(link.path)}
+                className={`px-3 py-2 transition-all duration-300 relative ${
+                  isActive 
+                    ? 'text-royal font-medium' 
+                    : 'text-gray-700 hover:text-blue-600'
+                }`}
+              >
+                {link.name}
+                {isActive && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-royal rounded-full"></div>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Search and User Actions */}
@@ -187,14 +208,16 @@ const Navbar = () => {
       <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} bg-white shadow-md border-b`}>
         <div className="px-2 pt-2 pb-4">
           {navLinks.map((link) => (
-            <Link 
+            <button 
               key={link.name} 
-              to={link.path} 
-              className="block px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-              onClick={toggleNav}
+              onClick={() => {
+                handleNavClick(link.path);
+                toggleNav();
+              }}
+              className="block w-full text-left px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
             >
               {link.name}
-            </Link>
+            </button>
           ))}
           
           <div className="mt-4 flex space-x-2 px-3">

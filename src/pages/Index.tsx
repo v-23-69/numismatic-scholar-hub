@@ -10,6 +10,7 @@ import CallToAction from "@/components/home/CallToAction";
 import CoinAuthenticationFeature from "@/components/home/CoinAuthenticationFeature";
 import LatestSection from "@/components/home/LatestSection";
 import ContactSection from "@/components/home/ContactSection";
+import FloatingActionButton from "@/components/FloatingActionButton";
 
 const Index = () => {
   return (
@@ -27,6 +28,7 @@ const Index = () => {
         <CallToAction />
       </main>
       <Footer />
+      <FloatingActionButton />
     </div>
   );
 };

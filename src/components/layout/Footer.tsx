@@ -5,6 +5,10 @@ import { Facebook, Twitter, Instagram, Youtube, Mail, Shield, Award, Globe } fro
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   
+  const handleContactClick = () => {
+    window.location.href = '/about#contact';
+  };
+  
   return (
     <footer className="bg-royal text-white">
       <div className="container mx-auto px-4 pt-16 pb-8">
@@ -97,12 +101,12 @@ const Footer = () => {
               <p className="text-sm text-white/70">📧 support@numismaticscholar.com</p>
               <p className="text-sm text-white/70">📱 @coinglobe</p>
             </div>
-            <Link 
-              to="/contact" 
+            <button 
+              onClick={handleContactClick}
               className="inline-flex items-center px-4 py-2 bg-gold text-royal font-medium rounded-md hover:bg-gold-light transition-colors"
             >
               Contact Support
-            </Link>
+            </button>
           </div>
         </div>
         

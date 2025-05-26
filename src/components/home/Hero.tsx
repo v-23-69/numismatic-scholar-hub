@@ -1,14 +1,11 @@
+
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import EnhancedSearchBar from '../EnhancedSearchBar';
+import { Button } from "@/components/ui/button";
+import SearchDropdown from '@/components/search/SearchDropdown';
 
 const Hero = () => {
-  const [searchExpanded, setSearchExpanded] = useState(false);
-  const navigate = useNavigate();
-  
   return (
     <div className="bg-gradient-to-b from-royal/5 to-white relative overflow-hidden">
       {/* Background decorative elements */}
@@ -27,11 +24,13 @@ const Hero = () => {
             transition={{ duration: 0.5 }}
             className="relative inline-block mb-6"
           >
-            <div className="h-20 w-20 bg-royal rounded-full flex items-center justify-center">
-              <span className="text-gold font-bold text-3xl">NS</span>
-            </div>
-            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-gold text-xs text-royal px-2 py-0.5 rounded-full font-medium">
-              TRUSTED
+            <div className="flex flex-col items-center">
+              <div className="h-20 w-20 bg-royal rounded-full flex items-center justify-center">
+                <span className="text-gold font-bold text-3xl">NS</span>
+              </div>
+              <div className="bg-gold text-xs text-royal px-3 py-1 rounded-full font-bold mt-1">
+                TRUSTED
+              </div>
             </div>
           </motion.div>
 
@@ -64,9 +63,9 @@ const Hero = () => {
             transition={{ delay: 0.6, duration: 0.5 }}
             className="relative w-full max-w-2xl mb-8"
           >
-            <EnhancedSearchBar 
-              expanded={searchExpanded}
-              onExpand={() => setSearchExpanded(true)}
+            <SearchDropdown 
+              expanded={true}
+              placeholder="Search for courses, coins, or mentors..."
             />
           </motion.div>
           
@@ -103,9 +102,9 @@ const Hero = () => {
                 Explore Courses
               </Button>
             </Link>
-            <Link to="/marketplace">
+            <Link to="/coins-market">
               <Button variant="outline" className="border-royal text-royal hover:bg-royal hover:text-white px-8 py-6 text-lg">
-                Visit Marketplace
+                Visit Coins Market
               </Button>
             </Link>
           </motion.div>

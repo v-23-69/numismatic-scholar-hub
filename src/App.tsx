@@ -19,6 +19,11 @@ import Mentors from "./pages/Mentors";
 import Articles from "./pages/Articles";
 import Wishlist from "./pages/Wishlist";
 import Purchases from "./pages/Purchases";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import RefundPolicy from "./pages/RefundPolicy";
+import VerificationProcess from "./pages/VerificationProcess";
+import CookiePolicy from "./pages/CookiePolicy";
 import { WishlistProvider } from "./context/WishlistContext";
 import supabase from '@/lib/supabaseClient';
 
@@ -65,12 +70,19 @@ const App = () => {
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/purchases" element={<Purchases />} />
                 
-                {/* Legal Pages */}
-                <Route path="/legal/privacy-policy" element={<LegalPage type="privacy" />} />
-                <Route path="/legal/terms-of-service" element={<LegalPage type="terms" />} />
-                <Route path="/legal/refund-policy" element={<LegalPage type="refund" />} />
-                <Route path="/legal/verification-process" element={<LegalPage type="verification" />} />
-                <Route path="/legal/cookie-policy" element={<LegalPage type="cookie" />} />
+                {/* Legal Pages - New individual pages */}
+                <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/legal/terms-of-service" element={<TermsOfService />} />
+                <Route path="/legal/refund-policy" element={<RefundPolicy />} />
+                <Route path="/legal/verification-process" element={<VerificationProcess />} />
+                <Route path="/legal/cookie-policy" element={<CookiePolicy />} />
+                
+                {/* Legacy Legal Pages - Keep existing LegalPage for backwards compatibility */}
+                <Route path="/legal/privacy" element={<LegalPage type="privacy" />} />
+                <Route path="/legal/terms" element={<LegalPage type="terms" />} />
+                <Route path="/legal/refund" element={<LegalPage type="refund" />} />
+                <Route path="/legal/verification" element={<LegalPage type="verification" />} />
+                <Route path="/legal/cookie" element={<LegalPage type="cookie" />} />
                 
                 {/* Search Results */}
                 <Route path="/search" element={<Index />} />

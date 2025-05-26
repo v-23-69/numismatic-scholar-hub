@@ -8,6 +8,8 @@ import Testimonials from "@/components/home/Testimonials";
 import TrustStats from "@/components/home/TrustStats";
 import CallToAction from "@/components/home/CallToAction";
 import CoinAuthenticationFeature from "@/components/home/CoinAuthenticationFeature";
+import LatestSection from "@/components/home/LatestSection";
+import ContactSection from "@/components/home/ContactSection";
 
 const Index = () => {
   return (
@@ -17,9 +19,11 @@ const Index = () => {
         <Hero />
         <FeaturedSections />
         <CoinAuthenticationFeature />
+        <LatestSection />
         <FeaturedCourses />
         <TrustStats />
         <Testimonials />
+        <ContactSection />
         <CallToAction />
       </main>
       <Footer />

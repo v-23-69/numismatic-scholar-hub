@@ -7,10 +7,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Calendar, Info, Award, CheckCircle, Plus, Minus, AlertCircle, QrCode, X } from 'lucide-react';
+import { Upload, Info, Award, CheckCircle, Plus, Minus, AlertCircle, QrCode, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from 'react-router-dom';
 import supabase from '@/lib/supabaseClient';
+
+interface FormData {
+  coin_name: string;
+  phone: string;
+  description: string;
+  coinImages: Record<number, { front?: File, back?: File }>;
+}
 
 const VerifyCoins = () => {
   const { toast } = useToast();
@@ -19,16 +26,15 @@ const VerifyCoins = () => {
   const [coinCount, setCoinCount] = useState(1);
   const [showQRModal, setShowQRModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showAgentModal, setShowAgentModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState<any>(null);
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     coin_name: '',
     phone: '',
-    email_or_whatsapp: '',
     description: '',
-    frontImages: [] as File[],
-    backImages: [] as File[]
+    coinImages: {}
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const basePrice = 20;
@@ -44,8 +50,12 @@ const VerifyCoins = () => {
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.coin_name.trim()) newErrors.coin_name = 'Coin name is required';
-    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+    if (!formData.coin_name.trim()) newErrors.coin_name = 'Name is required';
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else if (formData.phone.length !== 10 || !/^\d{10}$/.test(formData.phone)) {
+      newErrors.phone = 'Phone number must be exactly 10 digits';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -54,9 +64,16 @@ const VerifyCoins = () => {
   const validateStep2 = () => {
     const newErrors: Record<string, string> = {};
     
-    if (formData.frontImages.length === 0) newErrors.frontImages = 'Front side photo is required';
-    if (formData.backImages.length === 0) newErrors.backImages = 'Back side photo is required';
-    if (!formData.description.trim()) newErrors.description = 'Please tell us what you want to know about your coin';
+    // Check if we have front and back images for the required number of coins
+    const requiredCoins = hasFreeVerification ? coinCount + 1 : coinCount;
+    for (let i = 1; i <= requiredCoins; i++) {
+      if (!formData.coinImages[i]?.front) {
+        newErrors[`coin${i}Front`] = `Coin ${i} front image is required`;
+      }
+      if (!formData.coinImages[i]?.back) {
+        newErrors[`coin${i}Back`] = `Coin ${i} back image is required`;
+      }
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -76,19 +93,23 @@ const VerifyCoins = () => {
     }
   };
 
-  const handleFileUpload = (files: FileList | null, type: 'front' | 'back') => {
-    if (!files) return;
+  const handleFileUpload = (file: File | undefined, coinNumber: number, side: 'front' | 'back') => {
+    if (!file) return;
     
-    const fileArray = Array.from(files);
-    if (type === 'front') {
-      setFormData({...formData, frontImages: fileArray});
-    } else {
-      setFormData({...formData, backImages: fileArray});
-    }
+    setFormData(prev => ({
+      ...prev,
+      coinImages: {
+        ...prev.coinImages,
+        [coinNumber]: {
+          ...prev.coinImages[coinNumber],
+          [side]: file
+        }
+      }
+    }));
     
     // Clear any existing errors for this field
     const newErrors = {...errors};
-    delete newErrors[`${type}Images`];
+    delete newErrors[`coin${coinNumber}${side === 'front' ? 'Front' : 'Back'}`];
     setErrors(newErrors);
   };
 
@@ -129,22 +150,18 @@ const VerifyCoins = () => {
     setIsSubmitting(true);
     
     try {
-      // Upload images to Supabase Storage
-      const frontImageUrls = [];
-      const backImageUrls = [];
+      // Upload only the first coin's images for now
+      let frontImageUrl = '';
+      let backImageUrl = '';
       
-      for (let i = 0; i < formData.frontImages.length; i++) {
-        const file = formData.frontImages[i];
-        const fileName = `front_${Date.now()}_${i}_${file.name}`;
-        const url = await uploadToSupabase(file, fileName);
-        frontImageUrls.push(url);
+      if (formData.coinImages[1]?.front) {
+        const frontFileName = `front_${Date.now()}_${formData.coinImages[1].front.name}`;
+        frontImageUrl = await uploadToSupabase(formData.coinImages[1].front, frontFileName);
       }
       
-      for (let i = 0; i < formData.backImages.length; i++) {
-        const file = formData.backImages[i];
-        const fileName = `back_${Date.now()}_${i}_${file.name}`;
-        const url = await uploadToSupabase(file, fileName);
-        backImageUrls.push(url);
+      if (formData.coinImages[1]?.back) {
+        const backFileName = `back_${Date.now()}_${formData.coinImages[1].back.name}`;
+        backImageUrl = await uploadToSupabase(formData.coinImages[1].back, backFileName);
       }
 
       // Create verification record
@@ -154,16 +171,13 @@ const VerifyCoins = () => {
           user_id: user?.id,
           coin_name: formData.coin_name,
           phone: formData.phone,
-          email_or_whatsapp: formData.email_or_whatsapp,
-          description: formData.description,
-          front_image_url: frontImageUrls[0],
-          back_image_url: backImageUrls[0],
+          description: formData.description || 'General verification request',
+          front_image_url: frontImageUrl,
+          back_image_url: backImageUrl,
           num_coins: coinCount,
-          payment_status: 'pending',
-          paid: false,
-          redirected_to_agent: false,
-          status: 'pending',
-          submitted_at: new Date().toISOString()
+          payment_status: 'completed',
+          paid: true,
+          status: 'pending'
         })
         .select()
         .single();
@@ -185,7 +199,7 @@ const VerifyCoins = () => {
       
       setTimeout(() => {
         setShowSuccessModal(false);
-        navigate(`/verification-agent?id=${verification.id}`);
+        setShowAgentModal(true);
       }, 2000);
       
     } catch (error: any) {
@@ -210,6 +224,82 @@ const VerifyCoins = () => {
 
   const totalPrice = coinCount * basePrice;
   const hasFreeVerification = coinCount >= 5;
+  const totalCoinsToUpload = hasFreeVerification ? coinCount + 1 : coinCount;
+  
+  const renderCoinUploadBlocks = () => {
+    const blocks = [];
+    for (let i = 1; i <= totalCoinsToUpload; i++) {
+      const isFreeBonus = i > coinCount;
+      blocks.push(
+        <div key={i} className={`mb-6 p-4 border rounded-xl ${isFreeBonus ? 'border-green-300 bg-green-50' : 'border-gray-200'}`}>
+          {isFreeBonus && (
+            <div className="text-center mb-3">
+              <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                🎁 FREE BONUS COIN
+              </span>
+            </div>
+          )}
+          <h4 className="font-semibold text-gray-700 mb-3">Coin {i}</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Front Side */}
+            <div className={`border-2 border-dashed ${errors[`coin${i}Front`] ? 'border-red-300' : 'border-gray-300'} rounded-xl p-6 flex flex-col items-center justify-center hover:border-blue-400 transition-colors`}>
+              <Upload className="h-8 w-8 text-gray-400 mb-2" />
+              <p className="text-sm text-gray-600 text-center mb-3">
+                <strong>Coin {i} - Front Side</strong>
+              </p>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileUpload(e.target.files?.[0], i, 'front')}
+                className="hidden"
+                id={`coin${i}-front-upload`}
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-royal text-royal hover:bg-blue-50 rounded-xl"
+                onClick={() => document.getElementById(`coin${i}-front-upload`)?.click()}
+              >
+                Select Image
+              </Button>
+              {formData.coinImages[i]?.front && (
+                <p className="text-sm text-green-600 mt-2">✓ Image selected</p>
+              )}
+              {errors[`coin${i}Front`] && <p className="text-red-500 text-xs mt-2 flex items-center"><AlertCircle className="h-3 w-3 mr-1" />{errors[`coin${i}Front`]}</p>}
+            </div>
+
+            {/* Back Side */}
+            <div className={`border-2 border-dashed ${errors[`coin${i}Back`] ? 'border-red-300' : 'border-gray-300'} rounded-xl p-6 flex flex-col items-center justify-center hover:border-blue-400 transition-colors`}>
+              <Upload className="h-8 w-8 text-gray-400 mb-2" />
+              <p className="text-sm text-gray-600 text-center mb-3">
+                <strong>Coin {i} - Back Side</strong>
+              </p>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileUpload(e.target.files?.[0], i, 'back')}
+                className="hidden"
+                id={`coin${i}-back-upload`}
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-royal text-royal hover:bg-blue-50 rounded-xl"
+                onClick={() => document.getElementById(`coin${i}-back-upload`)?.click()}
+              >
+                Select Image
+              </Button>
+              {formData.coinImages[i]?.back && (
+                <p className="text-sm text-green-600 mt-2">✓ Image selected</p>
+              )}
+              {errors[`coin${i}Back`] && <p className="text-red-500 text-xs mt-2 flex items-center"><AlertCircle className="h-3 w-3 mr-1" />{errors[`coin${i}Back`]}</p>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return blocks;
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -266,16 +356,16 @@ const VerifyCoins = () => {
                 <CardHeader>
                   <CardTitle className="text-royal">Your Details</CardTitle>
                   <CardDescription>
-                    Please provide your contact information for verification updates.
+                    Please provide your basic information for verification updates.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form className="space-y-6">
                     <div className="space-y-2">
-                      <Label htmlFor="coin_name">Coin Name *</Label>
+                      <Label htmlFor="coin_name">Full Name *</Label>
                       <Input 
                         id="coin_name" 
-                        placeholder="Enter the name of your coin" 
+                        placeholder="Enter your full name" 
                         value={formData.coin_name}
                         onChange={(e) => setFormData({...formData, coin_name: e.target.value})}
                         className={`rounded-xl ${errors.coin_name ? 'border-red-500' : ''}`}
@@ -285,27 +375,20 @@ const VerifyCoins = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number *</Label>
+                      <Label htmlFor="phone">Phone Number (10 digits) *</Label>
                       <Input 
                         id="phone" 
-                        placeholder="+91 98765 43210" 
+                        placeholder="9876543210" 
                         value={formData.phone}
-                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                          setFormData({...formData, phone: value});
+                        }}
                         className={`rounded-xl ${errors.phone ? 'border-red-500' : ''}`}
+                        maxLength={10}
                         required 
                       />
                       {errors.phone && <p className="text-red-500 text-sm flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.phone}</p>}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="email_or_whatsapp">Email or WhatsApp (Optional)</Label>
-                      <Input 
-                        id="email_or_whatsapp" 
-                        placeholder="email@example.com or WhatsApp number" 
-                        value={formData.email_or_whatsapp}
-                        onChange={(e) => setFormData({...formData, email_or_whatsapp: e.target.value})}
-                        className="rounded-xl"
-                      />
                     </div>
                   </form>
                 </CardContent>
@@ -325,77 +408,66 @@ const VerifyCoins = () => {
                 <CardHeader>
                   <CardTitle className="text-royal">Upload Your Coins</CardTitle>
                   <CardDescription>
-                    Upload clear photos of both sides of your coin(s) and tell us what you'd like to know.
+                    Select how many coins you want to verify and upload clear photos of both sides.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className={`border-2 border-dashed ${errors.frontImages ? 'border-red-300' : 'border-gray-300'} rounded-xl p-8 flex flex-col items-center justify-center hover:border-blue-400 transition-colors`}>
-                      <Upload className="h-12 w-12 text-gray-400 mb-4" />
-                      <p className="text-sm text-gray-600 text-center mb-4">
-                        Upload photos of the <strong>front side</strong> of your coin(s) *
-                      </p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => handleFileUpload(e.target.files, 'front')}
-                        className="hidden"
-                        id="front-upload"
-                      />
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="border-royal text-royal hover:bg-blue-50 rounded-xl"
-                        onClick={() => document.getElementById('front-upload')?.click()}
+                  {/* Coin Count Selection */}
+                  <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
+                    <h3 className="text-lg font-semibold text-royal mb-4">How many coins do you want to verify?</h3>
+                    <div className="flex items-center justify-center space-x-4 mb-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={decrementCoinCount}
+                        disabled={coinCount <= 1}
+                        className="rounded-xl"
                       >
-                        Select Images
+                        <Minus className="h-4 w-4" />
                       </Button>
-                      {formData.frontImages.length > 0 && (
-                        <p className="text-sm text-green-600 mt-2">{formData.frontImages.length} file(s) selected</p>
-                      )}
-                      {errors.frontImages && <p className="text-red-500 text-xs mt-2 flex items-center"><AlertCircle className="h-3 w-3 mr-1" />{errors.frontImages}</p>}
-                    </div>
-                    
-                    <div className={`border-2 border-dashed ${errors.backImages ? 'border-red-300' : 'border-gray-300'} rounded-xl p-8 flex flex-col items-center justify-center hover:border-blue-400 transition-colors`}>
-                      <Upload className="h-12 w-12 text-gray-400 mb-4" />
-                      <p className="text-sm text-gray-600 text-center mb-4">
-                        Upload photos of the <strong>back side</strong> of your coin(s) *
-                      </p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => handleFileUpload(e.target.files, 'back')}
-                        className="hidden"
-                        id="back-upload"
-                      />
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="border-royal text-royal hover:bg-blue-50 rounded-xl"
-                        onClick={() => document.getElementById('back-upload')?.click()}
+                      <span className="text-2xl font-bold text-royal px-6">{coinCount}</span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={incrementCoinCount}
+                        disabled={coinCount >= 6}
+                        className="rounded-xl"
                       >
-                        Select Images
+                        <Plus className="h-4 w-4" />
                       </Button>
-                      {formData.backImages.length > 0 && (
-                        <p className="text-sm text-green-600 mt-2">{formData.backImages.length} file(s) selected</p>
-                      )}
-                      {errors.backImages && <p className="text-red-500 text-xs mt-2 flex items-center"><AlertCircle className="h-3 w-3 mr-1" />{errors.backImages}</p>}
                     </div>
+                    <div className="text-center">
+                      <p className="text-lg font-semibold text-royal">
+                        {coinCount} coin{coinCount > 1 ? 's' : ''} = ₹{totalPrice}
+                      </p>
+                      <p className="text-sm text-gray-600">₹20 per coin verification</p>
+                      {hasFreeVerification && (
+                        <div className="mt-3 p-3 bg-green-100 rounded-xl border border-green-200">
+                          <p className="text-sm font-medium text-green-800">
+                            🎁 Special Offer: Get 1 coin verification FREE! (Total: {totalCoinsToUpload} coins)
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Dynamic Coin Upload Blocks */}
+                  <div className="space-y-4">
+                    {renderCoinUploadBlocks()}
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="description">What would you like to know about this coin? *</Label>
+                    <Label htmlFor="description">What would you like to know about your coin? (Optional)</Label>
                     <Textarea 
                       id="description" 
                       placeholder="e.g., Is this coin authentic? What's its estimated value? What year is it from? Any specific details you want verified..."
-                      rows={4}
+                      rows={3}
                       value={formData.description}
                       onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      className={`resize-none rounded-xl ${errors.description ? 'border-red-500' : ''}`}
+                      className="resize-none rounded-xl"
                     />
-                    {errors.description && <p className="text-red-500 text-sm flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.description}</p>}
                   </div>
                   
                   <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
@@ -434,41 +506,16 @@ const VerifyCoins = () => {
                 </CardHeader>
                 <CardContent className="text-center space-y-6">
                   <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
-                    <h3 className="text-lg font-semibold text-royal mb-4">Number of Coins</h3>
-                    <div className="flex items-center justify-center space-x-4 mb-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={decrementCoinCount}
-                        disabled={coinCount <= 1}
-                        className="rounded-xl"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="text-2xl font-bold text-royal px-6">{coinCount}</span>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={incrementCoinCount}
-                        disabled={coinCount >= 6}
-                        className="rounded-xl"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-xl font-semibold text-royal">
-                        Total: ₹{totalPrice} for {coinCount} coin{coinCount > 1 ? 's' : ''}
-                      </p>
-                      <p className="text-sm text-gray-600">₹20 per coin verification</p>
+                    <h3 className="text-lg font-semibold text-royal mb-4">Verification Summary</h3>
+                    <div className="space-y-2 mb-4">
+                      <p><strong>Coins to verify:</strong> {totalCoinsToUpload} ({coinCount} paid + {hasFreeVerification ? '1 free' : '0 free'})</p>
+                      <p><strong>Total price:</strong> ₹{totalPrice}</p>
                     </div>
                     
                     {hasFreeVerification && (
-                      <div className="mt-4 p-3 bg-green-100 rounded-xl border border-green-200">
-                        <p className="text-sm font-medium text-green-800 text-center">
-                          🎁 Special Offer: Get 1 coin verification FREE when uploading 5 or more!
+                      <div className="mb-4 p-3 bg-green-100 rounded-xl border border-green-200">
+                        <p className="text-sm font-medium text-green-800">
+                          🎁 You've earned 1 FREE coin verification!
                         </p>
                       </div>
                     )}
@@ -477,14 +524,14 @@ const VerifyCoins = () => {
                   <div className="bg-gray-50 p-6 rounded-xl">
                     <h4 className="font-semibold text-gray-700 mb-4 flex items-center justify-center">
                       <Award className="mr-2 text-gold" size={20} />
-                      What you'll receive:
+                      Our expert will analyze:
                     </h4>
                     <ul className="text-left text-gray-600 space-y-2 max-w-md mx-auto">
-                      <li className="flex items-center"><CheckCircle className="h-4 w-4 text-green-600 mr-2" />Expert authentication within 48 hours</li>
-                      <li className="flex items-center"><CheckCircle className="h-4 w-4 text-green-600 mr-2" />Detailed condition assessment report</li>
-                      <li className="flex items-center"><CheckCircle className="h-4 w-4 text-green-600 mr-2" />Estimated market value analysis</li>
-                      <li className="flex items-center"><CheckCircle className="h-4 w-4 text-green-600 mr-2" />High-resolution verification certificate</li>
-                      <li className="flex items-center"><CheckCircle className="h-4 w-4 text-green-600 mr-2" />Direct access to live agent support</li>
+                      <li className="flex items-center"><CheckCircle className="h-4 w-4 text-green-600 mr-2" />🔍 Authenticity verification</li>
+                      <li className="flex items-center"><CheckCircle className="h-4 w-4 text-green-600 mr-2" />💰 Current market price</li>
+                      <li className="flex items-center"><CheckCircle className="h-4 w-4 text-green-600 mr-2" />🏭 Metal composition analysis</li>
+                      <li className="flex items-center"><CheckCircle className="h-4 w-4 text-green-600 mr-2" />📈 Future valuation insights</li>
+                      <li className="flex items-center"><CheckCircle className="h-4 w-4 text-green-600 mr-2" />📅 Era and historical context</li>
                     </ul>
                   </div>
                 </CardContent>
@@ -537,8 +584,50 @@ const VerifyCoins = () => {
             <CheckCircle className="h-16 w-16 text-green-600" />
             <h3 className="text-xl font-semibold text-green-800">Payment Successful!</h3>
             <p className="text-center text-gray-600">
-              Redirecting to our expert team...
+              Connecting you to our expert team...
             </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Agent Support Modal */}
+      <Dialog open={showAgentModal} onOpenChange={setShowAgentModal}>
+        <DialogContent className="sm:max-w-lg rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-center text-royal">Live Agent Support</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center space-y-4 p-6">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-royal">Our expert is now ready to guide you!</h3>
+            <p className="text-center text-gray-600">
+              Your coin verification is in progress. Our numismatic expert will analyze your submission and provide detailed insights.
+            </p>
+            <div className="w-full bg-blue-50 p-4 rounded-xl">
+              <h4 className="font-semibold text-blue-800 mb-2">What happens next:</h4>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• Expert analysis begins immediately</li>
+                <li>• You'll receive updates via phone/SMS</li>
+                <li>• Detailed report ready within 24-48 hours</li>
+                <li>• Live chat support available</li>
+              </ul>
+            </div>
+            <div className="flex space-x-3 w-full">
+              <Button 
+                onClick={() => navigate('/verification-agent')}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+              >
+                View Live Support
+              </Button>
+              <Button 
+                onClick={() => setShowAgentModal(false)}
+                variant="outline"
+                className="flex-1 rounded-xl"
+              >
+                Close
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

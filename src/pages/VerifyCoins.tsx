@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -24,10 +23,10 @@ const VerifyCoins = () => {
   const [user, setUser] = useState<any>(null);
   
   const [formData, setFormData] = useState({
-    name: '',
+    coin_name: '',
     phone: '',
-    contact: '',
-    question: '',
+    email_or_whatsapp: '',
+    description: '',
     frontImages: [] as File[],
     backImages: [] as File[]
   });
@@ -45,7 +44,7 @@ const VerifyCoins = () => {
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.coin_name.trim()) newErrors.coin_name = 'Coin name is required';
     if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
     
     setErrors(newErrors);
@@ -57,7 +56,7 @@ const VerifyCoins = () => {
     
     if (formData.frontImages.length === 0) newErrors.frontImages = 'Front side photo is required';
     if (formData.backImages.length === 0) newErrors.backImages = 'Back side photo is required';
-    if (!formData.question.trim()) newErrors.question = 'Please tell us what you want to know about your coin';
+    if (!formData.description.trim()) newErrors.description = 'Please tell us what you want to know about your coin';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -153,15 +152,18 @@ const VerifyCoins = () => {
         .from('coin_verification')
         .insert({
           user_id: user?.id,
-          name: formData.name,
+          coin_name: formData.coin_name,
           phone: formData.phone,
-          contact: formData.contact,
-          question: formData.question,
-          front_image_urls: frontImageUrls,
-          back_image_urls: backImageUrls,
-          coin_count: coinCount,
-          total_amount: totalPrice,
-          status: 'pending'
+          email_or_whatsapp: formData.email_or_whatsapp,
+          description: formData.description,
+          front_image_url: frontImageUrls[0],
+          back_image_url: backImageUrls[0],
+          num_coins: coinCount,
+          payment_status: 'pending',
+          paid: false,
+          redirected_to_agent: false,
+          status: 'pending',
+          submitted_at: new Date().toISOString()
         })
         .select()
         .single();
@@ -270,16 +272,16 @@ const VerifyCoins = () => {
                 <CardContent>
                   <form className="space-y-6">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Full Name *</Label>
+                      <Label htmlFor="coin_name">Coin Name *</Label>
                       <Input 
-                        id="name" 
-                        placeholder="Enter your full name" 
-                        value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        className={`rounded-xl ${errors.name ? 'border-red-500' : ''}`}
+                        id="coin_name" 
+                        placeholder="Enter the name of your coin" 
+                        value={formData.coin_name}
+                        onChange={(e) => setFormData({...formData, coin_name: e.target.value})}
+                        className={`rounded-xl ${errors.coin_name ? 'border-red-500' : ''}`}
                         required 
                       />
-                      {errors.name && <p className="text-red-500 text-sm flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.name}</p>}
+                      {errors.coin_name && <p className="text-red-500 text-sm flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.coin_name}</p>}
                     </div>
                     
                     <div className="space-y-2">
@@ -296,12 +298,12 @@ const VerifyCoins = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="contact">Email or WhatsApp (Optional)</Label>
+                      <Label htmlFor="email_or_whatsapp">Email or WhatsApp (Optional)</Label>
                       <Input 
-                        id="contact" 
+                        id="email_or_whatsapp" 
                         placeholder="email@example.com or WhatsApp number" 
-                        value={formData.contact}
-                        onChange={(e) => setFormData({...formData, contact: e.target.value})}
+                        value={formData.email_or_whatsapp}
+                        onChange={(e) => setFormData({...formData, email_or_whatsapp: e.target.value})}
                         className="rounded-xl"
                       />
                     </div>
@@ -384,16 +386,16 @@ const VerifyCoins = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="question">What would you like to know about this coin? *</Label>
+                    <Label htmlFor="description">What would you like to know about this coin? *</Label>
                     <Textarea 
-                      id="question" 
+                      id="description" 
                       placeholder="e.g., Is this coin authentic? What's its estimated value? What year is it from? Any specific details you want verified..."
                       rows={4}
-                      value={formData.question}
-                      onChange={(e) => setFormData({...formData, question: e.target.value})}
-                      className={`resize-none rounded-xl ${errors.question ? 'border-red-500' : ''}`}
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      className={`resize-none rounded-xl ${errors.description ? 'border-red-500' : ''}`}
                     />
-                    {errors.question && <p className="text-red-500 text-sm flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.question}</p>}
+                    {errors.description && <p className="text-red-500 text-sm flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.description}</p>}
                   </div>
                   
                   <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">

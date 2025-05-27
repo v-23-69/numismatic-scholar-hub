@@ -1,108 +1,88 @@
 
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { WishlistProvider } from './context/WishlistContext';
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState, createContext } from "react";
-import Index from "./pages/Index";
-import Courses from "./pages/Courses";
-import CoinsMarket from "./pages/Marketplace";
-import VerifyCoins from "./pages/VerifyCoins";
-import VerificationAgent from "./pages/VerificationAgent";
-import Community from "./pages/Community";
-import About from "./pages/About";
-import Profile from "./pages/Profile";
-import Authenticate from "./pages/Authenticate";
-import NotFound from "./pages/NotFound";
-import WelcomeModal from "./components/WelcomeModal";
-import LegalPage from "./pages/LegalPage";
-import Mentors from "./pages/Mentors";
-import Articles from "./pages/Articles";
-import Wishlist from "./pages/Wishlist";
-import Purchases from "./pages/Purchases";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
-import RefundPolicy from "./pages/RefundPolicy";
-import VerificationProcess from "./pages/VerificationProcess";
-import CookiePolicy from "./pages/CookiePolicy";
-import AgentSupport from "./pages/AgentSupport";
-import PromotionalPopup from "./components/PromotionalPopup";
-import { WishlistProvider } from "./context/WishlistContext";
-import supabase from '@/lib/supabaseClient';
 
-// Create a context to indicate if Supabase is properly configured
-export const ConfigContext = createContext({
-  supabaseConfigured: false,
-  supabaseClient: null as any,
-});
+// Pages
+import Index from './pages/Index';
+import About from './pages/About';
+import Courses from './pages/Courses';
+import Marketplace from './pages/Marketplace';
+import Community from './pages/Community';
+import Articles from './pages/Articles';
+import Profile from './pages/Profile';
+import Login from './pages/Login';
+import Wishlist from './pages/Wishlist';
+import Purchases from './pages/Purchases';
+import Mentors from './pages/Mentors';
+import Authenticate from './pages/Authenticate';
+import VerifyCoins from './pages/VerifyCoins';
+import VerificationProcess from './pages/VerificationProcess';
+import VerificationAgent from './pages/VerificationAgent';
+import AgentSupport from './pages/AgentSupport';
+import LiveSupport from './pages/LiveSupport';
+import LegalPage from './pages/LegalPage';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import RefundPolicy from './pages/RefundPolicy';
+import CookiePolicy from './pages/CookiePolicy';
+import NotFound from './pages/NotFound';
 
-const App = () => {
-  // Create a new QueryClient instance inside the component
-  const [queryClient] = useState(() => new QueryClient());
-  
-  // Check if Supabase environment variables are available
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  const supabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+// Components
+import PromotionalPopup from './components/PromotionalPopup';
+import WelcomeModal from './components/WelcomeModal';
+import FloatingActionButton from './components/FloatingActionButton';
 
-  return (
-    <ConfigContext.Provider value={{ supabaseConfigured, supabaseClient: supabase }}>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <WishlistProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <WelcomeModal />
-              <PromotionalPopup />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/courses" element={<Courses />} />
-                <Route path="/courses/:courseId" element={<Courses />} />
-                <Route path="/coins-market" element={<CoinsMarket />} />
-                <Route path="/coins-market/:coinId" element={<CoinsMarket />} />
-                <Route path="/verify-coins" element={<VerifyCoins />} />
-                <Route path="/verification-agent" element={<VerificationAgent />} />
-                <Route path="/community" element={<Community />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/authenticate" element={<Authenticate />} />
-                <Route path="/login" element={<Authenticate />} />
-                <Route path="/mentors" element={<Mentors />} />
-                <Route path="/mentors/:mentorId" element={<Mentors />} />
-                <Route path="/articles" element={<Articles />} />
-                <Route path="/articles/:articleId" element={<Articles />} />
-                <Route path="/wishlist" element={<Wishlist />} />
-                <Route path="/purchases" element={<Purchases />} />
-                <Route path="/agent-support" element={<AgentSupport />} />
-                
-                {/* Legal Pages - New individual pages */}
-                <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
-                <Route path="/legal/terms-of-service" element={<TermsOfService />} />
-                <Route path="/legal/refund-policy" element={<RefundPolicy />} />
-                <Route path="/legal/verification-process" element={<VerificationProcess />} />
-                <Route path="/legal/cookie-policy" element={<CookiePolicy />} />
-                
-                {/* Legacy Legal Pages - Keep existing LegalPage for backwards compatibility */}
-                <Route path="/legal/privacy" element={<LegalPage type="privacy" />} />
-                <Route path="/legal/terms" element={<LegalPage type="terms" />} />
-                <Route path="/legal/refund" element={<LegalPage type="refund" />} />
-                <Route path="/legal/verification" element={<LegalPage type="verification" />} />
-                <Route path="/legal/cookie" element={<LegalPage type="cookie" />} />
-                
-                {/* Search Results */}
-                <Route path="/search" element={<Index />} />
-                
-                {/* Catch-all */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </WishlistProvider>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ConfigContext.Provider>
-  );
+import './App.css';
+
+const queryClient = new QueryClient();
+
+// Helper function to scroll to top
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 };
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <WishlistProvider>
+          <div className="App">
+            <Toaster />
+            <PromotionalPopup />
+            <WelcomeModal />
+            <FloatingActionButton />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/courses" element={<Courses />} />
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/community" element={<Community />} />
+              <Route path="/articles" element={<Articles />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/purchases" element={<Purchases />} />
+              <Route path="/mentors" element={<Mentors />} />
+              <Route path="/authenticate" element={<Authenticate />} />
+              <Route path="/verify-coins" element={<VerifyCoins />} />
+              <Route path="/verification-process" element={<VerificationProcess />} />
+              <Route path="/verification-agent" element={<VerificationAgent />} />
+              <Route path="/agent-support" element={<AgentSupport />} />
+              <Route path="/live-support" element={<LiveSupport />} />
+              <Route path="/legal" element={<LegalPage />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/refund" element={<RefundPolicy />} />
+              <Route path="/cookies" element={<CookiePolicy />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+        </WishlistProvider>
+      </Router>
+    </QueryClientProvider>
+  );
+}
 
 export default App;

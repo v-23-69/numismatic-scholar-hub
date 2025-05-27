@@ -62,6 +62,22 @@
   animation: cartPulse 0.5s ease-in-out;
 }
 
+/* Popup animation */
+@keyframes scale-in {
+  0% { 
+    transform: scale(0.95) translateY(10px);
+    opacity: 0;
+  }
+  100% { 
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out;
+}
+
 /* Profile theme colors */
 .theme-royal { color: #0B2C5E; }
 .theme-gold { color: #D4AF37; }

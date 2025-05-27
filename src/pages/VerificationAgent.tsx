@@ -1,246 +1,384 @@
 
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Headphones, MessageCircle, Phone, Clock, CheckCircle, Star, Award, Shield, TrendingUp, Coins } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
+import { Send, User, Bot, Clock, Shield, DollarSign, TrendingUp } from 'lucide-react';
+import supabase from '@/lib/supabaseClient';
+
+interface Message {
+  id: string;
+  verification_id: string;
+  sender: 'user' | 'agent';
+  message: string;
+  created_at: string;
+}
+
+interface VerificationData {
+  id: string;
+  name: string;
+  status: string;
+  coin_count: number;
+  total_amount: number;
+  created_at: string;
+}
 
 const VerificationAgent = () => {
-  // Sample dummy data for coin verification
-  const verificationResult = {
-    coinName: "1947 British India 1 Rupee",
-    authentication: "Authentic",
-    metal: "Silver (0.500)",
-    year: "1947",
-    mintMark: "B (Bombay)",
-    condition: "Very Fine (VF-30)",
-    rarity: "Common",
-    marketValue: {
-      current: "₹800 - ₹1,200",
-      trend: "+15% (6 months)"
-    },
-    futurePrediction: "Stable growth expected due to historical significance",
-    expertNotes: "This coin represents the last year of British rule in India, making it historically significant. The condition is good with clear details visible."
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [verification, setVerification] = useState<VerificationData | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [credits, setCredits] = useState(0);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const verificationId = searchParams.get('id');
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+      
+      if (!session?.user) {
+        navigate('/authenticate');
+        return;
+      }
+    };
+    getUser();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!verificationId) {
+      navigate('/verify-coins');
+      return;
+    }
+    
+    fetchVerificationData();
+    fetchMessages();
+    fetchCredits();
+    
+    // Subscribe to real-time messages
+    const subscription = supabase
+      .channel('agent_messages')
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'agent_messages',
+          filter: `verification_id=eq.${verificationId}`
+        }, 
+        (payload) => {
+          setMessages(prev => [...prev, payload.new as Message]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [verificationId, navigate]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-grow py-12">
-        <div className="container mx-auto px-4 max-w-6xl">
-          {/* Hero Section */}
-          <div className="text-center mb-12">
-            <div className="mb-6">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
-                <CheckCircle className="h-10 w-10 text-green-600" />
-              </div>
-              <h1 className="text-4xl font-bold text-royal font-playfair mb-4">
-                👋 Welcome to CoinGlobe Expert Analysis
-              </h1>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Our expert team has completed the verification of your coin. Here's your detailed analysis report.
-              </p>
-            </div>
-            
-            <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-8">
-              <div className="flex items-center justify-center mb-3">
-                <CheckCircle className="h-6 w-6 text-green-600 mr-2" />
-                <span className="font-semibold text-green-800">Verification Complete!</span>
-              </div>
-              <p className="text-green-700">
-                Your coin has been thoroughly analyzed by our certified numismatic experts.
-              </p>
-            </div>
-          </div>
+  const fetchVerificationData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('coin_verification')
+        .select('*')
+        .eq('id', verificationId)
+        .single();
+      
+      if (error) throw error;
+      setVerification(data);
+    } catch (error) {
+      console.error('Error fetching verification:', error);
+    }
+  };
 
-          {/* Verification Results */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            {/* Authentication Card */}
-            <Card className="border-2 border-green-200">
-              <CardHeader className="text-center bg-green-50">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Shield className="h-6 w-6 text-green-600" />
-                </div>
-                <CardTitle className="text-green-700">Authentication</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6 space-y-4">
-                <div className="text-center">
-                  <Badge className="bg-green-100 text-green-800 text-lg px-4 py-2 rounded-xl">
-                    {verificationResult.authentication}
-                  </Badge>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Coin:</span>
-                    <span className="font-semibold">{verificationResult.coinName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Year:</span>
-                    <span className="font-semibold">{verificationResult.year}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Metal:</span>
-                    <span className="font-semibold">{verificationResult.metal}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Mint Mark:</span>
-                    <span className="font-semibold">{verificationResult.mintMark}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Condition:</span>
-                    <span className="font-semibold">{verificationResult.condition}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+  const fetchMessages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('agent_messages')
+        .select('*')
+        .eq('verification_id', verificationId)
+        .order('created_at', { ascending: true });
+      
+      if (error) throw error;
+      setMessages(data || []);
+      
+      // Add initial agent messages if none exist
+      if (!data || data.length === 0) {
+        await addInitialMessages();
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  };
 
-            {/* Market Value Card */}
-            <Card className="border-2 border-blue-200">
-              <CardHeader className="text-center bg-blue-50">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Coins className="h-6 w-6 text-blue-600" />
-                </div>
-                <CardTitle className="text-blue-700">Market Value</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6 space-y-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600 mb-2">
-                    {verificationResult.marketValue.current}
-                  </div>
-                  <Badge className="bg-blue-100 text-blue-800 rounded-xl">
-                    {verificationResult.marketValue.trend}
-                  </Badge>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Rarity:</span>
-                    <span className="font-semibold">{verificationResult.rarity}</span>
-                  </div>
-                  <div className="bg-blue-50 p-4 rounded-xl">
-                    <div className="flex items-center mb-2">
-                      <TrendingUp className="h-5 w-5 text-blue-600 mr-2" />
-                      <span className="font-semibold text-blue-700">Future Prediction</span>
-                    </div>
-                    <p className="text-sm text-blue-600">{verificationResult.futurePrediction}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+  const fetchCredits = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('verification_credits')
+        .select('credits')
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      const totalCredits = data?.reduce((sum, record) => sum + record.credits, 0) || 0;
+      setCredits(totalCredits);
+    } catch (error) {
+      console.error('Error fetching credits:', error);
+    }
+  };
 
-          {/* Expert Notes */}
-          <Card className="mb-8 border-2 border-gold/20">
-            <CardHeader>
-              <CardTitle className="flex items-center text-gold">
-                <Award className="h-5 w-5 mr-2" />
-                Expert Analysis Notes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700 leading-relaxed">{verificationResult.expertNotes}</p>
-            </CardContent>
-          </Card>
+  const addInitialMessages = async () => {
+    const initialMessages = [
+      {
+        verification_id: verificationId,
+        sender: 'agent',
+        message: `👋 Hello! I'm your coin verification expert. I've received your submission and I'm analyzing your coin(s) now.`
+      },
+      {
+        verification_id: verificationId,
+        sender: 'agent',
+        message: `Based on my initial analysis, here are the findings:\n\n🔍 **Authentication**: Your coin appears to be genuine\n💰 **Market Value**: Estimated ₹150-200\n📅 **Year**: 1965\n🏭 **Metal**: Copper-Nickel alloy\n\nDo you have any specific questions about your coin?`
+      }
+    ];
 
-          {/* Support Options */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-            <Card className="border-2 border-royal/20 hover:border-royal/40 transition-all duration-300">
-              <CardHeader className="text-center">
-                <div className="w-12 h-12 bg-royal/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <MessageCircle className="h-6 w-6 text-royal" />
-                </div>
-                <CardTitle className="text-royal">Have Questions?</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center">
-                <p className="text-gray-600 mb-4">
-                  Connect with our experts for additional clarifications about your coin.
-                </p>
-                <Button className="w-full bg-royal hover:bg-royal-light rounded-xl">
-                  Start Live Chat
-                </Button>
-              </CardContent>
-            </Card>
+    for (const msg of initialMessages) {
+      await supabase.from('agent_messages').insert(msg);
+    }
+  };
 
-            <Card className="border-2 border-gold/20 hover:border-gold/40 transition-all duration-300">
-              <CardHeader className="text-center">
-                <div className="w-12 h-12 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Phone className="h-6 w-6 text-gold" />
-                </div>
-                <CardTitle className="text-gold">Phone Support</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center">
-                <p className="text-gray-600 mb-4">
-                  Speak directly with our numismatic experts for detailed discussions.
-                </p>
-                <div className="mb-4">
-                  <p className="font-semibold text-royal">+91-9876543210</p>
-                  <p className="text-sm text-gray-500">Available 9 AM - 8 PM</p>
-                </div>
-                <Button variant="outline" className="w-full border-gold text-gold hover:bg-gold hover:text-white rounded-xl">
-                  Call Now
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('agent_messages')
+        .insert({
+          verification_id: verificationId,
+          sender: 'user',
+          message: newMessage.trim()
+        });
+      
+      if (error) throw error;
+      
+      setNewMessage('');
+      
+      // Simulate agent response after a delay
+      setTimeout(async () => {
+        const responses = [
+          "Thank you for your question. Let me analyze that for you...",
+          "Based on the coin details you've provided, I can see that...",
+          "That's a great question! Here's what I found...",
+          "I'll need to examine this more closely. Give me a moment...",
+        ];
+        
+        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        
+        await supabase
+          .from('agent_messages')
+          .insert({
+            verification_id: verificationId,
+            sender: 'agent',
+            message: randomResponse
+          });
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Failed to send message",
+        description: "Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
 
-          {/* Expert Team */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="text-center">Your Expert Team</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-royal/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Star className="h-8 w-8 text-royal" />
-                  </div>
-                  <h4 className="font-semibold">Dr. Rajesh Kumar</h4>
-                  <p className="text-sm text-gray-600">Senior Numismatist</p>
-                  <p className="text-xs text-gray-500">25+ years experience</p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Star className="h-8 w-8 text-gold" />
-                  </div>
-                  <h4 className="font-semibold">Priya Sharma</h4>
-                  <p className="text-sm text-gray-600">Authentication Specialist</p>
-                  <p className="text-xs text-gray-500">15+ years experience</p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Star className="h-8 w-8 text-green-600" />
-                  </div>
-                  <h4 className="font-semibold">Amit Patel</h4>
-                  <p className="text-sm text-gray-600">Valuation Expert</p>
-                  <p className="text-xs text-gray-500">20+ years experience</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
 
-          {/* Verification Credits Display */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold text-blue-800 mb-2">Your Account</h3>
-              <p className="text-blue-600">You have <span className="font-bold">1 free verification</span> remaining</p>
-              <p className="text-sm text-blue-500 mt-1">Bonus credit from your recent purchase</p>
-            </div>
-          </div>
-
-          {/* CTA Section */}
+  if (!verification) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
-            <h3 className="text-xl font-semibold text-royal mb-4">
-              Need to verify more coins?
-            </h3>
-            <div className="space-x-4">
-              <Button onClick={() => window.location.href = '/verify-coins'} className="bg-royal hover:bg-royal-light rounded-xl">
-                Submit Another Coin
-              </Button>
-              <Button onClick={() => window.location.href = '/courses'} variant="outline" className="border-gold text-gold hover:bg-gold hover:text-white rounded-xl">
-                Explore Courses
-              </Button>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-royal mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading verification details...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <Navbar />
+      <main className="flex-grow p-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-royal mb-2">
+                  👋 Welcome to CoinGlobe Live Support
+                </h1>
+                <p className="text-gray-600 mb-4">
+                  Our expert will now guide you about your coin verification.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    <Shield className="h-3 w-3 mr-1" />
+                    Verification ID: {verification.id.slice(0, 8)}
+                  </Badge>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    Status: {verification.status}
+                  </Badge>
+                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {new Date(verification.created_at).toLocaleDateString()}
+                  </Badge>
+                </div>
+              </div>
+              {credits > 0 && (
+                <Card className="mt-4 md:mt-0">
+                  <CardContent className="p-4">
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">Free Verifications</p>
+                      <p className="text-2xl font-bold text-green-600">{credits}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Verification Summary */}
+            <div className="lg:col-span-1">
+              <Card className="rounded-xl">
+                <CardHeader>
+                  <CardTitle className="text-royal">Verification Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Coins</span>
+                    <span className="font-semibold">{verification.coin_count}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Amount Paid</span>
+                    <span className="font-semibold">₹{verification.total_amount}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Customer</span>
+                    <span className="font-semibold">{verification.name}</span>
+                  </div>
+                  
+                  <div className="pt-4 border-t">
+                    <h4 className="font-semibold text-gray-700 mb-3">Quick Analysis</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <Shield className="h-4 w-4 text-green-600 mr-2" />
+                        <span className="text-sm">Authentic</span>
+                      </div>
+                      <div className="flex items-center">
+                        <DollarSign className="h-4 w-4 text-blue-600 mr-2" />
+                        <span className="text-sm">₹150-200 value</span>
+                      </div>
+                      <div className="flex items-center">
+                        <TrendingUp className="h-4 w-4 text-purple-600 mr-2" />
+                        <span className="text-sm">Good condition</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Chat Interface */}
+            <div className="lg:col-span-2">
+              <Card className="rounded-xl h-[600px] flex flex-col">
+                <CardHeader>
+                  <CardTitle className="text-royal">Live Chat with Expert</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow flex flex-col p-0">
+                  {/* Messages */}
+                  <div className="flex-grow overflow-y-auto p-4 space-y-4">
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-xl ${
+                            message.sender === 'user'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          <div className="flex items-center mb-1">
+                            {message.sender === 'agent' ? (
+                              <Bot className="h-4 w-4 mr-2" />
+                            ) : (
+                              <User className="h-4 w-4 mr-2" />
+                            )}
+                            <span className="text-xs opacity-75">
+                              {message.sender === 'agent' ? 'Expert' : 'You'}
+                            </span>
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap">{message.message}</p>
+                          <p className="text-xs opacity-75 mt-1">
+                            {new Date(message.created_at).toLocaleTimeString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  {/* Message Input */}
+                  <div className="border-t p-4">
+                    <div className="flex space-x-2">
+                      <Input
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Type your message..."
+                        className="flex-grow rounded-xl"
+                      />
+                      <Button
+                        onClick={sendMessage}
+                        disabled={!newMessage.trim()}
+                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

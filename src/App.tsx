@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Courses from "./pages/Courses";
 import CoinsMarket from "./pages/Marketplace";
 import VerifyCoins from "./pages/VerifyCoins";
+import VerificationAgent from "./pages/VerificationAgent";
 import Community from "./pages/Community";
 import About from "./pages/About";
 import Profile from "./pages/Profile";
@@ -62,6 +63,7 @@ const App = () => {
                 <Route path="/coins-market" element={<CoinsMarket />} />
                 <Route path="/coins-market/:coinId" element={<CoinsMarket />} />
                 <Route path="/verify-coins" element={<VerifyCoins />} />
+                <Route path="/verification-agent" element={<VerificationAgent />} />
                 <Route path="/community" element={<Community />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/profile" element={<Profile />} />

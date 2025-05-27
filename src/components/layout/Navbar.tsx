@@ -105,7 +105,7 @@ const Navbar = () => {
               <button 
                 key={link.name} 
                 onClick={() => handleNavClick(link.path)}
-                className={`px-4 py-2 rounded-md transition-all duration-300 font-medium ${
+                className={`px-4 py-2 rounded-xl transition-all duration-300 font-medium ${
                   isActive 
                     ? 'text-blue-600 bg-blue-50' 
                     : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
@@ -161,7 +161,7 @@ const Navbar = () => {
             </Link>
           ) : (
             <Link to="/authenticate">
-              <Button variant="outline" className="border-royal text-royal hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors duration-200">
+              <Button variant="outline" className="border-royal text-royal hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors duration-200 rounded-xl">
                 <LogIn className="h-4 w-4 mr-2" />
                 Sign In
               </Button>
@@ -211,7 +211,7 @@ const Navbar = () => {
                 handleNavClick(link.path);
                 toggleNav();
               }}
-              className="block w-full text-left px-3 py-2 rounded-md text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              className="block w-full text-left px-3 py-2 rounded-xl text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
             >
               {link.name}
             </button>
@@ -220,7 +220,7 @@ const Navbar = () => {
           <div className="mt-4 flex space-x-2 px-3">
             {user ? (
               <Link to="/profile" className="w-full">
-                <Button className="w-full bg-royal hover:bg-blue-600 text-white transition-colors">
+                <Button className="w-full bg-royal hover:bg-blue-600 text-white transition-colors rounded-xl">
                   <User className="h-4 w-4 mr-2" />
                   My Profile
                 </Button>
@@ -228,12 +228,12 @@ const Navbar = () => {
             ) : (
               <>
                 <Link to="/authenticate" className="w-1/2">
-                  <Button variant="outline" className="w-full border-royal text-royal hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors">
+                  <Button variant="outline" className="w-full border-royal text-royal hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors rounded-xl">
                     Sign In
                   </Button>
                 </Link>
                 <Link to="/authenticate?tab=register" className="w-1/2">
-                  <Button className="w-full bg-royal hover:bg-blue-600 text-white transition-colors">
+                  <Button className="w-full bg-royal hover:bg-blue-600 text-white transition-colors rounded-xl">
                     Register
                   </Button>
                 </Link>

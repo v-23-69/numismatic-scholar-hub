@@ -8,26 +8,60 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Calendar, Info, Award, CheckCircle, Plus, Minus } from 'lucide-react';
+import { Upload, Calendar, Info, Award, CheckCircle, Plus, Minus, AlertCircle } from 'lucide-react';
 
 const VerifyCoins = () => {
   const { toast } = useToast();
   const [verificationStep, setVerificationStep] = useState(1);
   const [coinCount, setCoinCount] = useState(1);
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    contact: '',
+    question: '',
+    frontImages: [] as File[],
+    backImages: [] as File[]
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const basePrice = 20;
   
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+    if (!formData.question.trim()) newErrors.question = 'Please tell us what you want to know about your coin';
+    if (formData.frontImages.length === 0) newErrors.frontImages = 'Front side photo is required';
+    if (formData.backImages.length === 0) newErrors.backImages = 'Back side photo is required';
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmission = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) {
+      toast({
+        title: "Please complete all required fields",
+        description: "Fill in all mandatory information to proceed.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     toast({
-      title: "Verification Request Submitted",
-      description: "Our experts will review your submission within 48 hours.",
+      title: "Payment Successful!",
+      description: "Redirecting to our expert team...",
     });
-    // Redirect to agent support page
-    window.location.href = '/agent-support';
+    
+    // Simulate payment and redirect
+    setTimeout(() => {
+      window.location.href = '/verification-agent';
+    }, 2000);
   };
 
   const incrementCoinCount = () => {
-    setCoinCount(prev => prev + 1);
+    setCoinCount(prev => Math.min(prev + 1, 6));
   };
 
   const decrementCoinCount = () => {
@@ -35,6 +69,7 @@ const VerifyCoins = () => {
   };
 
   const totalPrice = coinCount * basePrice;
+  const hasFreeVerification = coinCount >= 5;
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -88,23 +123,47 @@ const VerifyCoins = () => {
                 <CardContent>
                   <form className="space-y-6">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
-                      <Input id="name" placeholder="Enter your full name" required />
+                      <Label htmlFor="name">Full Name *</Label>
+                      <Input 
+                        id="name" 
+                        placeholder="Enter your full name" 
+                        value={formData.name}
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        className={errors.name ? 'border-red-500' : ''}
+                        required 
+                      />
+                      {errors.name && <p className="text-red-500 text-sm flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.name}</p>}
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <Input id="phone" placeholder="+91 98765 43210" required />
+                      <Label htmlFor="phone">Phone Number *</Label>
+                      <Input 
+                        id="phone" 
+                        placeholder="+91 98765 43210" 
+                        value={formData.phone}
+                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        className={errors.phone ? 'border-red-500' : ''}
+                        required 
+                      />
+                      {errors.phone && <p className="text-red-500 text-sm flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.phone}</p>}
                     </div>
                     
                     <div className="space-y-2">
                       <Label htmlFor="contact">Email or WhatsApp (Optional)</Label>
-                      <Input id="contact" placeholder="email@example.com or WhatsApp number" />
+                      <Input 
+                        id="contact" 
+                        placeholder="email@example.com or WhatsApp number" 
+                        value={formData.contact}
+                        onChange={(e) => setFormData({...formData, contact: e.target.value})}
+                      />
                     </div>
                   </form>
                 </CardContent>
                 <CardFooter className="flex justify-end">
-                  <Button onClick={() => setVerificationStep(2)} className="bg-royal hover:bg-blue-600">
+                  <Button 
+                    onClick={() => setVerificationStep(2)} 
+                    className="bg-royal hover:bg-blue-600 rounded-xl"
+                  >
                     Continue to Upload
                   </Button>
                 </CardFooter>
@@ -121,7 +180,7 @@ const VerifyCoins = () => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Coin Count Selection */}
-                  <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                  <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
                     <h3 className="text-lg font-semibold text-royal mb-4">Number of Coins</h3>
                     <div className="flex items-center justify-center space-x-4 mb-4">
                       <Button
@@ -130,6 +189,7 @@ const VerifyCoins = () => {
                         size="sm"
                         onClick={decrementCoinCount}
                         disabled={coinCount <= 1}
+                        className="rounded-xl"
                       >
                         <Minus className="h-4 w-4" />
                       </Button>
@@ -139,6 +199,8 @@ const VerifyCoins = () => {
                         variant="outline"
                         size="sm"
                         onClick={incrementCoinCount}
+                        disabled={coinCount >= 6}
+                        className="rounded-xl"
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
@@ -150,8 +212,8 @@ const VerifyCoins = () => {
                       <p className="text-sm text-gray-600">₹20 per coin verification</p>
                     </div>
                     
-                    {coinCount >= 5 && (
-                      <div className="mt-4 p-3 bg-green-100 rounded-lg border border-green-200">
+                    {hasFreeVerification && (
+                      <div className="mt-4 p-3 bg-green-100 rounded-xl border border-green-200">
                         <p className="text-sm font-medium text-green-800 text-center">
                           🎁 Special Offer: Get 1 coin verification FREE when uploading 5 or more!
                         </p>
@@ -160,38 +222,43 @@ const VerifyCoins = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center hover:border-blue-400 transition-colors">
+                    <div className={`border-2 border-dashed ${errors.frontImages ? 'border-red-300' : 'border-gray-300'} rounded-xl p-8 flex flex-col items-center justify-center hover:border-blue-400 transition-colors`}>
                       <Upload className="h-12 w-12 text-gray-400 mb-4" />
                       <p className="text-sm text-gray-600 text-center mb-4">
-                        Upload photos of the <strong>front side</strong> of your coin(s)
+                        Upload photos of the <strong>front side</strong> of your coin(s) *
                       </p>
-                      <Button variant="outline" size="sm" className="border-royal text-royal hover:bg-blue-50">
+                      <Button variant="outline" size="sm" className="border-royal text-royal hover:bg-blue-50 rounded-xl">
                         Select Images
                       </Button>
+                      {errors.frontImages && <p className="text-red-500 text-xs mt-2 flex items-center"><AlertCircle className="h-3 w-3 mr-1" />{errors.frontImages}</p>}
                     </div>
                     
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center hover:border-blue-400 transition-colors">
+                    <div className={`border-2 border-dashed ${errors.backImages ? 'border-red-300' : 'border-gray-300'} rounded-xl p-8 flex flex-col items-center justify-center hover:border-blue-400 transition-colors`}>
                       <Upload className="h-12 w-12 text-gray-400 mb-4" />
                       <p className="text-sm text-gray-600 text-center mb-4">
-                        Upload photos of the <strong>back side</strong> of your coin(s)
+                        Upload photos of the <strong>back side</strong> of your coin(s) *
                       </p>
-                      <Button variant="outline" size="sm" className="border-royal text-royal hover:bg-blue-50">
+                      <Button variant="outline" size="sm" className="border-royal text-royal hover:bg-blue-50 rounded-xl">
                         Select Images
                       </Button>
+                      {errors.backImages && <p className="text-red-500 text-xs mt-2 flex items-center"><AlertCircle className="h-3 w-3 mr-1" />{errors.backImages}</p>}
                     </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="question">What would you like to know about this coin?</Label>
+                    <Label htmlFor="question">What would you like to know about this coin? *</Label>
                     <Textarea 
                       id="question" 
                       placeholder="e.g., Is this coin authentic? What's its estimated value? What year is it from? Any specific details you want verified..."
                       rows={4}
-                      className="resize-none"
+                      value={formData.question}
+                      onChange={(e) => setFormData({...formData, question: e.target.value})}
+                      className={`resize-none rounded-xl ${errors.question ? 'border-red-500' : ''}`}
                     />
+                    {errors.question && <p className="text-red-500 text-sm flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.question}</p>}
                   </div>
                   
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
                     <div className="flex items-start">
                       <Info className="text-blue-600 mr-3 mt-1" size={20} />
                       <div>
@@ -207,10 +274,10 @@ const VerifyCoins = () => {
                   </div>
                 </CardContent>
                 <CardFooter className="flex justify-between">
-                  <Button variant="outline" onClick={() => setVerificationStep(1)}>
+                  <Button variant="outline" onClick={() => setVerificationStep(1)} className="rounded-xl">
                     Back
                   </Button>
-                  <Button onClick={() => setVerificationStep(3)} className="bg-royal hover:bg-blue-600">
+                  <Button onClick={() => setVerificationStep(3)} className="bg-royal hover:bg-blue-600 rounded-xl">
                     Proceed to Payment
                   </Button>
                 </CardFooter>
@@ -226,17 +293,17 @@ const VerifyCoins = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="text-center space-y-6">
-                  <div className="bg-royal/10 p-6 rounded-lg">
+                  <div className="bg-royal/10 p-6 rounded-xl">
                     <h3 className="text-3xl font-bold text-royal mb-2">₹{totalPrice}</h3>
                     <p className="text-gray-600">for {coinCount} coin{coinCount > 1 ? 's' : ''} verification</p>
-                    {coinCount >= 5 && (
+                    {hasFreeVerification && (
                       <p className="text-sm text-green-600 font-medium mt-2">
                         ✨ 1 FREE verification included!
                       </p>
                     )}
                   </div>
                   
-                  <div className="bg-gray-50 p-6 rounded-lg">
+                  <div className="bg-gray-50 p-6 rounded-xl">
                     <h4 className="font-semibold text-gray-700 mb-4 flex items-center justify-center">
                       <Award className="mr-2 text-gold" size={20} />
                       What you'll receive:
@@ -251,12 +318,12 @@ const VerifyCoins = () => {
                   </div>
                 </CardContent>
                 <CardFooter className="justify-center space-x-4">
-                  <Button variant="outline" onClick={() => setVerificationStep(2)}>
+                  <Button variant="outline" onClick={() => setVerificationStep(2)} className="rounded-xl">
                     Back to Upload
                   </Button>
                   <Button 
                     onClick={handleSubmission}
-                    className="bg-gold hover:bg-gold/80 text-white font-bold px-8 py-3 text-lg"
+                    className="bg-gold hover:bg-gold/80 text-white font-bold px-8 py-3 text-lg rounded-xl"
                   >
                     Pay ₹{totalPrice} & Submit
                   </Button>

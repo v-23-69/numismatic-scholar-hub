@@ -5,13 +5,13 @@
 
 /* Custom hover effects and transitions */
 @layer components {
-  /* Button hover effects */
+  /* Button hover effects - updated with rounded corners */
   .btn-hover-blue {
-    @apply hover:bg-blue-600 hover:border-blue-600 hover:text-white transition-colors duration-200;
+    @apply hover:bg-blue-600 hover:border-blue-600 hover:text-white transition-colors duration-200 rounded-xl;
   }
   
   .btn-hover-royal {
-    @apply hover:bg-royal hover:border-royal hover:text-white transition-colors duration-200;
+    @apply hover:bg-royal hover:border-royal hover:text-white transition-colors duration-200 rounded-xl;
   }
   
   /* Navbar link hover effect */
@@ -36,13 +36,18 @@
     @apply transition-transform duration-500 hover:scale-105;
   }
   
-  /* Royal theme buttons */
+  /* Royal theme buttons - updated with rounded corners */
   .royal-button {
-    @apply bg-royal text-white hover:bg-blue-600 transition-colors duration-200;
+    @apply bg-royal text-white hover:bg-blue-600 transition-colors duration-200 rounded-xl;
   }
   
   .royal-button-outline {
-    @apply border border-royal text-royal hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors duration-200;
+    @apply border border-royal text-royal hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors duration-200 rounded-xl;
+  }
+  
+  /* Global button styling - rounded corners */
+  button {
+    @apply rounded-xl;
   }
 }
 

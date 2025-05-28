@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,7 +33,7 @@ import supabase from '@/lib/supabaseClient';
 // Create a context to indicate if Supabase is properly configured
 export const ConfigContext = createContext({
   supabaseConfigured: false,
-  supabaseClient: null as any,
+  supabaseClient: supabase,
 });
 
 const App = () => {
@@ -76,6 +75,7 @@ const App = () => {
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/purchases" element={<Purchases />} />
                 <Route path="/agent-support" element={<AgentSupport />} />
+                <Route path="/live-support" element={<AgentSupport />} />
                 
                 {/* Legal Pages - New individual pages */}
                 <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />

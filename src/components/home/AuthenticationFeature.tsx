@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion';
 import { Shield, Clock, Award, Upload, Camera } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 
 const AuthenticationStep = ({ 
@@ -59,6 +59,26 @@ const TrustIndicator = ({
 };
 
 const AuthenticationFeature = () => {
+  const navigate = useNavigate();
+
+  const handleLearnMoreClick = (section: string) => {
+    navigate('/about', { replace: false });
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const element = document.getElementById(section);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
+  const handleGetStartedClick = () => {
+    navigate('/verify-coins');
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  };
+
   return (
     <section className="py-16 bg-gradient-to-b from-white to-gold/5">
       <div className="container mx-auto px-4">
@@ -100,16 +120,19 @@ const AuthenticationFeature = () => {
                   </div>
                   
                   <div className="flex flex-wrap gap-4">
-                    <Link to="/authenticate">
-                      <Button className="bg-gold hover:bg-gold-light text-royal gap-2 font-medium">
-                        <Upload size={18} /> Upload Coin for ₹20
-                      </Button>
-                    </Link>
-                    <Link to="/authentication-samples">
-                      <Button variant="outline" className="border-white text-white hover:bg-white/10">
-                        View Sample Reports
-                      </Button>
-                    </Link>
+                    <Button 
+                      onClick={handleGetStartedClick}
+                      className="bg-gold hover:bg-gold-light text-royal gap-2 font-medium"
+                    >
+                      <Upload size={18} /> Upload Coin for ₹20
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="border-white text-white hover:bg-white/10"
+                      onClick={() => handleLearnMoreClick('authentication')}
+                    >
+                      Learn More
+                    </Button>
                   </div>
                 </div>
 
@@ -183,9 +206,13 @@ const AuthenticationFeature = () => {
                     Take photos in good lighting, without glare. Include both sides of the coin and 
                     any distinctive marks. Higher resolution images lead to more accurate analysis.
                   </p>
-                  <Link to="/photography-guide" className="text-gold font-medium hover:underline flex items-center gap-1">
+                  <Button 
+                    variant="ghost" 
+                    className="text-gold font-medium hover:underline p-0 h-auto"
+                    onClick={() => handleLearnMoreClick('authentication')}
+                  >
                     View Photography Guide
-                  </Link>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -193,11 +220,12 @@ const AuthenticationFeature = () => {
         </div>
 
         <div className="mt-12 text-center">
-          <Link to="/authenticate">
-            <Button className="bg-royal hover:bg-royal-light text-white px-8 py-6 text-lg">
-              Authenticate Your Coin Now
-            </Button>
-          </Link>
+          <Button 
+            onClick={handleGetStartedClick}
+            className="bg-royal hover:bg-royal-light text-white px-8 py-6 text-lg"
+          >
+            Authenticate Your Coin Now
+          </Button>
         </div>
       </div>
     </section>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { Upload, Info, Award, CheckCircle, Plus, Minus, AlertCircle, QrCode, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from 'react-router-dom';
@@ -16,7 +15,6 @@ import supabase from '@/lib/supabaseClient';
 interface FormData {
   coin_name: string;
   phone: string;
-  email_or_whatsapp: string;
   description: string;
   coinImages: Record<number, { front?: File, back?: File }>;
 }
@@ -35,7 +33,6 @@ const VerifyCoins = () => {
   const [formData, setFormData] = useState<FormData>({
     coin_name: '',
     phone: '',
-    email_or_whatsapp: '',
     description: '',
     coinImages: {}
   });
@@ -174,7 +171,6 @@ const VerifyCoins = () => {
           user_id: user?.id,
           coin_name: formData.coin_name,
           phone: formData.phone,
-          email_or_whatsapp: formData.email_or_whatsapp || null,
           description: formData.description || 'General verification request',
           front_image_url: frontImageUrl,
           back_image_url: backImageUrl,
@@ -372,38 +368,27 @@ const VerifyCoins = () => {
                         placeholder="Enter your full name" 
                         value={formData.coin_name}
                         onChange={(e) => setFormData({...formData, coin_name: e.target.value})}
-                        className={`rounded-xl ${errors.coin_name ? 'border-red-500' : ''} placeholder:text-gray-400`}
+                        className={`rounded-xl ${errors.coin_name ? 'border-red-500' : ''}`}
                         required 
                       />
                       {errors.coin_name && <p className="text-red-500 text-sm flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.coin_name}</p>}
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number *</Label>
+                      <Label htmlFor="phone">Phone Number (10 digits) *</Label>
                       <Input 
                         id="phone" 
-                        placeholder="e.g. 9876543210" 
+                        placeholder="9876543210" 
                         value={formData.phone}
                         onChange={(e) => {
                           const value = e.target.value.replace(/\D/g, '').slice(0, 10);
                           setFormData({...formData, phone: value});
                         }}
-                        className={`rounded-xl ${errors.phone ? 'border-red-500' : ''} placeholder:text-gray-400`}
+                        className={`rounded-xl ${errors.phone ? 'border-red-500' : ''}`}
                         maxLength={10}
                         required 
                       />
                       {errors.phone && <p className="text-red-500 text-sm flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.phone}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email_or_whatsapp">Email or WhatsApp No.</Label>
-                      <Input 
-                        id="email_or_whatsapp" 
-                        placeholder="Enter email or WhatsApp number" 
-                        value={formData.email_or_whatsapp}
-                        onChange={(e) => setFormData({...formData, email_or_whatsapp: e.target.value})}
-                        className="rounded-xl placeholder:text-gray-400"
-                      />
                     </div>
                   </form>
                 </CardContent>
@@ -427,14 +412,6 @@ const VerifyCoins = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Info message at the top */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                    <p className="text-blue-700 text-sm flex items-center">
-                      <Info className="h-4 w-4 mr-2" />
-                      ➤ Verify 6 coins and get 1 coin verification free!
-                    </p>
-                  </div>
-
                   {/* Coin Count Selection */}
                   <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
                     <h3 className="text-lg font-semibold text-royal mb-4">How many coins do you want to verify?</h3>
@@ -482,14 +459,14 @@ const VerifyCoins = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="description">What would you like to know about your coin?</Label>
+                    <Label htmlFor="description">What would you like to know about your coin? (Optional)</Label>
                     <Textarea 
                       id="description" 
                       placeholder="e.g., Is this coin authentic? What's its estimated value? What year is it from? Any specific details you want verified..."
                       rows={3}
                       value={formData.description}
                       onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      className="resize-none rounded-xl placeholder:text-gray-400"
+                      className="resize-none rounded-xl"
                     />
                   </div>
                   
@@ -613,11 +590,11 @@ const VerifyCoins = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Agent Support Modal - Fixed with proper background */}
+      {/* Agent Support Modal */}
       <Dialog open={showAgentModal} onOpenChange={setShowAgentModal}>
         <DialogContent className="sm:max-w-lg rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-center text-royal">✅ Live Agent Support</DialogTitle>
+            <DialogTitle className="text-center text-royal">Live Agent Support</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center space-y-4 p-6">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
@@ -625,22 +602,20 @@ const VerifyCoins = () => {
             </div>
             <h3 className="text-xl font-semibold text-royal">Our expert is now ready to guide you!</h3>
             <p className="text-center text-gray-600">
-              Your coin verification service has started.
+              Your coin verification is in progress. Our numismatic expert will analyze your submission and provide detailed insights.
             </p>
             <div className="w-full bg-blue-50 p-4 rounded-xl">
-              <h4 className="font-semibold text-blue-800 mb-2">What happens now:</h4>
+              <h4 className="font-semibold text-blue-800 mb-2">What happens next:</h4>
               <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Instant expert analysis begins</li>
-                <li>• Get insights via live call/chat</li>
-                <li>• PDF report will be shared immediately</li>
+                <li>• Expert analysis begins immediately</li>
+                <li>• You'll receive updates via phone/SMS</li>
+                <li>• Detailed report ready within 24-48 hours</li>
+                <li>• Live chat support available</li>
               </ul>
             </div>
             <div className="flex space-x-3 w-full">
               <Button 
-                onClick={() => {
-                  setShowAgentModal(false);
-                  navigate('/live-support');
-                }}
+                onClick={() => navigate('/verification-agent')}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
               >
                 View Live Support

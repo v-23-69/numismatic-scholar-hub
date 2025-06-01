@@ -69,7 +69,7 @@ const About = () => {
         </section>
         
         {/* What We Do */}
-        <section className="py-16 bg-gray-50">
+        <section className="py-16 bg-gray-50" data-section="authentication">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
@@ -159,8 +159,35 @@ const About = () => {
           </div>
         </section>
 
+        {/* Community Section */}
+        <section className="py-16 bg-gray-50" data-section="community">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto text-center">
+              <h2 className="font-playfair text-3xl font-bold text-royal mb-6">Our Community</h2>
+              <p className="text-lg text-gray-600 mb-8">
+                Join thousands of passionate collectors who share knowledge, showcase their collections, 
+                and build lasting connections in the world of numismatics.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gold/10">
+                  <h3 className="text-xl font-bold text-royal mb-3">Expert Forums</h3>
+                  <p className="text-gray-700">Discuss rare finds and get expert opinions</p>
+                </div>
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gold/10">
+                  <h3 className="text-xl font-bold text-royal mb-3">Collection Showcase</h3>
+                  <p className="text-gray-700">Share your prized coins with fellow enthusiasts</p>
+                </div>
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gold/10">
+                  <h3 className="text-xl font-bold text-royal mb-3">Trading Hub</h3>
+                  <p className="text-gray-700">Connect with verified buyers and sellers</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Contact Us Section */}
-        <section id="contact" className="py-16 bg-gray-50">
+        <section id="contact" className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">

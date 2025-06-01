@@ -8,9 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Info, Award, CheckCircle, Plus, Minus, AlertCircle, QrCode, X } from 'lucide-react';
+import { Upload, Info, Award, CheckCircle, Plus, Minus, AlertCircle, QrCode, X, LogIn } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import supabase from '@/lib/supabaseClient';
 
 interface FormData {
@@ -29,6 +29,7 @@ const VerifyCoins = () => {
   const [showQRModal, setShowQRModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showAgentModal, setShowAgentModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState<any>(null);
   
@@ -145,6 +146,12 @@ const VerifyCoins = () => {
         description: "Fill in all mandatory information to proceed.",
         variant: "destructive"
       });
+      return;
+    }
+    
+    // Check if user is authenticated
+    if (!user) {
+      setShowAuthModal(true);
       return;
     }
     
@@ -576,6 +583,41 @@ const VerifyCoins = () => {
         </div>
       </main>
       
+      {/* Authentication Required Modal */}
+      <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
+        <DialogContent className="sm:max-w-md rounded-xl bg-white border border-gray-200 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-center text-royal flex items-center justify-center gap-2">
+              <LogIn className="h-5 w-5" />
+              Login Required
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center space-y-4 p-6">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+              <LogIn className="h-8 w-8 text-blue-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-royal">Please log in to use this feature</h3>
+            <p className="text-center text-gray-600">
+              You need to be logged in to submit coins for verification. This helps us track your verification history and provide better support.
+            </p>
+            <div className="flex space-x-3 w-full">
+              <Link to="/authenticate" className="flex-1">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl">
+                  Go to Login
+                </Button>
+              </Link>
+              <Button 
+                onClick={() => setShowAuthModal(false)}
+                variant="outline"
+                className="flex-1 rounded-xl"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* QR Code Payment Modal */}
       <Dialog open={showQRModal} onOpenChange={setShowQRModal}>
         <DialogContent className="sm:max-w-md rounded-xl bg-white/95 backdrop-blur-sm border border-gray-200 shadow-2xl">

@@ -1,5 +1,5 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Star, Clock, BookOpen, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { motion } from 'framer-motion';
@@ -42,6 +42,15 @@ const courses = [
 ];
 
 const CourseCard = ({ course, index }: { course: typeof courses[0], index: number }) => {
+  const navigate = useNavigate();
+
+  const handleCourseClick = () => {
+    navigate(`/courses/${course.id}`);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  };
+
   return (
     <motion.div 
       initial={{ y: 20, opacity: 0 }}
@@ -90,12 +99,12 @@ const CourseCard = ({ course, index }: { course: typeof courses[0], index: numbe
             <span className="ml-1 font-medium">{course.rating}</span>
             <span className="ml-1 text-sm text-gray-600">({course.reviews})</span>
           </div>
-          <Link 
-            to={`/courses/${course.id}`} 
+          <button 
+            onClick={handleCourseClick}
             className="text-royal hover:text-gold flex items-center transition-colors"
           >
             View Course <ChevronRight className="h-4 w-4 ml-1" />
-          </Link>
+          </button>
         </div>
       </div>
     </motion.div>
@@ -103,6 +112,15 @@ const CourseCard = ({ course, index }: { course: typeof courses[0], index: numbe
 };
 
 const FeaturedCourses = () => {
+  const navigate = useNavigate();
+
+  const handleViewAllCourses = () => {
+    navigate('/courses');
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  };
+
   return (
     <section className="py-20 bg-royal/5">
       <div className="container mx-auto px-4">
@@ -115,11 +133,13 @@ const FeaturedCourses = () => {
               Learn directly from master numismatists with our carefully curated selection of premium courses.
             </p>
           </div>
-          <Link to="/courses" className="mt-4 md:mt-0">
-            <Button variant="outline" className="border-royal text-royal hover:bg-royal hover:text-white">
-              View All Courses
-            </Button>
-          </Link>
+          <Button 
+            variant="outline" 
+            className="border-royal text-royal hover:bg-royal hover:text-white mt-4 md:mt-0"
+            onClick={handleViewAllCourses}
+          >
+            View All Courses
+          </Button>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -26,6 +27,7 @@ import RefundPolicy from "./pages/RefundPolicy";
 import VerificationProcess from "./pages/VerificationProcess";
 import CookiePolicy from "./pages/CookiePolicy";
 import AgentSupport from "./pages/AgentSupport";
+import LiveSupport from "./pages/LiveSupport";
 import PromotionalPopup from "./components/PromotionalPopup";
 import { WishlistProvider } from "./context/WishlistContext";
 import supabase from '@/lib/supabaseClient';
@@ -75,7 +77,7 @@ const App = () => {
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/purchases" element={<Purchases />} />
                 <Route path="/agent-support" element={<AgentSupport />} />
-                <Route path="/live-support" element={<AgentSupport />} />
+                <Route path="/live-support" element={<LiveSupport />} />
                 
                 {/* Legal Pages - New individual pages */}
                 <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />

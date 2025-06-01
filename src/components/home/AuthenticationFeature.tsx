@@ -61,13 +61,15 @@ const TrustIndicator = ({
 const AuthenticationFeature = () => {
   const navigate = useNavigate();
 
-  const handleLearnMoreClick = (section: string) => {
-    navigate('/about', { replace: false });
+  const handleLearnMoreClick = () => {
+    navigate('/about');
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      const element = document.getElementById(section);
+      // Look for authentication-related content
+      const element = document.querySelector('[data-section="authentication"]') || 
+                     document.querySelector('h2');
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 100);
   };
@@ -129,7 +131,7 @@ const AuthenticationFeature = () => {
                     <Button 
                       variant="outline" 
                       className="border-white text-white hover:bg-white/10"
-                      onClick={() => handleLearnMoreClick('authentication')}
+                      onClick={handleLearnMoreClick}
                     >
                       Learn More
                     </Button>
@@ -209,7 +211,7 @@ const AuthenticationFeature = () => {
                   <Button 
                     variant="ghost" 
                     className="text-gold font-medium hover:underline p-0 h-auto"
-                    onClick={() => handleLearnMoreClick('authentication')}
+                    onClick={handleLearnMoreClick}
                   >
                     View Photography Guide
                   </Button>

@@ -87,15 +87,22 @@ const VerifyCoins = () => {
   };
 
   const handleNextStep = () => {
-    if (verificationStep === 1 && validateStep1()) {
-      setVerificationStep(2);
+    // Check authentication when user tries to proceed from step 1
+    if (verificationStep === 1) {
+      if (!user) {
+        setShowAuthModal(true);
+        return;
+      }
+      if (validateStep1()) {
+        setVerificationStep(2);
+      }
     } else if (verificationStep === 2 && validateStep2()) {
       setVerificationStep(3);
     }
   };
 
   const handleStepClick = (step: number) => {
-    if (step === 1 || (step === 2 && validateStep1()) || (step === 3 && validateStep1() && validateStep2())) {
+    if (step === 1 || (step === 2 && user && validateStep1()) || (step === 3 && user && validateStep1() && validateStep2())) {
       setVerificationStep(step);
     }
   };
@@ -439,7 +446,7 @@ const VerifyCoins = () => {
                 <CardContent className="space-y-6">
                   {/* Special offer message */}
                   <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 text-center">
-                    <p className="text-blue-700 font-medium">➤ Verify 6 coins and get 1 verification free!</p>
+                    <p className="text-blue-700 font-medium">Verify 6 coins and get 1 verification free!</p>
                   </div>
 
                   {/* Coin Count Selection */}
@@ -585,18 +592,18 @@ const VerifyCoins = () => {
       
       {/* Authentication Required Modal */}
       <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
-        <DialogContent className="sm:max-w-md rounded-xl bg-white border border-gray-200 shadow-2xl">
+        <DialogContent className="sm:max-w-md rounded-xl bg-white/95 backdrop-blur-sm border border-gray-200 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-center text-royal flex items-center justify-center gap-2">
               <LogIn className="h-5 w-5" />
-              Login Required
+              Please log in to use this feature
             </DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center space-y-4 p-6">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
               <LogIn className="h-8 w-8 text-blue-600" />
             </div>
-            <h3 className="text-xl font-semibold text-royal">Please log in to use this feature</h3>
+            <h3 className="text-xl font-semibold text-royal">Authentication Required</h3>
             <p className="text-center text-gray-600">
               You need to be logged in to submit coins for verification. This helps us track your verification history and provide better support.
             </p>

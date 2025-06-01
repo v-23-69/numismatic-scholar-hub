@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, User, ShoppingCart, LogIn, Heart } from 'lucide-react';
+import { Menu, X, User, ShoppingCart, LogIn, Heart, ChevronDown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
@@ -50,6 +50,7 @@ const useAuthState = () => {
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchActive, setSearchActive] = useState(false);
+  const [aboutDropdownOpen, setAboutDropdownOpen] = useState(false);
   const { user, loading } = useAuthState();
   const { wishlist } = useWishlist();
   const location = useLocation();
@@ -74,6 +75,9 @@ const Navbar = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       navigate(path);
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
     }
   };
 
@@ -83,7 +87,6 @@ const Navbar = () => {
     { name: "Coins Market", path: "/coins-market" },
     { name: "Verify Your Coins", path: "/verify-coins" },
     { name: "Community", path: "/community" },
-    { name: "About", path: "/about" },
   ];
 
   return (
@@ -115,6 +118,57 @@ const Navbar = () => {
               </button>
             );
           })}
+          
+          {/* About Dropdown */}
+          <div className="relative">
+            <button 
+              onClick={() => setAboutDropdownOpen(!aboutDropdownOpen)}
+              onMouseEnter={() => setAboutDropdownOpen(true)}
+              className={`px-4 py-2 rounded-xl transition-all duration-300 font-medium flex items-center gap-1 ${
+                location.pathname === '/about' 
+                  ? 'text-blue-600 bg-blue-50' 
+                  : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              About
+              <ChevronDown className="h-4 w-4" />
+            </button>
+            
+            {aboutDropdownOpen && (
+              <div 
+                className="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50"
+                onMouseLeave={() => setAboutDropdownOpen(false)}
+              >
+                <button 
+                  onClick={() => {
+                    handleNavClick('/about');
+                    setAboutDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  About Us
+                </button>
+                <button 
+                  onClick={() => {
+                    handleNavClick('/mentors');
+                    setAboutDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  Mentors
+                </button>
+                <button 
+                  onClick={() => {
+                    handleNavClick('/articles');
+                    setAboutDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  Articles & Blog
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Search and User Actions */}
@@ -136,7 +190,7 @@ const Navbar = () => {
             )}
           </Link>
           
-          <Link to="/purchases" className="p-2 text-gray-500 hover:text-blue-600 transition-colors duration-200 relative">
+          <Link to="/cart" className="p-2 text-gray-500 hover:text-blue-600 transition-colors duration-200 relative">
             <ShoppingCart className="h-5 w-5" />
             {purchaseCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-gold text-xs text-white rounded-full h-4 w-4 flex items-center justify-center">
@@ -171,7 +225,7 @@ const Navbar = () => {
 
         {/* Mobile Menu Button */}
         <div className="md:flex lg:hidden items-center space-x-3">
-          <Link to="/wishlist" className="p-2 text-gray-500 hover:text-royal">
+          <Link to="/wishlist" className="p-2 text-gray-500 hover:text-royal relative">
             <Heart className="h-5 w-5" />
             {wishlist.length > 0 && (
               <span className="absolute -top-1 -right-1 bg-gold text-xs text-white rounded-full h-4 w-4 flex items-center justify-center">
@@ -179,7 +233,7 @@ const Navbar = () => {
               </span>
             )}
           </Link>
-          <Link to="/purchases" className="p-2 text-gray-500 hover:text-royal">
+          <Link to="/cart" className="p-2 text-gray-500 hover:text-royal relative">
             <ShoppingCart className="h-5 w-5" />
             {purchaseCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-gold text-xs text-white rounded-full h-4 w-4 flex items-center justify-center">
@@ -216,6 +270,36 @@ const Navbar = () => {
               {link.name}
             </button>
           ))}
+          
+          <button 
+            onClick={() => {
+              handleNavClick('/about');
+              toggleNav();
+            }}
+            className="block w-full text-left px-3 py-2 rounded-xl text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+          >
+            About
+          </button>
+          
+          <button 
+            onClick={() => {
+              handleNavClick('/mentors');
+              toggleNav();
+            }}
+            className="block w-full text-left px-3 py-2 rounded-xl text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+          >
+            Mentors
+          </button>
+          
+          <button 
+            onClick={() => {
+              handleNavClick('/articles');
+              toggleNav();
+            }}
+            className="block w-full text-left px-3 py-2 rounded-xl text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+          >
+            Articles & Blog
+          </button>
           
           <div className="mt-4 flex space-x-2 px-3">
             {user ? (

@@ -5,8 +5,28 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const About = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Scroll to top when component mounts
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Handle anchor scrolling
+    if (location.hash) {
+      setTimeout(() => {
+        const element = document.querySelector(location.hash);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, [location]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -38,7 +58,10 @@ const About = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
               >
-                <Button className="bg-gold text-royal hover:bg-gold-light">
+                <Button 
+                  className="bg-gold text-royal hover:bg-gold-light"
+                  onClick={() => navigate('/courses')}
+                >
                   Explore Our Courses
                 </Button>
               </motion.div>
@@ -68,8 +91,54 @@ const About = () => {
           </div>
         </section>
         
+        {/* Authentication Features Section */}
+        <section id="authentication" className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="font-playfair text-3xl font-bold text-royal mb-4">Expert Coin Authentication</h2>
+                <p className="text-gray-600 max-w-2xl mx-auto">
+                  Our advanced authentication service combines expert knowledge with modern technology to provide accurate, reliable coin verification.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gold/10 text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-royal text-gold mb-4">
+                    <Shield className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-royal mb-3">Expert Analysis</h3>
+                  <p className="text-gray-700">
+                    Certified numismatists examine your coins using industry-standard authentication methods
+                  </p>
+                </div>
+                
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gold/10 text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-royal text-gold mb-4">
+                    <Award className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-royal mb-3">Quick Results</h3>
+                  <p className="text-gray-700">
+                    Get comprehensive authentication reports within 24 hours of submission
+                  </p>
+                </div>
+                
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gold/10 text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-royal text-gold mb-4">
+                    <BookOpen className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-royal mb-3">Detailed Reports</h3>
+                  <p className="text-gray-700">
+                    Receive comprehensive analysis including authenticity, condition, and market value
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        
         {/* What We Do */}
-        <section className="py-16 bg-gray-50" data-section="authentication">
+        <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
@@ -115,7 +184,7 @@ const About = () => {
         </section>
         
         {/* Stats */}
-        <section className="py-16 bg-white">
+        <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto">
               <div className="text-center mb-12">
@@ -160,7 +229,7 @@ const About = () => {
         </section>
 
         {/* Community Section */}
-        <section className="py-16 bg-gray-50" data-section="community">
+        <section id="community" className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
               <h2 className="font-playfair text-3xl font-bold text-royal mb-6">Our Community</h2>
@@ -187,7 +256,7 @@ const About = () => {
         </section>
 
         {/* Contact Us Section */}
-        <section id="contact" className="py-16 bg-white">
+        <section id="contact" className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
@@ -203,7 +272,9 @@ const About = () => {
                     <Phone className="h-8 w-8" />
                   </div>
                   <h3 className="text-xl font-bold text-royal mb-2">Phone Support</h3>
-                  <p className="text-gray-600">+91-9876543210</p>
+                  <a href="tel:+919876543210" className="text-gray-600 hover:text-royal transition-colors">
+                    +91-9876543210
+                  </a>
                   <p className="text-sm text-gray-500 mt-2">Mon-Fri, 9AM-6PM IST</p>
                 </div>
                 
@@ -212,7 +283,9 @@ const About = () => {
                     <Mail className="h-8 w-8" />
                   </div>
                   <h3 className="text-xl font-bold text-royal mb-2">Email Support</h3>
-                  <p className="text-gray-600">support@coinglobe.in</p>
+                  <a href="mailto:support@coinglobe.in" className="text-gray-600 hover:text-royal transition-colors">
+                    support@coinglobe.in
+                  </a>
                   <p className="text-sm text-gray-500 mt-2">Response within 24 hours</p>
                 </div>
                 
@@ -221,7 +294,9 @@ const About = () => {
                     <Instagram className="h-8 w-8" />
                   </div>
                   <h3 className="text-xl font-bold text-royal mb-2">Social Media</h3>
-                  <p className="text-gray-600">@coinglobe</p>
+                  <a href="https://wa.me/919876543210" className="text-gray-600 hover:text-royal transition-colors">
+                    @coinglobe
+                  </a>
                   <p className="text-sm text-gray-500 mt-2">Follow us for updates</p>
                 </div>
               </div>

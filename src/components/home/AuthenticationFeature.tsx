@@ -62,16 +62,7 @@ const AuthenticationFeature = () => {
   const navigate = useNavigate();
 
   const handleLearnMoreClick = () => {
-    navigate('/about');
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      // Look for authentication-related content
-      const element = document.querySelector('[data-section="authentication"]') || 
-                     document.querySelector('h2');
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 100);
+    navigate('/about#authentication');
   };
 
   const handleGetStartedClick = () => {

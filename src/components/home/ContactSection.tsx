@@ -4,7 +4,7 @@ import { Phone, Instagram, Youtube, Twitter } from 'lucide-react';
 
 const ContactSection = () => {
   return (
-    <section className="py-16 bg-white">
+    <section id="contact" className="py-16 bg-white">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -33,7 +33,12 @@ const ContactSection = () => {
               <Phone className="h-8 w-8 text-royal" />
             </div>
             <h3 className="text-xl font-bold text-royal mb-2">Phone</h3>
-            <p className="text-gray-600">+91-9876543210</p>
+            <a 
+              href="tel:+919876543210" 
+              className="text-gray-600 hover:text-royal transition-colors"
+            >
+              +91-9876543210
+            </a>
           </motion.div>
 
           <motion.div
@@ -47,7 +52,14 @@ const ContactSection = () => {
               <Instagram className="h-8 w-8 text-pink-600" />
             </div>
             <h3 className="text-xl font-bold text-royal mb-2">Instagram</h3>
-            <p className="text-gray-600">@coinglobe</p>
+            <a 
+              href="https://instagram.com/coinglobe" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-gray-600 hover:text-royal transition-colors"
+            >
+              @coinglobe
+            </a>
           </motion.div>
 
           <motion.div
@@ -61,7 +73,14 @@ const ContactSection = () => {
               <Youtube className="h-8 w-8 text-red-600" />
             </div>
             <h3 className="text-xl font-bold text-royal mb-2">YouTube</h3>
-            <p className="text-gray-600">youtube.com/@coinglobe</p>
+            <a 
+              href="https://youtube.com/@coinglobe" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-gray-600 hover:text-royal transition-colors"
+            >
+              youtube.com/@coinglobe
+            </a>
           </motion.div>
 
           <motion.div
@@ -75,7 +94,14 @@ const ContactSection = () => {
               <Twitter className="h-8 w-8 text-blue-600" />
             </div>
             <h3 className="text-xl font-bold text-royal mb-2">Twitter</h3>
-            <p className="text-gray-600">@coinglobe_official</p>
+            <a 
+              href="https://twitter.com/coinglobe_official" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-gray-600 hover:text-royal transition-colors"
+            >
+              @coinglobe_official
+            </a>
           </motion.div>
         </div>
       </div>

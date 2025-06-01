@@ -1,3 +1,4 @@
+
 import { motion } from 'framer-motion';
 import { Shield, Clock, Award, Upload, Camera } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -61,9 +62,15 @@ const AuthenticationFeature = () => {
   const navigate = useNavigate();
 
   const handleLearnMoreClick = () => {
-    navigate('/about?section=authentication');
+    navigate('/about');
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Look for authentication-related content
+      const element = document.querySelector('[data-section="authentication"]') || 
+                     document.querySelector('h2');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }, 100);
   };
 

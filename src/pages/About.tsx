@@ -1,12 +1,39 @@
-
 import { motion } from 'framer-motion';
 import { Shield, Award, BookOpen, Users, Mail, Phone, Instagram } from 'lucide-react';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const About = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    // Scroll to top first
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Then scroll to specific section if query param exists
+    const section = searchParams.get('section');
+    if (section === 'authentication') {
+      setTimeout(() => {
+        const element = document.querySelector('[data-section="authentication"]');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500);
+    }
+  }, [searchParams]);
+
+  const handleExploreCourses = () => {
+    navigate('/courses');
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -38,7 +65,10 @@ const About = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
               >
-                <Button className="bg-gold text-royal hover:bg-gold-light">
+                <Button 
+                  onClick={handleExploreCourses}
+                  className="bg-gold text-royal hover:bg-gold-light"
+                >
                   Explore Our Courses
                 </Button>
               </motion.div>
@@ -107,6 +137,52 @@ const About = () => {
                   <h3 className="text-xl font-bold text-royal mb-3">Community</h3>
                   <p className="text-gray-700">
                     Connecting collectors through social platforms to share knowledge and build relationships
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        {/* Expert Coin Authentication Section */}
+        <section className="py-16 bg-white" data-section="authentication">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="font-playfair text-3xl font-bold text-royal mb-4">Expert Coin Authentication</h2>
+                <p className="text-gray-600 max-w-2xl mx-auto">
+                  Our professional authentication service provides comprehensive analysis of your coins using advanced techniques and expert knowledge.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div className="bg-gray-50 p-6 rounded-lg border border-gold/10 text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-royal text-gold mb-4">
+                    <Upload className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-royal mb-3">Upload & Analyze</h3>
+                  <p className="text-gray-700">
+                    Upload clear photos of your coin and receive detailed expert analysis within 24 hours
+                  </p>
+                </div>
+                
+                <div className="bg-gray-50 p-6 rounded-lg border border-gold/10 text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-royal text-gold mb-4">
+                    <Shield className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-royal mb-3">Authenticity Check</h3>
+                  <p className="text-gray-700">
+                    Get verification of authenticity, era identification, and material composition analysis
+                  </p>
+                </div>
+                
+                <div className="bg-gray-50 p-6 rounded-lg border border-gold/10 text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-royal text-gold mb-4">
+                    <Award className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-royal mb-3">Expert Report</h3>
+                  <p className="text-gray-700">
+                    Receive a comprehensive PDF report with valuation, rarity assessment, and market insights
                   </p>
                 </div>
               </div>
@@ -203,7 +279,9 @@ const About = () => {
                     <Phone className="h-8 w-8" />
                   </div>
                   <h3 className="text-xl font-bold text-royal mb-2">Phone Support</h3>
-                  <p className="text-gray-600">+91-9876543210</p>
+                  <a href="tel:+919876543210" className="text-gray-600 hover:text-royal transition-colors">
+                    +91-9876543210
+                  </a>
                   <p className="text-sm text-gray-500 mt-2">Mon-Fri, 9AM-6PM IST</p>
                 </div>
                 
@@ -212,7 +290,9 @@ const About = () => {
                     <Mail className="h-8 w-8" />
                   </div>
                   <h3 className="text-xl font-bold text-royal mb-2">Email Support</h3>
-                  <p className="text-gray-600">support@coinglobe.in</p>
+                  <a href="mailto:support@coinglobe.in" className="text-gray-600 hover:text-royal transition-colors">
+                    support@coinglobe.in
+                  </a>
                   <p className="text-sm text-gray-500 mt-2">Response within 24 hours</p>
                 </div>
                 
@@ -221,7 +301,9 @@ const About = () => {
                     <Instagram className="h-8 w-8" />
                   </div>
                   <h3 className="text-xl font-bold text-royal mb-2">Social Media</h3>
-                  <p className="text-gray-600">@coinglobe</p>
+                  <a href="https://wa.me/919876543210" className="text-gray-600 hover:text-royal transition-colors">
+                    @coinglobe
+                  </a>
                   <p className="text-sm text-gray-500 mt-2">Follow us for updates</p>
                 </div>
               </div>

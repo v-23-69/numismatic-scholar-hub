@@ -4,7 +4,7 @@ import { Phone, Instagram, Youtube, Twitter } from 'lucide-react';
 
 const ContactSection = () => {
   return (
-    <section className="py-16 bg-white">
+    <section id="contact" className="py-16 bg-white">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -29,11 +29,13 @@ const ContactSection = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-center"
           >
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-royal/10 rounded-full mb-4">
-              <Phone className="h-8 w-8 text-royal" />
-            </div>
-            <h3 className="text-xl font-bold text-royal mb-2">Phone</h3>
-            <p className="text-gray-600">+91-9876543210</p>
+            <a href="tel:+919876543210" className="block hover:opacity-80 transition-opacity">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-royal/10 rounded-full mb-4">
+                <Phone className="h-8 w-8 text-royal" />
+              </div>
+              <h3 className="text-xl font-bold text-royal mb-2">Phone</h3>
+              <p className="text-gray-600">+91-9876543210</p>
+            </a>
           </motion.div>
 
           <motion.div
@@ -43,11 +45,13 @@ const ContactSection = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-center"
           >
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-pink-100 rounded-full mb-4">
-              <Instagram className="h-8 w-8 text-pink-600" />
-            </div>
-            <h3 className="text-xl font-bold text-royal mb-2">Instagram</h3>
-            <p className="text-gray-600">@coinglobe</p>
+            <a href="https://instagram.com/coinglobe" target="_blank" rel="noopener noreferrer" className="block hover:opacity-80 transition-opacity">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-pink-100 rounded-full mb-4">
+                <Instagram className="h-8 w-8 text-pink-600" />
+              </div>
+              <h3 className="text-xl font-bold text-royal mb-2">Instagram</h3>
+              <p className="text-gray-600">@coinglobe</p>
+            </a>
           </motion.div>
 
           <motion.div
@@ -57,11 +61,13 @@ const ContactSection = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="text-center"
           >
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
-              <Youtube className="h-8 w-8 text-red-600" />
-            </div>
-            <h3 className="text-xl font-bold text-royal mb-2">YouTube</h3>
-            <p className="text-gray-600">youtube.com/@coinglobe</p>
+            <a href="https://youtube.com/@coinglobe" target="_blank" rel="noopener noreferrer" className="block hover:opacity-80 transition-opacity">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+                <Youtube className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-royal mb-2">YouTube</h3>
+              <p className="text-gray-600">youtube.com/@coinglobe</p>
+            </a>
           </motion.div>
 
           <motion.div
@@ -71,11 +77,13 @@ const ContactSection = () => {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="text-center"
           >
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-              <Twitter className="h-8 w-8 text-blue-600" />
-            </div>
-            <h3 className="text-xl font-bold text-royal mb-2">Twitter</h3>
-            <p className="text-gray-600">@coinglobe_official</p>
+            <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer" className="block hover:opacity-80 transition-opacity">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+                <Twitter className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold text-royal mb-2">WhatsApp</h3>
+              <p className="text-gray-600">@coinglobe_official</p>
+            </a>
           </motion.div>
         </div>
       </div>

@@ -21,6 +21,7 @@ import Mentors from "./pages/Mentors";
 import Articles from "./pages/Articles";
 import Wishlist from "./pages/Wishlist";
 import Purchases from "./pages/Purchases";
+import Cart from "./pages/Cart";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import RefundPolicy from "./pages/RefundPolicy";
@@ -76,6 +77,7 @@ const App = () => {
                 <Route path="/articles/:articleId" element={<Articles />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/purchases" element={<Purchases />} />
+                <Route path="/cart" element={<Cart />} />
                 <Route path="/agent-support" element={<AgentSupport />} />
                 <Route path="/live-support" element={<LiveSupport />} />
                 

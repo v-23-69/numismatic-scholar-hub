@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Filter, Plus, Upload, Shield, ArrowUpDown, Heart, ShoppingCart, X } from 'lucide-react';
@@ -207,7 +208,7 @@ const FilterPanel = ({
       </div>
       
       <div className="space-y-4">
-        <div>
+        <div className="relative z-20">
           <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
           <Select 
             value={filters.region || 'all'} 
@@ -216,10 +217,10 @@ const FilterPanel = ({
               onFiltersChange({ ...filters, region: newValue });
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger className="relative z-20">
               <SelectValue placeholder="All regions" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
               <SelectItem value="all">All regions</SelectItem>
               <SelectItem value="United States">United States</SelectItem>
               <SelectItem value="Roman Empire">Roman Empire</SelectItem>
@@ -230,7 +231,7 @@ const FilterPanel = ({
           </Select>
         </div>
 
-        <div>
+        <div className="relative z-10">
           <label className="block text-sm font-medium text-gray-700 mb-2">Rarity</label>
           <Select 
             value={filters.rarity || 'all'} 
@@ -239,10 +240,10 @@ const FilterPanel = ({
               onFiltersChange({ ...filters, rarity: newValue });
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger className="relative z-10">
               <SelectValue placeholder="All rarities" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-40 bg-white border border-gray-200 shadow-lg">
               <SelectItem value="all">All rarities</SelectItem>
               <SelectItem value="Common">Common</SelectItem>
               <SelectItem value="Uncommon">Uncommon</SelectItem>
@@ -414,7 +415,11 @@ const Marketplace = () => {
                   </Button>
                 )}
                 
-                <Button variant="outline" className="border-royal text-royal hover:bg-royal hover:text-white">
+                <Button 
+                  onClick={() => navigate('/verify-coins')}
+                  variant="outline" 
+                  className="border-royal text-royal hover:bg-royal hover:text-white"
+                >
                   <Shield className="h-4 w-4 mr-2" />
                   Verification Services
                 </Button>
@@ -442,16 +447,18 @@ const Marketplace = () => {
         </section>
         
         {/* Main Content */}
-        <section className="py-16">
+        <section className="py-16 relative">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
               {/* Filters Sidebar */}
-              <div className="lg:col-span-1">
-                <FilterPanel 
-                  filters={filters}
-                  onFiltersChange={handleFiltersChange}
-                  onClearFilters={clearFilters}
-                />
+              <div className="lg:col-span-1 relative">
+                <div className="relative z-30">
+                  <FilterPanel 
+                    filters={filters}
+                    onFiltersChange={handleFiltersChange}
+                    onClearFilters={clearFilters}
+                  />
+                </div>
               </div>
 
               {/* Coins Grid */}

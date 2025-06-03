@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from "@/components/layout/Navbar";
@@ -148,7 +147,7 @@ const Cart = () => {
                   variant="outline"
                   className="border-royal text-royal hover:bg-royal hover:text-white px-8 py-3"
                 >
-                  Browse Marketplace
+                  Return to Coins Market
                 </Button>
               </div>
             </div>
@@ -190,7 +189,7 @@ const Cart = () => {
               className="text-royal hover:text-royal-light"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Continue Shopping
+              Return to Coins Market
             </Button>
             <div>
               <h1 className="text-4xl font-bold text-royal font-playfair">Shopping Cart</h1>
@@ -209,7 +208,7 @@ const Cart = () => {
                 onClick={() => navigate('/coins-market')}
                 className="bg-royal hover:bg-royal-light text-white px-8 py-3"
               >
-                Browse Marketplace
+                Return to Coins Market
               </Button>
             </div>
           ) : (
@@ -348,7 +347,7 @@ const Cart = () => {
                           className="w-full border-royal text-royal hover:bg-royal hover:text-white"
                           onClick={() => navigate('/coins-market')}
                         >
-                          Continue Shopping
+                          Return to Coins Market
                         </Button>
                       </div>
                     </CardContent>

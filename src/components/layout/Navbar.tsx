@@ -89,6 +89,23 @@ const Navbar = () => {
     { name: "Community", path: "/community" },
   ];
 
+  // Close dropdown when clicking outside or on navigation
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setAboutDropdownOpen(false);
+    };
+
+    if (aboutDropdownOpen) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [aboutDropdownOpen]);
+
+  // Close dropdown on route change
+  useEffect(() => {
+    setAboutDropdownOpen(false);
+  }, [location.pathname]);
+
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gold/10">
       <nav className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -122,8 +139,10 @@ const Navbar = () => {
           {/* About Dropdown */}
           <div className="relative">
             <button 
-              onClick={() => setAboutDropdownOpen(!aboutDropdownOpen)}
-              onMouseEnter={() => setAboutDropdownOpen(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setAboutDropdownOpen(!aboutDropdownOpen);
+              }}
               className={`px-4 py-2 rounded-xl transition-all duration-300 font-medium flex items-center gap-1 ${
                 location.pathname === '/about' 
                   ? 'text-blue-600 bg-blue-50' 
@@ -131,16 +150,14 @@ const Navbar = () => {
               }`}
             >
               About
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className={`h-4 w-4 transition-transform ${aboutDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
             
             {aboutDropdownOpen && (
-              <div 
-                className="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50"
-                onMouseLeave={() => setAboutDropdownOpen(false)}
-              >
+              <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
                 <button 
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     handleNavClick('/about');
                     setAboutDropdownOpen(false);
                   }}
@@ -149,7 +166,8 @@ const Navbar = () => {
                   About Us
                 </button>
                 <button 
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     handleNavClick('/mentors');
                     setAboutDropdownOpen(false);
                   }}
@@ -158,7 +176,8 @@ const Navbar = () => {
                   Mentors
                 </button>
                 <button 
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     handleNavClick('/articles');
                     setAboutDropdownOpen(false);
                   }}

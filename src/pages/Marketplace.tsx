@@ -35,21 +35,21 @@ const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
   const [addingToCart, setAddingToCart] = useState(false);
   
   const toggleWishlist = () => {
-    const coinIdNum = Number(coin.id);
-    if (isInWishlist(coinIdNum)) {
-      removeFromWishlist(coinIdNum);
+    const coinIdStr = String(coin.id);
+    if (isInWishlist(coinIdStr)) {
+      removeFromWishlist(coinIdStr);
       toast({
         title: "Removed from wishlist",
         description: `${coin.title} has been removed from your wishlist`,
       });
     } else {
       addToWishlist({
-        id: coinIdNum,
+        id: coinIdStr,
         title: coin.title,
         description: coin.description,
-        image: coin.images[0] || '',
-        value: String(coin.value),
-        type: 'coin'
+        value: coin.value,
+        images: coin.images,
+        seller_name: coin.seller_name
       });
       toast({
         title: "Added to wishlist",
@@ -118,12 +118,12 @@ const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
             toggleWishlist();
           }}
           className={`absolute top-3 left-3 p-2 rounded-full ${
-            isInWishlist(Number(coin.id)) 
+            isInWishlist(String(coin.id)) 
               ? 'bg-red-500 text-white' 
               : 'bg-white text-gray-500 hover:text-red-500'
           } transition-colors shadow-md`}
         >
-          <Heart className="h-4 w-4" fill={isInWishlist(Number(coin.id)) ? "currentColor" : "none"} />
+          <Heart className="h-4 w-4" fill={isInWishlist(String(coin.id)) ? "currentColor" : "none"} />
         </button>
         
         {coin.stock_quantity === 0 && (

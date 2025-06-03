@@ -54,21 +54,21 @@ const CoinDetails = () => {
   const toggleWishlist = () => {
     if (!coin) return;
     
-    const coinIdNum = Number(coin.id);
-    if (isInWishlist(coinIdNum)) {
-      removeFromWishlist(coinIdNum);
+    const coinIdStr = String(coin.id);
+    if (isInWishlist(coinIdStr)) {
+      removeFromWishlist(coinIdStr);
       toast({
         title: "Removed from wishlist",
         description: `${coin.title} has been removed from your wishlist`,
       });
     } else {
       addToWishlist({
-        id: coinIdNum,
+        id: coinIdStr,
         title: coin.title,
         description: coin.description,
-        image: coin.images[0] || '',
-        value: String(coin.value),
-        type: 'coin'
+        value: coin.value,
+        images: coin.images,
+        seller_name: coin.seller_name
       });
       toast({
         title: "Added to wishlist",
@@ -313,9 +313,9 @@ const CoinDetails = () => {
                   >
                     <Heart 
                       className="h-4 w-4 mr-2" 
-                      fill={isInWishlist(Number(coin.id)) ? "currentColor" : "none"} 
+                      fill={isInWishlist(String(coin.id)) ? "currentColor" : "none"} 
                     />
-                    {isInWishlist(Number(coin.id)) ? 'Remove from Wishlist' : 'Add to Wishlist'}
+                    {isInWishlist(String(coin.id)) ? 'Remove from Wishlist' : 'Add to Wishlist'}
                   </Button>
                 </div>
               </div>

@@ -10,21 +10,7 @@ import { motion } from 'framer-motion';
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { MarketplaceService } from '@/services/MarketplaceService';
-
-interface CartItem {
-  id: number;
-  coin_listing_id: number;
-  quantity: number;
-  coin_listings: {
-    id: number;
-    title: string;
-    description: string;
-    value: number;
-    images: string[];
-    seller_name: string;
-    stock_quantity: number;
-  };
-}
+import type { CartItem } from '@/types/marketplace';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -66,10 +52,10 @@ const Cart = () => {
     if (!user || newQuantity < 1) return;
     try {
       setActionLoading(prev => ({ ...prev, [itemId]: true }));
-      await MarketplaceService.updateCartItemQuantity(user.id, itemId, newQuantity);
+      await MarketplaceService.updateCartItemQuantity(itemId, newQuantity);
       setCartItems(prev => 
         prev.map(item => 
-          String(item.coin_listing_id) === itemId 
+          item.coin_id === itemId 
             ? { ...item, quantity: newQuantity }
             : item
         )
@@ -90,8 +76,8 @@ const Cart = () => {
     if (!user) return;
     try {
       setActionLoading(prev => ({ ...prev, [itemId]: true }));
-      await MarketplaceService.removeFromCart(user.id, itemId);
-      setCartItems(prev => prev.filter(item => String(item.coin_listing_id) !== itemId));
+      await MarketplaceService.removeFromCart(itemId);
+      setCartItems(prev => prev.filter(item => item.coin_id !== itemId));
       toast({
         title: "Item removed",
         description: "Item has been removed from your cart",
@@ -110,7 +96,7 @@ const Cart = () => {
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
-      return total + (item.coin_listings.value * item.quantity);
+      return total + (item.coin_listing?.value || 0) * item.quantity;
     }, 0);
   };
 
@@ -184,7 +170,7 @@ const Cart = () => {
               <div className="lg:col-span-2 space-y-4">
                 {cartItems.map((item, index) => (
                   <motion.div
-                    key={item.coin_listing_id}
+                    key={item.coin_id}
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -195,10 +181,10 @@ const Cart = () => {
                           {/* Product Image */}
                           <div className="w-full md:w-32 h-32 flex-shrink-0">
                             <img
-                              src={item.coin_listings.images[0] || 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=600&auto=format&fit=crop&q=80'}
-                              alt={item.coin_listings.title}
+                              src={item.coin_listing?.images[0] || 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=600&auto=format&fit=crop&q=80'}
+                              alt={item.coin_listing?.title}
                               className="w-full h-full object-cover rounded-lg cursor-pointer"
-                              onClick={() => navigate(`/coins-market/${item.coin_listing_id}`)}
+                              onClick={() => navigate(`/coins-market/${item.coin_id}`)}
                             />
                           </div>
 
@@ -206,24 +192,24 @@ const Cart = () => {
                           <div className="flex-grow">
                             <h3 
                               className="text-xl font-bold text-royal cursor-pointer hover:text-royal-light transition-colors"
-                              onClick={() => navigate(`/coins-market/${item.coin_listing_id}`)}
+                              onClick={() => navigate(`/coins-market/${item.coin_id}`)}
                             >
-                              {item.coin_listings.title}
+                              {item.coin_listing?.title}
                             </h3>
                             <p className="text-gray-600 text-sm mb-2 line-clamp-2">
-                              {item.coin_listings.description}
+                              {item.coin_listing?.description}
                             </p>
-                            <p className="text-sm text-gray-500">Seller: {item.coin_listings.seller_name}</p>
+                            <p className="text-sm text-gray-500">Seller: {item.coin_listing?.seller_name}</p>
                             
                             <div className="flex items-center justify-between mt-4">
                               <span className="text-xl font-bold text-royal">
-                                ₹{item.coin_listings.value.toLocaleString()}
+                                ₹{(item.coin_listing?.value || 0).toLocaleString()}
                               </span>
                               
                               {/* Stock indicator */}
-                              {item.coin_listings.stock_quantity <= 5 && (
+                              {item.coin_listing?.stock_quantity && item.coin_listing.stock_quantity <= 5 && (
                                 <span className="text-sm text-orange-600 font-medium">
-                                  Only {item.coin_listings.stock_quantity} left
+                                  Only {item.coin_listing.stock_quantity} left
                                 </span>
                               )}
                             </div>
@@ -235,8 +221,8 @@ const Cart = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updateQuantity(String(item.coin_listing_id), item.quantity - 1)}
-                                disabled={item.quantity <= 1 || actionLoading[String(item.coin_listing_id)]}
+                                onClick={() => updateQuantity(String(item.coin_id), item.quantity - 1)}
+                                disabled={item.quantity <= 1 || actionLoading[String(item.coin_id)]}
                                 className="h-8 w-8 p-0"
                               >
                                 <Minus className="h-3 w-3" />
@@ -249,8 +235,8 @@ const Cart = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updateQuantity(String(item.coin_listing_id), item.quantity + 1)}
-                                disabled={item.quantity >= item.coin_listings.stock_quantity || actionLoading[String(item.coin_listing_id)]}
+                                onClick={() => updateQuantity(String(item.coin_id), item.quantity + 1)}
+                                disabled={item.quantity >= item.coin_listing?.stock_quantity || actionLoading[String(item.coin_id)]}
                                 className="h-8 w-8 p-0"
                               >
                                 <Plus className="h-3 w-3" />
@@ -260,8 +246,8 @@ const Cart = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => removeItem(String(item.coin_listing_id))}
-                              disabled={actionLoading[String(item.coin_listing_id)]}
+                              onClick={() => removeItem(String(item.coin_id))}
+                              disabled={actionLoading[String(item.coin_id)]}
                               className="text-red-500 hover:text-red-700 hover:bg-red-50"
                             >
                               <Trash2 className="h-4 w-4 mr-1" />
@@ -271,7 +257,7 @@ const Cart = () => {
                             {/* Item Total */}
                             <div className="text-right">
                               <p className="text-lg font-bold text-royal">
-                                ₹{(item.coin_listings.value * item.quantity).toLocaleString()}
+                                ₹{(item.coin_listing?.value || 0 * item.quantity).toLocaleString()}
                               </p>
                             </div>
                           </div>

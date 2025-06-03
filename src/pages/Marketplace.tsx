@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Filter, Plus, Upload, Shield, ArrowUpDown, Heart, ShoppingCart, X } from 'lucide-react';
@@ -10,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import FeaturedCoins from "@/components/marketplace/FeaturedCoins";
 import { useWishlist } from '@/context/WishlistContext';
 import { useToast } from "@/components/ui/use-toast";
 import { MarketplaceService } from '@/services/MarketplaceService';
@@ -23,6 +25,7 @@ interface MarketplaceFilters {
   minValue?: number;
   maxValue?: number;
   verified?: boolean;
+  sortBy?: string;
 }
 
 const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
@@ -199,27 +202,54 @@ const FilterPanel = ({
     if (key === 'minValue' || key === 'maxValue') {
       return typeof value === 'number' && !isNaN(value);
     }
+    if (key === 'search' || key === 'sortBy') return false; // Don't count search and sort as filters
     return value !== undefined && value !== '' && value !== null;
   });
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-royal">Filters</h3>
+    <Card className="p-6 bg-gradient-to-b from-white to-gray-50 border-royal/20 shadow-lg">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="font-semibold text-royal text-lg flex items-center">
+          <Filter className="h-5 w-5 mr-2" />
+          Filters
+        </h3>
         {hasActiveFilters && (
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={onClearFilters}
-            className="text-royal hover:text-royal-light"
+            className="text-royal hover:text-royal-light hover:bg-royal/10"
           >
             <X className="h-4 w-4 mr-1" />
-            Clear
+            Clear All
           </Button>
         )}
       </div>
-      <div className="relative z-20">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
+
+      {/* Sort By */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-3">Sort By</label>
+        <Select 
+          value={filters.sortBy || 'newest'} 
+          onValueChange={(value: string) => {
+            onFiltersChange({ ...filters, sortBy: value });
+          }}
+        >
+          <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
+            <SelectValue placeholder="Sort by..." />
+          </SelectTrigger>
+          <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
+            <SelectItem value="newest">Newest First</SelectItem>
+            <SelectItem value="oldest">Oldest First</SelectItem>
+            <SelectItem value="price-low">Price: Low to High</SelectItem>
+            <SelectItem value="price-high">Price: High to Low</SelectItem>
+            <SelectItem value="featured">Featured</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="relative z-20 mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-3">Region</label>
         <Select 
           value={filters.region || 'all'} 
           onValueChange={(value: string) => {
@@ -227,7 +257,7 @@ const FilterPanel = ({
             onFiltersChange({ ...filters, region: newValue });
           }}
         >
-          <SelectTrigger className="relative z-20">
+          <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
             <SelectValue placeholder="All regions" />
           </SelectTrigger>
           <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
@@ -240,8 +270,9 @@ const FilterPanel = ({
           </SelectContent>
         </Select>
       </div>
-      <div className="relative z-10 mt-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Rarity</label>
+      
+      <div className="relative z-10 mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-3">Rarity</label>
         <Select 
           value={filters.rarity || 'all'} 
           onValueChange={(value: string) => {
@@ -249,7 +280,7 @@ const FilterPanel = ({
             onFiltersChange({ ...filters, rarity: newValue });
           }}
         >
-          <SelectTrigger className="relative z-10">
+          <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
             <SelectValue placeholder="All rarities" />
           </SelectTrigger>
           <SelectContent className="z-40 bg-white border border-gray-200 shadow-lg">
@@ -262,9 +293,10 @@ const FilterPanel = ({
           </SelectContent>
         </Select>
       </div>
-      <div className="mt-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Price Range (₹)</label>
-        <div className="grid grid-cols-2 gap-2">
+      
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-3">Price Range (₹)</label>
+        <div className="grid grid-cols-2 gap-3">
           <Input
             type="number"
             placeholder="Min Value"
@@ -274,6 +306,7 @@ const FilterPanel = ({
               onFiltersChange({ ...filters, minValue: value !== '' ? Number(value) : undefined });
             }}
             min={0}
+            className="border-royal/30 focus:border-royal focus:ring-royal/20"
           />
           <Input
             type="number"
@@ -284,10 +317,12 @@ const FilterPanel = ({
               onFiltersChange({ ...filters, maxValue: value !== '' ? Number(value) : undefined });
             }}
             min={0}
+            className="border-royal/30 focus:border-royal focus:ring-royal/20"
           />
         </div>
       </div>
-      <div className="flex items-center mt-4">
+      
+      <div className="flex items-center p-4 bg-royal/10 rounded-lg">
         <input
           type="checkbox"
           id="verified"
@@ -296,9 +331,10 @@ const FilterPanel = ({
             ...filters, 
             verified: e.target.checked || undefined 
           })}
-          className="rounded border-gray-300 text-royal focus:ring-royal"
+          className="rounded border-royal/30 text-royal focus:ring-royal/20 mr-3"
         />
-        <label htmlFor="verified" className="ml-2 text-sm text-gray-700">
+        <label htmlFor="verified" className="text-sm text-gray-700 flex items-center">
+          <Shield className="h-4 w-4 mr-1 text-gold" />
           Verified coins only
         </label>
       </div>
@@ -330,6 +366,7 @@ const Marketplace = () => {
       minValue: minValue !== null && minValue !== '' ? Number(minValue) : undefined,
       maxValue: maxValue !== null && maxValue !== '' ? Number(maxValue) : undefined,
       verified: searchParams.get('verified') === 'true' ? true : undefined,
+      sortBy: searchParams.get('sortBy') || 'newest',
     };
   });
 
@@ -391,7 +428,7 @@ const Marketplace = () => {
   };
 
   const clearFilters = () => {
-    setFilters({ search: '' });
+    setFilters({ search: filters.search || '', sortBy: 'newest' });
   };
 
   const loadMore = () => {
@@ -421,9 +458,9 @@ const Marketplace = () => {
                   placeholder="Search for coins by name, region, or date..."
                   value={filters.search || ''}
                   onChange={(e) => handleFiltersChange({ ...filters, search: e.target.value })}
-                  className="pr-10"
+                  className="pr-10 h-12 text-lg border-royal/30 focus:border-royal focus:ring-royal/20"
                 />
-                <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
+                <Search className="absolute right-3 top-3 h-6 w-6 text-gray-400" />
               </div>
               
               <div className="flex flex-wrap justify-center mt-6 space-x-0 space-y-2 sm:space-x-4 sm:space-y-0">
@@ -468,6 +505,9 @@ const Marketplace = () => {
             </div>
           </div>
         </section>
+
+        {/* Featured Coins Section */}
+        <FeaturedCoins />
         
         {/* Main Content */}
         <section className="py-16 relative">
@@ -475,7 +515,7 @@ const Marketplace = () => {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
               {/* Filters Sidebar */}
               <div className="lg:col-span-1 relative">
-                <div className="relative z-30">
+                <div className="relative z-30 sticky top-4">
                   <FilterPanel 
                     filters={filters}
                     onFiltersChange={handleFiltersChange}
@@ -488,7 +528,7 @@ const Marketplace = () => {
               <div className="lg:col-span-3">
                 <div className="flex justify-between items-center mb-8">
                   <h2 className="text-2xl font-bold font-playfair text-royal">
-                    {totalCount > 0 ? `${totalCount} Coins Found` : 'Featured Coins'}
+                    {totalCount > 0 ? `${totalCount} Coins Found` : 'All Coins'}
                   </h2>
                 </div>
                 

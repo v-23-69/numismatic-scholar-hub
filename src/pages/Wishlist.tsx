@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from "@/components/layout/Navbar";
@@ -9,6 +8,7 @@ import { Heart, ShoppingCart, Trash2, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useWishlist } from '@/context/WishlistContext';
 import { useToast } from "@/components/ui/use-toast";
+import type { WishlistItem } from '@/types/wishlist';
 
 const Wishlist = () => {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ const Wishlist = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  const handleRemove = (id: string) => {
+  const handleRemove = (id: number) => {
     removeFromWishlist(id);
     toast({
       title: "Removed from wishlist",
@@ -27,7 +27,7 @@ const Wishlist = () => {
     });
   };
 
-  const handleAddToCart = (item: any) => {
+  const handleAddToCart = (item: WishlistItem) => {
     // TODO: Implement add to cart functionality
     toast({
       title: "Added to cart",
@@ -98,13 +98,13 @@ const Wishlist = () => {
                         </button>
                       </div>
                       
-                      <CardContent className="p-6">
+                      <CardContent className="p-4">
                         <h3 className="font-semibold text-royal text-lg mb-2">{item.title}</h3>
                         <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.description}</p>
                         
                         {item.value && (
                           <div className="flex items-center justify-between mb-4">
-                            <span className="text-lg font-bold text-royal">₹{item.value}</span>
+                            <span className="text-lg font-bold text-royal">₹{Number(item.value).toLocaleString()}</span>
                             <span className="text-sm text-gray-500 capitalize">{item.type}</span>
                           </div>
                         )}

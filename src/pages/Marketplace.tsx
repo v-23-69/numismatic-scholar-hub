@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Filter, Plus, Upload, Shield, ArrowUpDown, Heart, ShoppingCart, X } from 'lucide-react';
@@ -15,7 +14,16 @@ import { useWishlist } from '@/context/WishlistContext';
 import { useToast } from "@/components/ui/use-toast";
 import { MarketplaceService } from '@/services/MarketplaceService';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import type { CoinListing, MarketplaceFilters } from '@/types/marketplace';
+import type { CoinListing } from '@/types/marketplace';
+
+interface MarketplaceFilters {
+  search?: string;
+  region?: string;
+  rarity?: string;
+  minValue?: number;
+  maxValue?: number;
+  verified?: boolean;
+}
 
 const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
   const navigate = useNavigate();
@@ -25,19 +33,20 @@ const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
   const [addingToCart, setAddingToCart] = useState(false);
   
   const toggleWishlist = () => {
-    if (isInWishlist(coin.id)) {
-      removeFromWishlist(coin.id);
+    const coinIdNum = Number(coin.id);
+    if (isInWishlist(coinIdNum)) {
+      removeFromWishlist(coinIdNum);
       toast({
         title: "Removed from wishlist",
         description: `${coin.title} has been removed from your wishlist`,
       });
     } else {
       addToWishlist({
-        id: coin.id,
+        id: coinIdNum,
         title: coin.title,
         description: coin.description,
         image: coin.images[0] || '',
-        value: coin.value.toString(),
+        value: String(coin.value),
         type: 'coin'
       });
       toast({
@@ -107,12 +116,12 @@ const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
             toggleWishlist();
           }}
           className={`absolute top-3 left-3 p-2 rounded-full ${
-            isInWishlist(coin.id) 
+            isInWishlist(Number(coin.id)) 
               ? 'bg-red-500 text-white' 
               : 'bg-white text-gray-500 hover:text-red-500'
           } transition-colors shadow-md`}
         >
-          <Heart className="h-4 w-4" fill={isInWishlist(coin.id) ? "currentColor" : "none"} />
+          <Heart className="h-4 w-4" fill={isInWishlist(Number(coin.id)) ? "currentColor" : "none"} />
         </button>
         
         {coin.stock_quantity === 0 && (
@@ -186,9 +195,12 @@ const FilterPanel = ({
   onFiltersChange: (filters: MarketplaceFilters) => void;
   onClearFilters: () => void;
 }) => {
-  const hasActiveFilters = Object.values(filters).some(value => 
-    value !== undefined && value !== '' && value !== null
-  );
+  const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
+    if (key === 'minValue' || key === 'maxValue') {
+      return typeof value === 'number' && !isNaN(value);
+    }
+    return value !== undefined && value !== '' && value !== null;
+  });
 
   return (
     <Card className="p-6">
@@ -206,93 +218,89 @@ const FilterPanel = ({
           </Button>
         )}
       </div>
-      
-      <div className="space-y-4">
-        <div className="relative z-20">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
-          <Select 
-            value={filters.region || 'all'} 
-            onValueChange={(value: string) => {
-              const newValue = value === 'all' ? undefined : value;
-              onFiltersChange({ ...filters, region: newValue });
+      <div className="relative z-20">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
+        <Select 
+          value={filters.region || 'all'} 
+          onValueChange={(value: string) => {
+            const newValue = value === 'all' ? undefined : value;
+            onFiltersChange({ ...filters, region: newValue });
+          }}
+        >
+          <SelectTrigger className="relative z-20">
+            <SelectValue placeholder="All regions" />
+          </SelectTrigger>
+          <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
+            <SelectItem value="all">All regions</SelectItem>
+            <SelectItem value="United States">United States</SelectItem>
+            <SelectItem value="Roman Empire">Roman Empire</SelectItem>
+            <SelectItem value="India">India</SelectItem>
+            <SelectItem value="China">China</SelectItem>
+            <SelectItem value="Europe">Europe</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="relative z-10 mt-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Rarity</label>
+        <Select 
+          value={filters.rarity || 'all'} 
+          onValueChange={(value: string) => {
+            const newValue = value === 'all' ? undefined : value;
+            onFiltersChange({ ...filters, rarity: newValue });
+          }}
+        >
+          <SelectTrigger className="relative z-10">
+            <SelectValue placeholder="All rarities" />
+          </SelectTrigger>
+          <SelectContent className="z-40 bg-white border border-gray-200 shadow-lg">
+            <SelectItem value="all">All rarities</SelectItem>
+            <SelectItem value="Common">Common</SelectItem>
+            <SelectItem value="Uncommon">Uncommon</SelectItem>
+            <SelectItem value="Rare">Rare</SelectItem>
+            <SelectItem value="Very Rare">Very Rare</SelectItem>
+            <SelectItem value="Extremely Rare">Extremely Rare</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="mt-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Price Range (₹)</label>
+        <div className="grid grid-cols-2 gap-2">
+          <Input
+            type="number"
+            placeholder="Min Value"
+            value={filters.minValue !== undefined ? String(filters.minValue) : ''}
+            onChange={e => {
+              const value = e.target.value;
+              onFiltersChange({ ...filters, minValue: value !== '' ? Number(value) : undefined });
             }}
-          >
-            <SelectTrigger className="relative z-20">
-              <SelectValue placeholder="All regions" />
-            </SelectTrigger>
-            <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
-              <SelectItem value="all">All regions</SelectItem>
-              <SelectItem value="United States">United States</SelectItem>
-              <SelectItem value="Roman Empire">Roman Empire</SelectItem>
-              <SelectItem value="India">India</SelectItem>
-              <SelectItem value="China">China</SelectItem>
-              <SelectItem value="Europe">Europe</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="relative z-10">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Rarity</label>
-          <Select 
-            value={filters.rarity || 'all'} 
-            onValueChange={(value: string) => {
-              const newValue = value === 'all' ? undefined : value;
-              onFiltersChange({ ...filters, rarity: newValue });
-            }}
-          >
-            <SelectTrigger className="relative z-10">
-              <SelectValue placeholder="All rarities" />
-            </SelectTrigger>
-            <SelectContent className="z-40 bg-white border border-gray-200 shadow-lg">
-              <SelectItem value="all">All rarities</SelectItem>
-              <SelectItem value="Common">Common</SelectItem>
-              <SelectItem value="Uncommon">Uncommon</SelectItem>
-              <SelectItem value="Rare">Rare</SelectItem>
-              <SelectItem value="Very Rare">Very Rare</SelectItem>
-              <SelectItem value="Extremely Rare">Extremely Rare</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Price Range (₹)</label>
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              type="number"
-              placeholder="Min"
-              value={filters.minValue !== undefined ? String(filters.minValue) : ''}
-              onChange={(e) => onFiltersChange({
-                ...filters,
-                minValue: e.target.value !== '' ? Number(e.target.value) : undefined
-              })}
-            />
-            <Input
-              type="number"
-              placeholder="Max"
-              value={filters.maxValue !== undefined ? String(filters.maxValue) : ''}
-              onChange={(e) => onFiltersChange({
-                ...filters,
-                maxValue: e.target.value !== '' ? Number(e.target.value) : undefined
-              })}
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="verified"
-            checked={filters.verified || false}
-            onChange={(e) => onFiltersChange({ 
-              ...filters, 
-              verified: e.target.checked || undefined 
-            })}
-            className="rounded border-gray-300 text-royal focus:ring-royal"
+            min={0}
           />
-          <label htmlFor="verified" className="ml-2 text-sm text-gray-700">
-            Verified coins only
-          </label>
+          <Input
+            type="number"
+            placeholder="Max Value"
+            value={filters.maxValue !== undefined ? String(filters.maxValue) : ''}
+            onChange={e => {
+              const value = e.target.value;
+              onFiltersChange({ ...filters, maxValue: value !== '' ? Number(value) : undefined });
+            }}
+            min={0}
+          />
         </div>
+      </div>
+      <div className="flex items-center mt-4">
+        <input
+          type="checkbox"
+          id="verified"
+          checked={filters.verified || false}
+          onChange={(e) => onFiltersChange({ 
+            ...filters, 
+            verified: e.target.checked || undefined 
+          })}
+          className="rounded border-gray-300 text-royal focus:ring-royal"
+        />
+        <label htmlFor="verified" className="ml-2 text-sm text-gray-700">
+          Verified coins only
+        </label>
       </div>
     </Card>
   );
@@ -312,11 +320,17 @@ const Marketplace = () => {
   const [totalCount, setTotalCount] = useState(0);
   
   // Filters
-  const [filters, setFilters] = useState<MarketplaceFilters>({
-    search: searchParams.get('search') || '',
-    region: searchParams.get('region') || undefined,
-    rarity: searchParams.get('rarity') || undefined,
-    verified: searchParams.get('verified') === 'true' ? true : undefined,
+  const [filters, setFilters] = useState<MarketplaceFilters>(() => {
+    const minValue = searchParams.get('minValue');
+    const maxValue = searchParams.get('maxValue');
+    return {
+      search: searchParams.get('search') || '',
+      region: searchParams.get('region') || undefined,
+      rarity: searchParams.get('rarity') || undefined,
+      minValue: minValue !== null && minValue !== '' ? Number(minValue) : undefined,
+      maxValue: maxValue !== null && maxValue !== '' ? Number(maxValue) : undefined,
+      verified: searchParams.get('verified') === 'true' ? true : undefined,
+    };
   });
 
   // Load coins from Supabase
@@ -357,14 +371,23 @@ const Marketplace = () => {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== '') {
-        params.set(key, value.toString());
+        params.set(key, String(value));
       }
     });
     setSearchParams(params);
   }, [filters, setSearchParams]);
 
   const handleFiltersChange = (newFilters: MarketplaceFilters) => {
-    setFilters(newFilters);
+    setFilters(prev => ({
+      ...prev,
+      ...newFilters,
+      minValue: typeof newFilters.minValue === 'string' 
+        ? (newFilters.minValue !== '' ? Number(newFilters.minValue) : undefined)
+        : newFilters.minValue,
+      maxValue: typeof newFilters.maxValue === 'string'
+        ? (newFilters.maxValue !== '' ? Number(newFilters.maxValue) : undefined)
+        : newFilters.maxValue,
+    }));
   };
 
   const clearFilters = () => {

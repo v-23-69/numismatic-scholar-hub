@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Heart, Shield, ShoppingCart, Star, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -24,7 +23,7 @@ const CoinDetails = () => {
   const [coin, setCoin] = useState<CoinListing | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState<number>(1);
   const [addingToCart, setAddingToCart] = useState(false);
 
   useEffect(() => {
@@ -55,19 +54,20 @@ const CoinDetails = () => {
   const toggleWishlist = () => {
     if (!coin) return;
     
-    if (isInWishlist(coin.id)) {
-      removeFromWishlist(coin.id);
+    const coinIdNum = Number(coin.id);
+    if (isInWishlist(coinIdNum)) {
+      removeFromWishlist(coinIdNum);
       toast({
         title: "Removed from wishlist",
         description: `${coin.title} has been removed from your wishlist`,
       });
     } else {
       addToWishlist({
-        id: coin.id,
+        id: coinIdNum,
         title: coin.title,
         description: coin.description,
         image: coin.images[0] || '',
-        value: coin.value.toString(),
+        value: String(coin.value),
         type: 'coin'
       });
       toast({
@@ -89,7 +89,7 @@ const CoinDetails = () => {
 
     try {
       setAddingToCart(true);
-      await MarketplaceService.addToCart(user.id, coin.id, quantity);
+      await MarketplaceService.addToCart(user.id, String(coin.id), quantity);
       
       toast({
         title: "Added to cart",
@@ -313,9 +313,9 @@ const CoinDetails = () => {
                   >
                     <Heart 
                       className="h-4 w-4 mr-2" 
-                      fill={isInWishlist(coin.id) ? "currentColor" : "none"} 
+                      fill={isInWishlist(Number(coin.id)) ? "currentColor" : "none"} 
                     />
-                    {isInWishlist(coin.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
+                    {isInWishlist(Number(coin.id)) ? 'Remove from Wishlist' : 'Add to Wishlist'}
                   </Button>
                 </div>
               </div>

@@ -1,4 +1,3 @@
-
 export interface CoinListing {
   id: string;
   title: string;

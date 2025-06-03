@@ -1,54 +1,48 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { WishlistItem } from '@/types/wishlist';
 
 export class WishlistService {
-  // Get user's wishlist from Supabase
-  static async getUserWishlist(userId: string) {
+  static async getWishlistItems(userId: string): Promise<WishlistItem[]> {
     try {
       const { data, error } = await supabase
-        .from('user_wishlists')
+        .from('wishlist_items')
         .select(`
-          id,
-          coin_listing_id,
-          coin_listings (
+          *,
+          coin_listing:coin_listings(
             id,
             title,
             description,
             value,
             images,
-            seller_name
+            seller:profiles!seller_id(full_name)
           )
         `)
         .eq('user_id', userId);
 
       if (error) throw error;
 
-      // Transform data to match WishlistItem interface
-      const wishlistItems: WishlistItem[] = data?.map(item => ({
-        id: item.coin_listing_id,
-        title: item.coin_listings?.title || '',
-        description: item.coin_listings?.description || '',
-        image: item.coin_listings?.images?.[0] || '',
-        value: String(item.coin_listings?.value || 0),
-        type: 'coin' as const,
-      })) || [];
-
-      return wishlistItems;
+      // Transform the data to match our WishlistItem interface
+      return (data || []).map(item => ({
+        id: item.coin_listing.id,
+        title: item.coin_listing.title,
+        description: item.coin_listing.description,
+        value: item.coin_listing.value,
+        images: item.coin_listing.images,
+        seller_name: item.coin_listing.seller?.full_name || 'Unknown Seller'
+      }));
     } catch (error) {
-      console.error('Error fetching wishlist:', error);
-      throw error;
+      console.error('Error fetching wishlist items:', error);
+      return [];
     }
   }
 
-  // Add item to wishlist in Supabase
-  static async addToWishlist(userId: string, coinId: number) {
+  static async addToWishlist(userId: string, coinId: string): Promise<void> {
     try {
       const { error } = await supabase
-        .from('user_wishlists')
+        .from('wishlist_items')
         .insert({
           user_id: userId,
-          coin_listing_id: coinId
+          coin_id: coinId
         });
 
       if (error) throw error;
@@ -58,14 +52,13 @@ export class WishlistService {
     }
   }
 
-  // Remove item from wishlist in Supabase
-  static async removeFromWishlist(userId: string, coinId: number) {
+  static async removeFromWishlist(userId: string, coinId: string): Promise<void> {
     try {
       const { error } = await supabase
-        .from('user_wishlists')
+        .from('wishlist_items')
         .delete()
         .eq('user_id', userId)
-        .eq('coin_listing_id', coinId);
+        .eq('coin_id', coinId);
 
       if (error) throw error;
     } catch (error) {
@@ -74,20 +67,19 @@ export class WishlistService {
     }
   }
 
-  // Check if item is in wishlist
-  static async isInWishlist(userId: string, coinId: number) {
+  static async isInWishlist(userId: string, coinId: string): Promise<boolean> {
     try {
       const { data, error } = await supabase
-        .from('user_wishlists')
+        .from('wishlist_items')
         .select('id')
         .eq('user_id', userId)
-        .eq('coin_listing_id', coinId)
+        .eq('coin_id', coinId)
         .single();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       return !!data;
     } catch (error) {
-      console.error('Error checking wishlist:', error);
+      console.error('Error checking wishlist status:', error);
       return false;
     }
   }

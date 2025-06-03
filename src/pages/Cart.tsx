@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from "@/components/layout/Navbar";
@@ -34,7 +33,7 @@ const Cart = () => {
   
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<{ [key: number]: boolean }>({});
+  const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -63,16 +62,14 @@ const Cart = () => {
     }
   };
 
-  const updateQuantity = async (itemId: number, newQuantity: number) => {
+  const updateQuantity = async (itemId: string, newQuantity: number) => {
     if (!user || newQuantity < 1) return;
-
     try {
       setActionLoading(prev => ({ ...prev, [itemId]: true }));
       await MarketplaceService.updateCartItemQuantity(user.id, itemId, newQuantity);
-      
       setCartItems(prev => 
         prev.map(item => 
-          item.coin_listing_id === itemId 
+          String(item.coin_listing_id) === itemId 
             ? { ...item, quantity: newQuantity }
             : item
         )
@@ -89,15 +86,12 @@ const Cart = () => {
     }
   };
 
-  const removeItem = async (itemId: number) => {
+  const removeItem = async (itemId: string) => {
     if (!user) return;
-
     try {
       setActionLoading(prev => ({ ...prev, [itemId]: true }));
       await MarketplaceService.removeFromCart(user.id, itemId);
-      
-      setCartItems(prev => prev.filter(item => item.coin_listing_id !== itemId));
-      
+      setCartItems(prev => prev.filter(item => String(item.coin_listing_id) !== itemId));
       toast({
         title: "Item removed",
         description: "Item has been removed from your cart",
@@ -241,8 +235,8 @@ const Cart = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updateQuantity(item.coin_listing_id, item.quantity - 1)}
-                                disabled={item.quantity <= 1 || actionLoading[item.coin_listing_id]}
+                                onClick={() => updateQuantity(String(item.coin_listing_id), item.quantity - 1)}
+                                disabled={item.quantity <= 1 || actionLoading[String(item.coin_listing_id)]}
                                 className="h-8 w-8 p-0"
                               >
                                 <Minus className="h-3 w-3" />
@@ -255,8 +249,8 @@ const Cart = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => updateQuantity(item.coin_listing_id, item.quantity + 1)}
-                                disabled={item.quantity >= item.coin_listings.stock_quantity || actionLoading[item.coin_listing_id]}
+                                onClick={() => updateQuantity(String(item.coin_listing_id), item.quantity + 1)}
+                                disabled={item.quantity >= item.coin_listings.stock_quantity || actionLoading[String(item.coin_listing_id)]}
                                 className="h-8 w-8 p-0"
                               >
                                 <Plus className="h-3 w-3" />
@@ -266,8 +260,8 @@ const Cart = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => removeItem(item.coin_listing_id)}
-                              disabled={actionLoading[item.coin_listing_id]}
+                              onClick={() => removeItem(String(item.coin_listing_id))}
+                              disabled={actionLoading[String(item.coin_listing_id)]}
                               className="text-red-500 hover:text-red-700 hover:bg-red-50"
                             >
                               <Trash2 className="h-4 w-4 mr-1" />

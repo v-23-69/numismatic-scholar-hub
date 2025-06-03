@@ -1,58 +1,59 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-export interface WishlistItem {
-  id: number;
-  title: string;
-  description: string;
-  image: string;
-  value: string;
-  type: 'coin';
-  price?: string; // Optional price field
-}
-
-interface WishlistContextType {
-  wishlist: WishlistItem[];
-  addToWishlist: (item: WishlistItem) => void;
-  removeFromWishlist: (id: number) => void;
-  isInWishlist: (id: number) => boolean;
-}
+import type { WishlistItem, WishlistContextType } from '@/types/wishlist';
+import { WishlistService } from '@/services/WishlistService';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
 
 export const WishlistProvider = ({ children }: { children: ReactNode }) => {
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const { user } = useSupabaseAuth();
 
-  // Load wishlist from localStorage on initial render
+  // Load wishlist from database on initial render
   useEffect(() => {
-    const savedWishlist = localStorage.getItem('wishlist');
-    if (savedWishlist) {
-      setWishlist(JSON.parse(savedWishlist));
+    if (user) {
+      loadWishlist();
     }
-  }, []);
+  }, [user]);
 
-  // Save wishlist to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('wishlist', JSON.stringify(wishlist));
-  }, [wishlist]);
-
-  const addToWishlist = (item: WishlistItem) => {
-    setWishlist(prev => {
-      // Check if item already exists
-      if (prev.some(i => i.id === item.id)) return prev;
-      return [...prev, item];
-    });
+  const loadWishlist = async () => {
+    if (!user) return;
+    try {
+      const items = await WishlistService.getWishlistItems(user.id);
+      setWishlist(items);
+    } catch (error) {
+      console.error('Error loading wishlist:', error);
+    }
   };
 
-  const removeFromWishlist = (id: number) => {
-    setWishlist(prev => prev.filter(item => item.id !== id));
+  const addToWishlist = async (item: WishlistItem) => {
+    if (!user) return;
+    try {
+      await WishlistService.addToWishlist(user.id, item.id);
+      setWishlist(prev => {
+        // Check if item already exists
+        if (prev.some(i => i.id === item.id)) return prev;
+        return [...prev, item];
+      });
+    } catch (error) {
+      console.error('Error adding to wishlist:', error);
+      throw error;
+    }
   };
 
-  const isInWishlist = (id: number) => {
-    return wishlist.some(item => item.id === id);
+  const removeFromWishlist = async (id: string) => {
+    if (!user) return;
+    try {
+      await WishlistService.removeFromWishlist(user.id, id);
+      setWishlist(prev => prev.filter(item => item.id !== id));
+    } catch (error) {
+      console.error('Error removing from wishlist:', error);
+      throw error;
+    }
   };
 
   return (
-    <WishlistContext.Provider value={{ wishlist, addToWishlist, removeFromWishlist, isInWishlist }}>
+    <WishlistContext.Provider value={{ wishlist, addToWishlist, removeFromWishlist }}>
       {children}
     </WishlistContext.Provider>
   );

@@ -282,9 +282,9 @@ const CourseCreatorForm = () => {
             <SelectValue placeholder="Select level" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Beginner">Beginner</SelectItem>
-            <SelectItem value="Intermediate">Intermediate</SelectItem>
-            <SelectItem value="Advanced">Advanced</SelectItem>
+            <SelectItem value="Beginner">Beginner Level</SelectItem>
+            <SelectItem value="Intermediate">Intermediate Level</SelectItem>
+            <SelectItem value="Advanced">Advanced Level</SelectItem>
             <SelectItem value="All Levels">All Levels</SelectItem>
           </SelectContent>
         </Select>
@@ -719,11 +719,11 @@ const Courses = () => {
                         <SelectValue placeholder="Sort" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="featured">Featured</SelectItem>
+                        <SelectItem value="featured">Featured Courses</SelectItem>
                         <SelectItem value="price-low">Price: Low to High</SelectItem>
                         <SelectItem value="price-high">Price: High to Low</SelectItem>
                         <SelectItem value="rating">Highest Rated</SelectItem>
-                        <SelectItem value="newest">Newest</SelectItem>
+                        <SelectItem value="newest">Newest First</SelectItem>
                       </SelectContent>
                     </Select>
                     
@@ -762,7 +762,7 @@ const Courses = () => {
                           onValueChange={(value) => setCoursesPerPage(Number(value))}
                         >
                           <SelectTrigger className="w-[70px]">
-                            <SelectValue placeholder="6" />
+                            <SelectValue placeholder="3" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="3">3</SelectItem>
@@ -771,7 +771,7 @@ const Courses = () => {
                             <SelectItem value="12">12</SelectItem>
                           </SelectContent>
                         </Select>
-                        <span className="text-sm text-gray-600">courses per page</span>
+                        <span className="text-sm text-gray-600">per page</span>
                       </div>
                       
                       <div className="flex items-center space-x-2">

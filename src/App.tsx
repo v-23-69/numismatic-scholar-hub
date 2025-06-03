@@ -1,43 +1,46 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState } from "react";
-import Index from "./pages/Index";
-import Courses from "./pages/Courses";
-import CoinsMarket from "./pages/Marketplace";
-import CoinDetails from "./pages/CoinDetails";
-import VerifyCoins from "./pages/VerifyCoins";
-import VerificationAgent from "./pages/VerificationAgent";
-import Community from "./pages/Community";
-import About from "./pages/About";
-import Profile from "./pages/Profile";
-import Authenticate from "./pages/Authenticate";
-import NotFound from "./pages/NotFound";
-import WelcomeModal from "./components/WelcomeModal";
-import LegalPage from "./pages/LegalPage";
-import Mentors from "./pages/Mentors";
-import Articles from "./pages/Articles";
-import Wishlist from "./pages/Wishlist";
-import Purchases from "./pages/Purchases";
-import Cart from "./pages/Cart";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
-import RefundPolicy from "./pages/RefundPolicy";
-import VerificationProcess from "./pages/VerificationProcess";
-import CookiePolicy from "./pages/CookiePolicy";
-import AgentSupport from "./pages/AgentSupport";
-import LiveSupport from "./pages/LiveSupport";
-import PromotionalPopup from "./components/PromotionalPopup";
-import { WishlistProvider } from "./context/WishlistContext";
-import { ConfigContext } from "./context/ConfigContext";
+import { WishlistProvider } from "@/context/WishlistContext";
+import { ConfigContext } from "@/context/ConfigContext";
 import supabase from '@/lib/supabaseClient';
+import WelcomeModal from "./components/WelcomeModal";
+import PromotionalPopup from "./components/PromotionalPopup";
+
+const queryClient = new QueryClient();
+
+// Lazy load pages for better performance
+const Index = lazy(() => import("./pages/Index"));
+const About = lazy(() => import("./pages/About"));
+const Courses = lazy(() => import("./pages/Courses"));
+const Articles = lazy(() => import("./pages/Articles"));
+const Community = lazy(() => import("./pages/Community"));
+const Mentors = lazy(() => import("./pages/Mentors"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Authenticate = lazy(() => import("./pages/Authenticate"));
+const Login = lazy(() => import("./pages/Login"));
+const VerifyCoins = lazy(() => import("./pages/VerifyCoins"));
+const VerificationProcess = lazy(() => import("./pages/VerificationProcess"));
+const VerificationAgent = lazy(() => import("./pages/VerificationAgent"));
+const AgentSupport = lazy(() => import("./pages/AgentSupport"));
+const LiveSupport = lazy(() => import("./pages/LiveSupport"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
+const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
+const LegalPage = lazy(() => import("./pages/LegalPage"));
+const Purchases = lazy(() => import("./pages/Purchases"));
+const Marketplace = lazy(() => import("./pages/Marketplace"));
+const CoinDetails = lazy(() => import("./pages/CoinDetails"));
+const Wishlist = lazy(() => import("./pages/Wishlist"));
+const Cart = lazy(() => import("./pages/Cart"));
+const Checkout = lazy(() => import("./pages/Checkout"));
 
 const App = () => {
-  // Create a new QueryClient instance inside the component
-  const [queryClient] = useState(() => new QueryClient());
-  
   // Check if Supabase environment variables are available
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -46,59 +49,66 @@ const App = () => {
   return (
     <ConfigContext.Provider value={{ supabaseConfigured, supabaseClient: supabase }}>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <WishlistProvider>
+        <WishlistProvider>
+          <TooltipProvider>
             <Toaster />
             <Sonner />
             <BrowserRouter>
               <WelcomeModal />
               <PromotionalPopup />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/courses" element={<Courses />} />
-                <Route path="/courses/:courseId" element={<Courses />} />
-                <Route path="/coins-market" element={<CoinsMarket />} />
-                <Route path="/coins-market/:coinId" element={<CoinDetails />} />
-                <Route path="/verify-coins" element={<VerifyCoins />} />
-                <Route path="/verification-agent" element={<VerificationAgent />} />
-                <Route path="/community" element={<Community />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/authenticate" element={<Authenticate />} />
-                <Route path="/login" element={<Authenticate />} />
-                <Route path="/mentors" element={<Mentors />} />
-                <Route path="/mentors/:mentorId" element={<Mentors />} />
-                <Route path="/articles" element={<Articles />} />
-                <Route path="/articles/:articleId" element={<Articles />} />
-                <Route path="/wishlist" element={<Wishlist />} />
-                <Route path="/purchases" element={<Purchases />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/agent-support" element={<AgentSupport />} />
-                <Route path="/live-support" element={<LiveSupport />} />
-                
-                {/* Legal Pages - New individual pages */}
-                <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
-                <Route path="/legal/terms-of-service" element={<TermsOfService />} />
-                <Route path="/legal/refund-policy" element={<RefundPolicy />} />
-                <Route path="/legal/verification-process" element={<VerificationProcess />} />
-                <Route path="/legal/cookie-policy" element={<CookiePolicy />} />
-                
-                {/* Legacy Legal Pages - Keep existing LegalPage for backwards compatibility */}
-                <Route path="/legal/privacy" element={<LegalPage type="privacy" />} />
-                <Route path="/legal/terms" element={<LegalPage type="terms" />} />
-                <Route path="/legal/refund" element={<LegalPage type="refund" />} />
-                <Route path="/legal/verification" element={<LegalPage type="verification" />} />
-                <Route path="/legal/cookie" element={<LegalPage type="cookie" />} />
-                
-                {/* Search Results */}
-                <Route path="/search" element={<Index />} />
-                
-                {/* Catch-all */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <Suspense fallback={<div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-royal"></div>
+              </div>}>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/courses" element={<Courses />} />
+                  <Route path="/courses/:courseId" element={<Courses />} />
+                  <Route path="/articles" element={<Articles />} />
+                  <Route path="/articles/:articleId" element={<Articles />} />
+                  <Route path="/community" element={<Community />} />
+                  <Route path="/mentors" element={<Mentors />} />
+                  <Route path="/mentors/:mentorId" element={<Mentors />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/authenticate" element={<Authenticate />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/verify-coins" element={<VerifyCoins />} />
+                  <Route path="/verification-process" element={<VerificationProcess />} />
+                  <Route path="/verification-agent" element={<VerificationAgent />} />
+                  <Route path="/agent-support" element={<AgentSupport />} />
+                  <Route path="/live-support" element={<LiveSupport />} />
+                  
+                  {/* Legal Pages - New individual pages */}
+                  <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/legal/terms-of-service" element={<TermsOfService />} />
+                  <Route path="/legal/refund-policy" element={<RefundPolicy />} />
+                  <Route path="/legal/verification-process" element={<VerificationProcess />} />
+                  <Route path="/legal/cookie-policy" element={<CookiePolicy />} />
+                  
+                  {/* Legacy Legal Pages - Keep existing LegalPage for backwards compatibility */}
+                  <Route path="/legal/privacy" element={<LegalPage type="privacy" />} />
+                  <Route path="/legal/terms" element={<LegalPage type="terms" />} />
+                  <Route path="/legal/refund" element={<LegalPage type="refund" />} />
+                  <Route path="/legal/verification" element={<LegalPage type="verification" />} />
+                  <Route path="/legal/cookie" element={<LegalPage type="cookie" />} />
+                  
+                  <Route path="/purchases" element={<Purchases />} />
+                  <Route path="/coins-market" element={<Marketplace />} />
+                  <Route path="/coins-market/:coinId" element={<CoinDetails />} />
+                  <Route path="/wishlist" element={<Wishlist />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  
+                  {/* Search Results */}
+                  <Route path="/search" element={<Index />} />
+                  
+                  {/* Catch-all */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
             </BrowserRouter>
-          </WishlistProvider>
-        </TooltipProvider>
+          </TooltipProvider>
+        </WishlistProvider>
       </QueryClientProvider>
     </ConfigContext.Provider>
   );

@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingCart, Trash2, Plus, Minus, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { MarketplaceService } from '@/services/MarketplaceService';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -117,11 +118,16 @@ const Cart = () => {
       return;
     }
     
-    // TODO: Implement checkout flow
-    toast({
-      title: "Checkout",
-      description: "Checkout functionality will be implemented soon",
-    });
+    if (cartItems.length === 0) {
+      toast({
+        title: "Empty Cart",
+        description: "Please add some items to your cart before checkout",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    navigate('/checkout');
   };
 
   // If user not logged in
@@ -147,7 +153,7 @@ const Cart = () => {
                   variant="outline"
                   className="border-royal text-royal hover:bg-royal hover:text-white px-8 py-3"
                 >
-                  Return to Coins Market
+                  Browse Marketplace
                 </Button>
               </div>
             </div>
@@ -182,21 +188,11 @@ const Cart = () => {
       <main className="flex-grow pt-8 pb-16">
         <div className="container mx-auto px-4">
           {/* Header */}
-          <div className="flex items-center space-x-4 mb-8">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/coins-market')}
-              className="text-royal hover:text-royal-light"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Return to Coins Market
-            </Button>
-            <div>
-              <h1 className="text-4xl font-bold text-royal font-playfair">Shopping Cart</h1>
-              <p className="text-lg text-gray-600">
-                {getTotalItems()} {getTotalItems() === 1 ? 'item' : 'items'} in your cart
-              </p>
-            </div>
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-royal font-playfair mb-2">Shopping Cart</h1>
+            <p className="text-lg text-gray-600">
+              {getTotalItems()} {getTotalItems() === 1 ? 'item' : 'items'} in your cart
+            </p>
           </div>
 
           {cartItems.length === 0 ? (
@@ -208,7 +204,7 @@ const Cart = () => {
                 onClick={() => navigate('/coins-market')}
                 className="bg-royal hover:bg-royal-light text-white px-8 py-3"
               >
-                Return to Coins Market
+                Browse Marketplace
               </Button>
             </div>
           ) : (
@@ -221,18 +217,18 @@ const Cart = () => {
                     if (!coin) return null;
 
                     return (
-                      <Card key={item.id} className="border border-gray-200">
+                      <Card key={item.id} className="border border-gray-200 hover:shadow-md transition-shadow">
                         <CardContent className="p-6">
                           <div className="flex items-start space-x-4">
                             {/* Product Image */}
                             <div 
-                              className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
+                              className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer group"
                               onClick={() => navigate(`/coins-market/${coin.id}`)}
                             >
                               <img 
                                 src={coin.images[0] || 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=600&auto=format&fit=crop&q=80'} 
                                 alt={coin.title}
-                                className="w-full h-full object-cover hover:scale-105 transition-transform"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                               />
                             </div>
                             
@@ -256,13 +252,13 @@ const Cart = () => {
                             
                             {/* Quantity Controls */}
                             <div className="flex items-center space-x-3">
-                              <div className="flex items-center space-x-2 border border-gray-300 rounded-lg">
+                              <div className="flex items-center space-x-2 border border-gray-300 rounded-lg bg-white">
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => updateQuantity(item.id, item.quantity - 1)}
                                   disabled={updating === item.id || item.quantity <= 1}
-                                  className="h-8 w-8 p-0"
+                                  className="h-8 w-8 p-0 hover:bg-gray-100"
                                 >
                                   <Minus className="h-3 w-3" />
                                 </Button>
@@ -274,7 +270,7 @@ const Cart = () => {
                                   size="sm"
                                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
                                   disabled={updating === item.id || item.quantity >= coin.stock_quantity}
-                                  className="h-8 w-8 p-0"
+                                  className="h-8 w-8 p-0 hover:bg-gray-100"
                                 >
                                   <Plus className="h-3 w-3" />
                                 </Button>
@@ -285,7 +281,7 @@ const Cart = () => {
                                 size="sm"
                                 onClick={() => removeItem(item.id)}
                                 disabled={updating === item.id}
-                                className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -299,25 +295,25 @@ const Cart = () => {
 
                 {/* Order Summary */}
                 <div className="lg:col-span-1">
-                  <Card className="border border-gray-200 sticky top-4">
-                    <CardHeader>
+                  <Card className="border border-gray-200 sticky top-4 shadow-lg">
+                    <CardHeader className="bg-royal/5">
                       <CardTitle className="text-royal">Order Summary</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-6">
                       <div className="space-y-4">
                         <div className="flex justify-between">
                           <span>Subtotal ({getTotalItems()} items):</span>
-                          <span>₹{getTotalPrice().toLocaleString()}</span>
+                          <span className="font-medium">₹{getTotalPrice().toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Shipping:</span>
-                          <span className="text-green-600">
+                          <span className={`font-medium ${getTotalPrice() >= 5000 ? "text-green-600" : ""}`}>
                             {getTotalPrice() >= 5000 ? 'Free' : '₹99'}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span>Tax (GST):</span>
-                          <span>₹{Math.round(getTotalPrice() * 0.18).toLocaleString()}</span>
+                          <span className="font-medium">₹{Math.round(getTotalPrice() * 0.18).toLocaleString()}</span>
                         </div>
                         <div className="border-t pt-4">
                           <div className="flex justify-between font-bold text-lg">
@@ -329,13 +325,13 @@ const Cart = () => {
                         </div>
                         
                         {getTotalPrice() < 5000 && (
-                          <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                          <div className="text-sm text-blue-700 bg-blue-50 p-3 rounded-lg border border-blue-200">
                             Add ₹{(5000 - getTotalPrice()).toLocaleString()} more for free shipping
                           </div>
                         )}
                         
                         <Button 
-                          className="w-full bg-royal hover:bg-royal-light text-white mt-6 h-12"
+                          className="w-full bg-royal hover:bg-royal-light text-white mt-6 h-12 text-lg font-semibold"
                           onClick={handleCheckout}
                           disabled={cartItems.length === 0}
                         >
@@ -347,7 +343,7 @@ const Cart = () => {
                           className="w-full border-royal text-royal hover:bg-royal hover:text-white"
                           onClick={() => navigate('/coins-market')}
                         >
-                          Return to Coins Market
+                          Continue Shopping
                         </Button>
                       </div>
                     </CardContent>

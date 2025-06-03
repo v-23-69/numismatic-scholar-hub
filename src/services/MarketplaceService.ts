@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { CoinListing, CartItem, MarketplaceFilters } from '@/types/marketplace';
 
@@ -19,7 +18,7 @@ export class MarketplaceService {
             avatar_url
           )
         `)
-        .eq('stock_quantity', 0, { negate: true }) // Only show items in stock
+        .gt('stock_quantity', 0) // Only show items in stock
         .order('created_at', { ascending: false });
 
       // Apply filters

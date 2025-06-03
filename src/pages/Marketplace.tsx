@@ -210,14 +210,17 @@ const FilterPanel = ({
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
           <Select 
-            value={filters.region || ''} 
-            onValueChange={(value) => onFiltersChange({ ...filters, region: value || undefined })}
+            value={filters.region || 'all'} 
+            onValueChange={(value: string) => {
+              const newValue = value === 'all' ? undefined : value;
+              onFiltersChange({ ...filters, region: newValue });
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="All regions" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All regions</SelectItem>
+              <SelectItem value="all">All regions</SelectItem>
               <SelectItem value="United States">United States</SelectItem>
               <SelectItem value="Roman Empire">Roman Empire</SelectItem>
               <SelectItem value="India">India</SelectItem>
@@ -230,14 +233,17 @@ const FilterPanel = ({
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Rarity</label>
           <Select 
-            value={filters.rarity || ''} 
-            onValueChange={(value) => onFiltersChange({ ...filters, rarity: value || undefined })}
+            value={filters.rarity || 'all'} 
+            onValueChange={(value: string) => {
+              const newValue = value === 'all' ? undefined : value;
+              onFiltersChange({ ...filters, rarity: newValue });
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="All rarities" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All rarities</SelectItem>
+              <SelectItem value="all">All rarities</SelectItem>
               <SelectItem value="Common">Common</SelectItem>
               <SelectItem value="Uncommon">Uncommon</SelectItem>
               <SelectItem value="Rare">Rare</SelectItem>
@@ -253,19 +259,19 @@ const FilterPanel = ({
             <Input
               type="number"
               placeholder="Min"
-              value={filters.minValue || ''}
-              onChange={(e) => onFiltersChange({ 
-                ...filters, 
-                minValue: e.target.value ? Number(e.target.value) : undefined 
+              value={filters.minValue !== undefined ? String(filters.minValue) : ''}
+              onChange={(e) => onFiltersChange({
+                ...filters,
+                minValue: e.target.value !== '' ? Number(e.target.value) : undefined
               })}
             />
             <Input
               type="number"
               placeholder="Max"
-              value={filters.maxValue || ''}
-              onChange={(e) => onFiltersChange({ 
-                ...filters, 
-                maxValue: e.target.value ? Number(e.target.value) : undefined 
+              value={filters.maxValue !== undefined ? String(filters.maxValue) : ''}
+              onChange={(e) => onFiltersChange({
+                ...filters,
+                maxValue: e.target.value !== '' ? Number(e.target.value) : undefined
               })}
             />
           </div>

@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { WishlistItem, WishlistContextType } from '@/types/wishlist';
 import { WishlistService } from '@/services/WishlistService';
@@ -7,27 +8,45 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 
 export const WishlistProvider = ({ children }: { children: ReactNode }) => {
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
-  const { user } = useSupabaseAuth();
+  const [loading, setLoading] = useState(false);
+
+  // Safely get user with error handling
+  let user = null;
+  try {
+    const authHook = useSupabaseAuth();
+    user = authHook?.user || null;
+  } catch (error) {
+    console.error('Error getting user in WishlistProvider:', error);
+  }
 
   // Load wishlist from database on initial render
   useEffect(() => {
     if (user) {
       loadWishlist();
+    } else {
+      setWishlist([]);
     }
   }, [user]);
 
   const loadWishlist = async () => {
     if (!user) return;
     try {
+      setLoading(true);
       const items = await WishlistService.getWishlistItems(user.id);
-      setWishlist(items);
+      setWishlist(items || []);
     } catch (error) {
       console.error('Error loading wishlist:', error);
+      setWishlist([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const addToWishlist = async (item: WishlistItem) => {
-    if (!user) return;
+    if (!user) {
+      console.warn('Cannot add to wishlist: no user');
+      return;
+    }
     try {
       await WishlistService.addToWishlist(user.id, item.id);
       setWishlist(prev => {
@@ -42,7 +61,10 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeFromWishlist = async (id: string) => {
-    if (!user) return;
+    if (!user) {
+      console.warn('Cannot remove from wishlist: no user');
+      return;
+    }
     try {
       await WishlistService.removeFromWishlist(user.id, id);
       setWishlist(prev => prev.filter(item => item.id !== id));

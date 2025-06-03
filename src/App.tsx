@@ -1,3 +1,4 @@
+
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -6,13 +7,42 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { WishlistProvider } from "@/context/WishlistContext";
 import { ConfigContext } from "@/context/ConfigContext";
+import { ErrorBoundary } from "react-error-boundary";
 import supabase from '@/lib/supabaseClient';
-import WelcomeModal from "./components/WelcomeModal";
-import PromotionalPopup from "./components/PromotionalPopup";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 5 * 60 * 1000,
+    },
+  },
+});
 
-// Lazy load pages for better performance
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-royal"></div>
+  </div>
+);
+
+// Error fallback for route-level errors
+const RouteErrorFallback = ({ error }: { error: Error }) => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="text-center">
+      <h2 className="text-xl font-bold text-red-600 mb-2">Page Error</h2>
+      <p className="text-gray-600">Unable to load this page</p>
+      <button 
+        onClick={() => window.location.href = '/'} 
+        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+      >
+        Go Home
+      </button>
+    </div>
+  </div>
+);
+
+// Lazy load pages with error boundaries
 const Index = lazy(() => import("./pages/Index"));
 const About = lazy(() => import("./pages/About"));
 const Courses = lazy(() => import("./pages/Courses"));
@@ -40,6 +70,10 @@ const Wishlist = lazy(() => import("./pages/Wishlist"));
 const Cart = lazy(() => import("./pages/Cart"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 
+// Lazy loading modal components
+const WelcomeModal = lazy(() => import("./components/WelcomeModal"));
+const PromotionalPopup = lazy(() => import("./components/PromotionalPopup"));
+
 const App = () => {
   // Check if Supabase environment variables are available
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -47,70 +81,72 @@ const App = () => {
   const supabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
   return (
-    <ConfigContext.Provider value={{ supabaseConfigured, supabaseClient: supabase }}>
-      <QueryClientProvider client={queryClient}>
-        <WishlistProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <WelcomeModal />
-              <PromotionalPopup />
-              <Suspense fallback={<div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-royal"></div>
-              </div>}>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/courses" element={<Courses />} />
-                  <Route path="/courses/:courseId" element={<Courses />} />
-                  <Route path="/articles" element={<Articles />} />
-                  <Route path="/articles/:articleId" element={<Articles />} />
-                  <Route path="/community" element={<Community />} />
-                  <Route path="/mentors" element={<Mentors />} />
-                  <Route path="/mentors/:mentorId" element={<Mentors />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/authenticate" element={<Authenticate />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/verify-coins" element={<VerifyCoins />} />
-                  <Route path="/verification-process" element={<VerificationProcess />} />
-                  <Route path="/verification-agent" element={<VerificationAgent />} />
-                  <Route path="/agent-support" element={<AgentSupport />} />
-                  <Route path="/live-support" element={<LiveSupport />} />
-                  
-                  {/* Legal Pages - New individual pages */}
-                  <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
-                  <Route path="/legal/terms-of-service" element={<TermsOfService />} />
-                  <Route path="/legal/refund-policy" element={<RefundPolicy />} />
-                  <Route path="/legal/verification-process" element={<VerificationProcess />} />
-                  <Route path="/legal/cookie-policy" element={<CookiePolicy />} />
-                  
-                  {/* Legacy Legal Pages - Keep existing LegalPage for backwards compatibility */}
-                  <Route path="/legal/privacy" element={<LegalPage type="privacy" />} />
-                  <Route path="/legal/terms" element={<LegalPage type="terms" />} />
-                  <Route path="/legal/refund" element={<LegalPage type="refund" />} />
-                  <Route path="/legal/verification" element={<LegalPage type="verification" />} />
-                  <Route path="/legal/cookie" element={<LegalPage type="cookie" />} />
-                  
-                  <Route path="/purchases" element={<Purchases />} />
-                  <Route path="/coins-market" element={<Marketplace />} />
-                  <Route path="/coins-market/:coinId" element={<CoinDetails />} />
-                  <Route path="/wishlist" element={<Wishlist />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  
-                  {/* Search Results */}
-                  <Route path="/search" element={<Index />} />
-                  
-                  {/* Catch-all */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </BrowserRouter>
-          </TooltipProvider>
-        </WishlistProvider>
-      </QueryClientProvider>
-    </ConfigContext.Provider>
+    <ErrorBoundary FallbackComponent={RouteErrorFallback}>
+      <ConfigContext.Provider value={{ supabaseConfigured, supabaseClient: supabase }}>
+        <QueryClientProvider client={queryClient}>
+          <WishlistProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Suspense fallback={<LoadingFallback />}>
+                  <WelcomeModal />
+                  <PromotionalPopup />
+                </Suspense>
+                <Suspense fallback={<LoadingFallback />}>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/courses" element={<Courses />} />
+                    <Route path="/courses/:courseId" element={<Courses />} />
+                    <Route path="/articles" element={<Articles />} />
+                    <Route path="/articles/:articleId" element={<Articles />} />
+                    <Route path="/community" element={<Community />} />
+                    <Route path="/mentors" element={<Mentors />} />
+                    <Route path="/mentors/:mentorId" element={<Mentors />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/authenticate" element={<Authenticate />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/verify-coins" element={<VerifyCoins />} />
+                    <Route path="/verification-process" element={<VerificationProcess />} />
+                    <Route path="/verification-agent" element={<VerificationAgent />} />
+                    <Route path="/agent-support" element={<AgentSupport />} />
+                    <Route path="/live-support" element={<LiveSupport />} />
+                    
+                    {/* Legal Pages */}
+                    <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/legal/terms-of-service" element={<TermsOfService />} />
+                    <Route path="/legal/refund-policy" element={<RefundPolicy />} />
+                    <Route path="/legal/verification-process" element={<VerificationProcess />} />
+                    <Route path="/legal/cookie-policy" element={<CookiePolicy />} />
+                    
+                    {/* Legacy Legal Pages */}
+                    <Route path="/legal/privacy" element={<LegalPage type="privacy" />} />
+                    <Route path="/legal/terms" element={<LegalPage type="terms" />} />
+                    <Route path="/legal/refund" element={<LegalPage type="refund" />} />
+                    <Route path="/legal/verification" element={<LegalPage type="verification" />} />
+                    <Route path="/legal/cookie" element={<LegalPage type="cookie" />} />
+                    
+                    <Route path="/purchases" element={<Purchases />} />
+                    <Route path="/coins-market" element={<Marketplace />} />
+                    <Route path="/coins-market/:coinId" element={<CoinDetails />} />
+                    <Route path="/wishlist" element={<Wishlist />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    
+                    {/* Search Results */}
+                    <Route path="/search" element={<Index />} />
+                    
+                    {/* Catch-all */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </BrowserRouter>
+            </TooltipProvider>
+          </WishlistProvider>
+        </QueryClientProvider>
+      </ConfigContext.Provider>
+    </ErrorBoundary>
   );
 };
 

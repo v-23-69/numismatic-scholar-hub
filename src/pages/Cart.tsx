@@ -1,139 +1,301 @@
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingCart, Trash2, Plus, Minus } from 'lucide-react';
-
-interface CartItem {
-  id: string;
-  title: string;
-  price: number;
-  quantity: number;
-  image?: string;
-}
+import { ShoppingCart, Trash2, Plus, Minus, ArrowLeft } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
+import { MarketplaceService } from '@/services/MarketplaceService';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import type { CartItem } from '@/types/marketplace';
 
 const Cart = () => {
+  const navigate = useNavigate();
+  const { user } = useSupabaseAuth();
+  const { toast } = useToast();
+  
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState<string | null>(null);
 
   useEffect(() => {
-    // Scroll to top when component mounts
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    // Load cart items from localStorage
+    if (user) {
+      loadCartItems();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const loadCartItems = async () => {
+    if (!user) return;
+    
     try {
-      const purchases = JSON.parse(localStorage.getItem('purchases') || '[]');
-      const items = purchases.map((item: any, index: number) => ({
-        id: item.id || `item-${index}`,
-        title: item.title || 'Course',
-        price: item.price || 0,
-        quantity: 1,
-        image: item.image
-      }));
+      setLoading(true);
+      const items = await MarketplaceService.getCartItems(user.id);
       setCartItems(items);
     } catch (error) {
-      console.error('Failed to load cart items:', error);
+      console.error('Error loading cart items:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load cart items",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  }, []);
-
-  const updateQuantity = (id: string, newQuantity: number) => {
-    if (newQuantity < 1) return;
-    setCartItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
   };
 
-  const removeItem = (id: string) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== id));
-    // Also remove from localStorage
+  const updateQuantity = async (itemId: string, newQuantity: number) => {
     try {
-      const purchases = JSON.parse(localStorage.getItem('purchases') || '[]');
-      const updatedPurchases = purchases.filter((item: any) => item.id !== id);
-      localStorage.setItem('purchases', JSON.stringify(updatedPurchases));
+      setUpdating(itemId);
+      await MarketplaceService.updateCartItemQuantity(itemId, newQuantity);
+      
+      if (newQuantity === 0) {
+        setCartItems(prev => prev.filter(item => item.id !== itemId));
+        toast({
+          title: "Item removed",
+          description: "Item has been removed from your cart",
+        });
+      } else {
+        setCartItems(prev =>
+          prev.map(item =>
+            item.id === itemId ? { ...item, quantity: newQuantity } : item
+          )
+        );
+      }
     } catch (error) {
-      console.error('Failed to update localStorage:', error);
+      console.error('Error updating cart item:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update item quantity",
+        variant: "destructive"
+      });
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const removeItem = async (itemId: string) => {
+    try {
+      setUpdating(itemId);
+      await MarketplaceService.removeFromCart(itemId);
+      setCartItems(prev => prev.filter(item => item.id !== itemId));
+      
+      toast({
+        title: "Item removed",
+        description: "Item has been removed from your cart",
+      });
+    } catch (error) {
+      console.error('Error removing cart item:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove item from cart",
+        variant: "destructive"
+      });
+    } finally {
+      setUpdating(null);
     }
   };
 
   const getTotalPrice = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cartItems.reduce((total, item) => {
+      const price = item.coin_listing?.value || 0;
+      return total + (price * item.quantity);
+    }, 0);
   };
+
+  const getTotalItems = () => {
+    return cartItems.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  const handleCheckout = () => {
+    if (!user) {
+      navigate('/authenticate');
+      return;
+    }
+    
+    // TODO: Implement checkout flow
+    toast({
+      title: "Checkout",
+      description: "Checkout functionality will be implemented soon",
+    });
+  };
+
+  // If user not logged in
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow pt-8 pb-16">
+          <div className="container mx-auto px-4">
+            <div className="text-center py-16">
+              <ShoppingCart className="h-24 w-24 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-600 mb-4">Please Sign In</h2>
+              <p className="text-gray-500 mb-8">You need to be signed in to view your cart</p>
+              <div className="space-x-4">
+                <Button 
+                  onClick={() => navigate('/authenticate')}
+                  className="bg-royal hover:bg-royal-light text-white px-8 py-3"
+                >
+                  Sign In
+                </Button>
+                <Button 
+                  onClick={() => navigate('/coins-market')}
+                  variant="outline"
+                  className="border-royal text-royal hover:bg-royal hover:text-white px-8 py-3"
+                >
+                  Browse Marketplace
+                </Button>
+              </div>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow pt-8 pb-16">
+          <div className="container mx-auto px-4">
+            <div className="text-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-royal mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading your cart...</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow pt-8 pb-16">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-royal font-playfair mb-4">Shopping Cart</h1>
-            <p className="text-lg text-gray-600">Review your selected courses and proceed to checkout</p>
+          {/* Header */}
+          <div className="flex items-center space-x-4 mb-8">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/coins-market')}
+              className="text-royal hover:text-royal-light"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Continue Shopping
+            </Button>
+            <div>
+              <h1 className="text-4xl font-bold text-royal font-playfair">Shopping Cart</h1>
+              <p className="text-lg text-gray-600">
+                {getTotalItems()} {getTotalItems() === 1 ? 'item' : 'items'} in your cart
+              </p>
+            </div>
           </div>
 
           {cartItems.length === 0 ? (
             <div className="text-center py-16">
               <ShoppingCart className="h-24 w-24 text-gray-400 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-gray-600 mb-4">Your cart is empty</h2>
-              <p className="text-gray-500 mb-8">Browse our courses and add some to your cart!</p>
+              <p className="text-gray-500 mb-8">Browse our marketplace and add some coins to your cart!</p>
               <Button 
-                onClick={() => window.location.href = '/courses'}
+                onClick={() => navigate('/coins-market')}
                 className="bg-royal hover:bg-royal-light text-white px-8 py-3"
               >
-                Browse Courses
+                Browse Marketplace
               </Button>
             </div>
           ) : (
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Cart Items */}
                 <div className="lg:col-span-2 space-y-4">
-                  {cartItems.map((item) => (
-                    <Card key={item.id} className="border border-gray-200">
-                      <CardContent className="p-6">
-                        <div className="flex items-center space-x-4">
-                          {item.image && (
-                            <img 
-                              src={item.image} 
-                              alt={item.title}
-                              className="w-20 h-20 object-cover rounded-lg"
-                            />
-                          )}
-                          <div className="flex-grow">
-                            <h3 className="font-semibold text-royal text-lg">{item.title}</h3>
-                            <p className="text-gray-600">₹{item.price}</p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              disabled={item.quantity <= 1}
+                  {cartItems.map((item) => {
+                    const coin = item.coin_listing;
+                    if (!coin) return null;
+
+                    return (
+                      <Card key={item.id} className="border border-gray-200">
+                        <CardContent className="p-6">
+                          <div className="flex items-start space-x-4">
+                            {/* Product Image */}
+                            <div 
+                              className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
+                              onClick={() => navigate(`/coins-market/${coin.id}`)}
                             >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                            <span className="w-8 text-center">{item.quantity}</span>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
+                              <img 
+                                src={coin.images[0] || 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=600&auto=format&fit=crop&q=80'} 
+                                alt={coin.title}
+                                className="w-full h-full object-cover hover:scale-105 transition-transform"
+                              />
+                            </div>
+                            
+                            {/* Product Info */}
+                            <div className="flex-grow">
+                              <h3 
+                                className="font-semibold text-royal text-lg mb-1 cursor-pointer hover:text-royal-light transition-colors"
+                                onClick={() => navigate(`/coins-market/${coin.id}`)}
+                              >
+                                {coin.title}
+                              </h3>
+                              <p className="text-sm text-gray-600 mb-2">{coin.region} • {coin.mint_date}</p>
+                              <p className="text-sm text-gray-500 mb-3 line-clamp-2">{coin.description}</p>
+                              <div className="flex items-center space-x-4">
+                                <span className="text-lg font-bold text-royal">₹{coin.value.toLocaleString()}</span>
+                                <span className="text-sm text-gray-500">
+                                  {coin.stock_quantity > 0 ? `${coin.stock_quantity} in stock` : 'Out of stock'}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            {/* Quantity Controls */}
+                            <div className="flex items-center space-x-3">
+                              <div className="flex items-center space-x-2 border border-gray-300 rounded-lg">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                  disabled={updating === item.id || item.quantity <= 1}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <span className="w-8 text-center text-sm font-medium">
+                                  {updating === item.id ? '...' : item.quantity}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                  disabled={updating === item.id || item.quantity >= coin.stock_quantity}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeItem(item.id)}
+                                disabled={updating === item.id}
+                                className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeItem(item.id)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
 
                 {/* Order Summary */}
@@ -145,21 +307,48 @@ const Cart = () => {
                     <CardContent>
                       <div className="space-y-4">
                         <div className="flex justify-between">
-                          <span>Subtotal:</span>
-                          <span>₹{getTotalPrice()}</span>
+                          <span>Subtotal ({getTotalItems()} items):</span>
+                          <span>₹{getTotalPrice().toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>Tax:</span>
-                          <span>₹0</span>
+                          <span>Shipping:</span>
+                          <span className="text-green-600">
+                            {getTotalPrice() >= 5000 ? 'Free' : '₹99'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Tax (GST):</span>
+                          <span>₹{Math.round(getTotalPrice() * 0.18).toLocaleString()}</span>
                         </div>
                         <div className="border-t pt-4">
                           <div className="flex justify-between font-bold text-lg">
                             <span>Total:</span>
-                            <span className="text-royal">₹{getTotalPrice()}</span>
+                            <span className="text-royal">
+                              ₹{(getTotalPrice() + (getTotalPrice() >= 5000 ? 0 : 99) + Math.round(getTotalPrice() * 0.18)).toLocaleString()}
+                            </span>
                           </div>
                         </div>
-                        <Button className="w-full bg-royal hover:bg-royal-light text-white mt-6">
+                        
+                        {getTotalPrice() < 5000 && (
+                          <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                            Add ₹{(5000 - getTotalPrice()).toLocaleString()} more for free shipping
+                          </div>
+                        )}
+                        
+                        <Button 
+                          className="w-full bg-royal hover:bg-royal-light text-white mt-6 h-12"
+                          onClick={handleCheckout}
+                          disabled={cartItems.length === 0}
+                        >
                           Proceed to Checkout
+                        </Button>
+                        
+                        <Button 
+                          variant="outline"
+                          className="w-full border-royal text-royal hover:bg-royal hover:text-white"
+                          onClick={() => navigate('/coins-market')}
+                        >
+                          Continue Shopping
                         </Button>
                       </div>
                     </CardContent>

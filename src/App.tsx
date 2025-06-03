@@ -8,6 +8,7 @@ import { useState, createContext } from "react";
 import Index from "./pages/Index";
 import Courses from "./pages/Courses";
 import CoinsMarket from "./pages/Marketplace";
+import CoinDetails from "./pages/CoinDetails";
 import VerifyCoins from "./pages/VerifyCoins";
 import VerificationAgent from "./pages/VerificationAgent";
 import Community from "./pages/Community";
@@ -63,7 +64,7 @@ const App = () => {
                 <Route path="/courses" element={<Courses />} />
                 <Route path="/courses/:courseId" element={<Courses />} />
                 <Route path="/coins-market" element={<CoinsMarket />} />
-                <Route path="/coins-market/:coinId" element={<CoinsMarket />} />
+                <Route path="/coins-market/:coinId" element={<CoinDetails />} />
                 <Route path="/verify-coins" element={<VerifyCoins />} />
                 <Route path="/verification-agent" element={<VerificationAgent />} />
                 <Route path="/community" element={<Community />} />

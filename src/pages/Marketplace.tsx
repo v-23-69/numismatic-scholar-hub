@@ -1,19 +1,18 @@
-
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Filter, Plus, Upload, Shield, ArrowUpDown, Heart, ShoppingCart, X } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Search, Filter, Plus, Upload, Shield, Heart, ShoppingCart, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import FeaturedCoins from "@/components/marketplace/FeaturedCoins";
+import { ListCoinModal } from "@/components/marketplace/ListCoinModal";
 import { useWishlist } from '@/context/WishlistContext';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { MarketplaceService } from '@/services/MarketplaceService';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import type { CoinListing } from '@/types/marketplace';
@@ -354,6 +353,7 @@ const Marketplace = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
+  const [showListModal, setShowListModal] = useState(false);
   
   // Filters
   const [filters, setFilters] = useState<MarketplaceFilters>(() => {
@@ -378,6 +378,13 @@ const Marketplace = () => {
       
       if (resetList) {
         setCoins(result.data);
+        // Smooth scroll to filters section when results update
+        setTimeout(() => {
+          const filtersSection = document.getElementById('filters-section');
+          if (filtersSection && pageNum === 1) {
+            filtersSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 100);
       } else {
         setCoins(prev => [...prev, ...result.data]);
       }
@@ -399,7 +406,6 @@ const Marketplace = () => {
 
   // Initialize and handle filter changes
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     loadCoins(1, true);
   }, [filters]);
 
@@ -437,6 +443,14 @@ const Marketplace = () => {
     }
   };
 
+  const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
+    if (key === 'minValue' || key === 'maxValue') {
+      return typeof value === 'number' && !isNaN(value);
+    }
+    if (key === 'search' || key === 'sortBy') return false;
+    return value !== undefined && value !== '' && value !== null;
+  });
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -464,16 +478,13 @@ const Marketplace = () => {
               </div>
               
               <div className="flex flex-wrap justify-center mt-6 space-x-0 space-y-2 sm:space-x-4 sm:space-y-0">
-                {user ? (
-                  <Button className="bg-gold hover:bg-gold-light text-royal">
-                    <Plus className="h-4 w-4 mr-2" />
-                    List Your Coin
-                  </Button>
-                ) : (
-                  <Button onClick={() => navigate('/authenticate')} className="bg-royal hover:bg-royal-light text-white">
-                    Sign In to List Coins
-                  </Button>
-                )}
+                <Button 
+                  onClick={() => user ? setShowListModal(true) : navigate('/authenticate')} 
+                  className="bg-gold hover:bg-gold-light text-royal"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {user ? 'List Your Coin' : 'Sign In to List Coins'}
+                </Button>
                 
                 <Button 
                   onClick={() => navigate('/verify-coins')}
@@ -509,83 +520,215 @@ const Marketplace = () => {
         {/* Featured Coins Section */}
         <FeaturedCoins />
         
-        {/* Main Content */}
-        <section className="py-16 relative">
+        {/* Filters and Main Content */}
+        <section className="py-16" id="filters-section">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-              {/* Filters Sidebar */}
-              <div className="lg:col-span-1 relative">
-                <div className="relative z-30 sticky top-4">
-                  <FilterPanel 
-                    filters={filters}
-                    onFiltersChange={handleFiltersChange}
-                    onClearFilters={clearFilters}
-                  />
+            {/* Enhanced Filters Bar */}
+            <div className="mb-8">
+              <div className="bg-white border border-royal/20 rounded-lg p-6 shadow-lg">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-semibold text-royal text-lg flex items-center">
+                    <Filter className="h-5 w-5 mr-2" />
+                    Filters & Sorting
+                  </h3>
+                  {hasActiveFilters && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={clearFilters}
+                      className="text-royal hover:text-royal-light hover:bg-royal/10"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Clear All
+                    </Button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                  {/* Sort By */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                    <Select 
+                      value={filters.sortBy || 'newest'} 
+                      onValueChange={(value: string) => {
+                        handleFiltersChange({ ...filters, sortBy: value });
+                      }}
+                    >
+                      <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
+                        <SelectValue placeholder="Sort by..." />
+                      </SelectTrigger>
+                      <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
+                        <SelectItem value="newest">Newest First</SelectItem>
+                        <SelectItem value="oldest">Oldest First</SelectItem>
+                        <SelectItem value="price-low">Price: Low to High</SelectItem>
+                        <SelectItem value="price-high">Price: High to Low</SelectItem>
+                        <SelectItem value="featured">Featured</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Region */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
+                    <Select 
+                      value={filters.region || 'all'} 
+                      onValueChange={(value: string) => {
+                        const newValue = value === 'all' ? undefined : value;
+                        handleFiltersChange({ ...filters, region: newValue });
+                      }}
+                    >
+                      <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
+                        <SelectValue placeholder="All regions" />
+                      </SelectTrigger>
+                      <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
+                        <SelectItem value="all">All regions</SelectItem>
+                        <SelectItem value="United States">United States</SelectItem>
+                        <SelectItem value="Roman Empire">Roman Empire</SelectItem>
+                        <SelectItem value="India">India</SelectItem>
+                        <SelectItem value="China">China</SelectItem>
+                        <SelectItem value="Europe">Europe</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Rarity */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Rarity</label>
+                    <Select 
+                      value={filters.rarity || 'all'} 
+                      onValueChange={(value: string) => {
+                        const newValue = value === 'all' ? undefined : value;
+                        handleFiltersChange({ ...filters, rarity: newValue });
+                      }}
+                    >
+                      <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
+                        <SelectValue placeholder="All rarities" />
+                      </SelectTrigger>
+                      <SelectContent className="z-40 bg-white border border-gray-200 shadow-lg">
+                        <SelectItem value="all">All rarities</SelectItem>
+                        <SelectItem value="Common">Common</SelectItem>
+                        <SelectItem value="Uncommon">Uncommon</SelectItem>
+                        <SelectItem value="Rare">Rare</SelectItem>
+                        <SelectItem value="Very Rare">Very Rare</SelectItem>
+                        <SelectItem value="Extremely Rare">Extremely Rare</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Min Price */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Min Price (₹)</label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={filters.minValue !== undefined ? String(filters.minValue) : ''}
+                      onChange={e => {
+                        const value = e.target.value;
+                        handleFiltersChange({ ...filters, minValue: value !== '' ? Number(value) : undefined });
+                      }}
+                      min={0}
+                      className="border-royal/30 focus:border-royal focus:ring-royal/20"
+                    />
+                  </div>
+
+                  {/* Max Price */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Max Price (₹)</label>
+                    <Input
+                      type="number"
+                      placeholder="∞"
+                      value={filters.maxValue !== undefined ? String(filters.maxValue) : ''}
+                      onChange={e => {
+                        const value = e.target.value;
+                        handleFiltersChange({ ...filters, maxValue: value !== '' ? Number(value) : undefined });
+                      }}
+                      min={0}
+                      className="border-royal/30 focus:border-royal focus:ring-royal/20"
+                    />
+                  </div>
+                  
+                  {/* Verified Only */}
+                  <div className="flex items-end">
+                    <div className="flex items-center p-4 bg-royal/10 rounded-lg h-10">
+                      <input
+                        type="checkbox"
+                        id="verified"
+                        checked={filters.verified || false}
+                        onChange={(e) => handleFiltersChange({ 
+                          ...filters, 
+                          verified: e.target.checked || undefined 
+                        })}
+                        className="rounded border-royal/30 text-royal focus:ring-royal/20 mr-2"
+                      />
+                      <label htmlFor="verified" className="text-sm text-gray-700 flex items-center">
+                        <Shield className="h-4 w-4 mr-1 text-gold" />
+                        Verified only
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
 
-              {/* Coins Grid */}
-              <div className="lg:col-span-3">
-                <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-2xl font-bold font-playfair text-royal">
-                    {totalCount > 0 ? `${totalCount} Coins Found` : 'All Coins'}
-                  </h2>
+            {/* Results Header and Coins Grid */}
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-bold font-playfair text-royal">
+                {totalCount > 0 ? `${totalCount} Coins Found` : 'All Coins'}
+              </h2>
+            </div>
+            
+            {loading && page === 1 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                ))}
+              </div>
+            ) : coins.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                  {coins.map((coin, index) => (
+                    <CoinCard key={coin.id} coin={coin} index={index} />
+                  ))}
                 </div>
                 
-                {loading && page === 1 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                    {[...Array(6)].map((_, i) => (
-                      <div key={i} className="animate-pulse">
-                        <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
-                        <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                      </div>
-                    ))}
-                  </div>
-                ) : coins.length > 0 ? (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                      {coins.map((coin, index) => (
-                        <CoinCard key={coin.id} coin={coin} index={index} />
-                      ))}
-                    </div>
-                    
-                    {/* Load More Button */}
-                    {hasMore && (
-                      <div className="text-center mt-12">
-                        <Button 
-                          onClick={loadMore}
-                          disabled={loading}
-                          className="bg-royal hover:bg-royal-light text-white px-8 py-3"
-                        >
-                          {loading ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                              Loading...
-                            </>
-                          ) : (
-                            'Load More Coins'
-                          )}
-                        </Button>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="text-center py-12">
-                    <h3 className="text-xl font-bold text-gray-700 mb-2">No coins found</h3>
-                    <p className="text-gray-600 mb-8">
-                      Try adjusting your search or filter criteria to find what you're looking for.
-                    </p>
+                {/* Load More Button */}
+                {hasMore && (
+                  <div className="text-center mt-12">
                     <Button 
-                      onClick={clearFilters}
-                      className="bg-royal hover:bg-royal-light text-white"
+                      onClick={loadMore}
+                      disabled={loading}
+                      className="bg-royal hover:bg-royal-light text-white px-8 py-3"
                     >
-                      Clear Filters
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Loading...
+                        </>
+                      ) : (
+                        'Load More Coins'
+                      )}
                     </Button>
                   </div>
                 )}
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <h3 className="text-xl font-bold text-gray-700 mb-2">No coins found</h3>
+                <p className="text-gray-600 mb-8">
+                  Try adjusting your search or filter criteria to find what you're looking for.
+                </p>
+                <Button 
+                  onClick={clearFilters}
+                  className="bg-royal hover:bg-royal-light text-white"
+                >
+                  Clear Filters
+                </Button>
               </div>
-            </div>
+            )}
           </div>
         </section>
 
@@ -681,6 +824,12 @@ const Marketplace = () => {
         </section>
       </main>
       <Footer />
+      
+      {/* List Coin Modal */}
+      <ListCoinModal 
+        open={showListModal} 
+        onOpenChange={setShowListModal} 
+      />
     </div>
   );
 };

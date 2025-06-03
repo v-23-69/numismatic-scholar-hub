@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -110,12 +109,15 @@ const VerifyCoins = () => {
   const handleFileUpload = (file: File | undefined, coinNumber: number, side: 'front' | 'back') => {
     if (!file) return;
     
+    const coinNumberInt = Number(coinNumber);
+    if (isNaN(coinNumberInt)) return;
+    
     setFormData(prev => ({
       ...prev,
       coinImages: {
         ...prev.coinImages,
-        [coinNumber]: {
-          ...prev.coinImages[coinNumber],
+        [coinNumberInt]: {
+          ...prev.coinImages[coinNumberInt],
           [side]: file
         }
       }
@@ -123,7 +125,7 @@ const VerifyCoins = () => {
     
     // Clear any existing errors for this field
     const newErrors = {...errors};
-    delete newErrors[`coin${coinNumber}${side === 'front' ? 'Front' : 'Back'}`];
+    delete newErrors[`coin${coinNumberInt}${side === 'front' ? 'Front' : 'Back'}`];
     setErrors(newErrors);
   };
 
@@ -175,12 +177,14 @@ const VerifyCoins = () => {
       let backImageUrl = '';
       
       if (formData.coinImages[1]?.front) {
-        const frontFileName = `front_${Date.now()}_${formData.coinImages[1].front.name}`;
+        const timestamp = Date.now();
+        const frontFileName = `front_${timestamp}_${formData.coinImages[1].front.name}`;
         frontImageUrl = await uploadToSupabase(formData.coinImages[1].front, frontFileName);
       }
       
       if (formData.coinImages[1]?.back) {
-        const backFileName = `back_${Date.now()}_${formData.coinImages[1].back.name}`;
+        const timestamp = Date.now();
+        const backFileName = `back_${timestamp}_${formData.coinImages[1].back.name}`;
         backImageUrl = await uploadToSupabase(formData.coinImages[1].back, backFileName);
       }
 
@@ -195,7 +199,7 @@ const VerifyCoins = () => {
           description: formData.description || 'General verification request',
           front_image_url: frontImageUrl,
           back_image_url: backImageUrl,
-          num_coins: coinCount,
+          num_coins: Number(coinCount) || 1,
           payment_status: 'completed',
           paid: true,
           status: 'pending'
@@ -236,16 +240,16 @@ const VerifyCoins = () => {
   };
 
   const incrementCoinCount = () => {
-    setCoinCount(prev => Math.min(prev + 1, 6));
+    setCoinCount(prev => Math.min(Number(prev) + 1, 6));
   };
 
   const decrementCoinCount = () => {
-    setCoinCount(prev => Math.max(1, prev - 1));
+    setCoinCount(prev => Math.max(1, Number(prev) - 1));
   };
 
-  const totalPrice = coinCount * basePrice;
-  const hasFreeVerification = coinCount >= 5;
-  const totalCoinsToUpload = hasFreeVerification ? coinCount + 1 : coinCount;
+  const totalPrice = Number(coinCount) * basePrice;
+  const hasFreeVerification = Number(coinCount) >= 5;
+  const totalCoinsToUpload = hasFreeVerification ? Number(coinCount) + 1 : Number(coinCount);
   
   const renderCoinUploadBlocks = () => {
     const blocks = [];

@@ -1,10 +1,9 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState, createContext } from "react";
+import { useState } from "react";
 import Index from "./pages/Index";
 import Courses from "./pages/Courses";
 import CoinsMarket from "./pages/Marketplace";
@@ -32,13 +31,8 @@ import AgentSupport from "./pages/AgentSupport";
 import LiveSupport from "./pages/LiveSupport";
 import PromotionalPopup from "./components/PromotionalPopup";
 import { WishlistProvider } from "./context/WishlistContext";
+import { ConfigContext } from "./context/ConfigContext";
 import supabase from '@/lib/supabaseClient';
-
-// Create a context to indicate if Supabase is properly configured
-export const ConfigContext = createContext({
-  supabaseConfigured: false,
-  supabaseClient: supabase,
-});
 
 const App = () => {
   // Create a new QueryClient instance inside the component

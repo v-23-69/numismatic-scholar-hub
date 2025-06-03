@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
-import { ConfigContext } from "@/App";
+import { ConfigContext } from "@/context/ConfigContext";
 import { useToast } from "@/hooks/use-toast";
 import CourseCard from "@/components/CourseCard";
 

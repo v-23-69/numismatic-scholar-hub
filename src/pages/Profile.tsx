@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { ConfigContext } from "@/App";
+import { ConfigContext } from "@/context/ConfigContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
 import ProfileCompletion from '@/components/profile/ProfileCompletion';

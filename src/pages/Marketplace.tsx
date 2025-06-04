@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Filter, Plus, Upload, Shield, Heart, ShoppingCart, X, Calendar, Award, Crown } from 'lucide-react';
+import { Search, Filter, Plus, Upload, Shield, Heart, ShoppingCart, X, Calendar, Award, Crown, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import FeaturedCoins from "@/components/marketplace/FeaturedCoins";
 import { ListCoinModal } from "@/components/marketplace/ListCoinModal";
+import { QuickViewModal } from "@/components/marketplace/QuickViewModal";
+import { FilterPresets } from "@/components/marketplace/FilterPresets";
 import { useWishlist } from '@/context/WishlistContext';
 import { useToast } from "@/hooks/use-toast";
 import { MarketplaceService } from '@/services/MarketplaceService';
@@ -33,14 +35,16 @@ interface MarketplaceFilters {
   dynasty?: string;
 }
 
-const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
+const CoinCard = ({ coin, index, onQuickView }: { coin: CoinListing, index: number, onQuickView: (coin: CoinListing) => void }) => {
   const navigate = useNavigate();
   const { user } = useSupabaseAuth();
   const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlist();
   const { toast } = useToast();
   const [addingToCart, setAddingToCart] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   
-  const toggleWishlist = () => {
+  const toggleWishlist = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const coinIdStr = String(coin.id);
     if (isInWishlist(coinIdStr)) {
       removeFromWishlist(coinIdStr);
@@ -125,6 +129,8 @@ const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className="royal-card overflow-hidden group cursor-pointer"
       onClick={() => navigate(`/coins-market/${coin.id}`)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative h-48 overflow-hidden">
         <img 
@@ -139,10 +145,7 @@ const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
           </div>
         )}
         <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleWishlist();
-          }}
+          onClick={toggleWishlist}
           className={`absolute top-3 left-3 p-2 rounded-full ${
             isInWishlist(String(coin.id)) 
               ? 'bg-red-500 text-white' 
@@ -151,6 +154,20 @@ const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
         >
           <Heart className="h-4 w-4" fill={isInWishlist(String(coin.id)) ? "currentColor" : "none"} />
         </button>
+        
+        {/* Quick View Button */}
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: isHovered ? 1 : 0, scale: isHovered ? 1 : 0.8 }}
+          transition={{ duration: 0.2 }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onQuickView(coin);
+          }}
+          className="absolute bottom-3 right-3 bg-royal text-white p-2 rounded-full shadow-lg hover:bg-royal-light transition-colors"
+        >
+          <Eye className="h-4 w-4" />
+        </motion.button>
         
         {coin.stock_quantity === 0 && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -418,6 +435,8 @@ const Marketplace = () => {
   const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [showListModal, setShowListModal] = useState(false);
+  const [quickViewCoin, setQuickViewCoin] = useState<CoinListing | null>(null);
+  const [showQuickView, setShowQuickView] = useState(false);
   
   // Filters
   const [filters, setFilters] = useState<MarketplaceFilters>(() => {
@@ -521,6 +540,11 @@ const Marketplace = () => {
     }
   };
 
+  const handleQuickView = (coin: CoinListing) => {
+    setQuickViewCoin(coin);
+    setShowQuickView(true);
+  };
+
   const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
     if (['minValue', 'maxValue', 'minYear', 'maxYear'].includes(key)) {
       return typeof value === 'number' && !isNaN(value);
@@ -595,8 +619,18 @@ const Marketplace = () => {
           </div>
         </section>
 
+        {/* Filter Presets Section */}
+        <section className="py-6 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <FilterPresets 
+              currentFilters={filters}
+              onApplyPreset={handleFiltersChange}
+            />
+          </div>
+        </section>
+
         {/* Enhanced Filters & Sorting Section */}
-        <section className="py-8 bg-white border-b border-gray-200">
+        <section id="filters-section" className="py-8 bg-white border-b border-gray-200">
           <div className="container mx-auto px-4">
             <div className="bg-gradient-to-r from-royal/5 to-gold/5 border border-royal/20 rounded-lg p-6 shadow-lg">
               <div className="flex items-center justify-between mb-6">
@@ -860,7 +894,12 @@ const Marketplace = () => {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                   {coins.map((coin, index) => (
-                    <CoinCard key={coin.id} coin={coin} index={index} />
+                    <CoinCard 
+                      key={coin.id} 
+                      coin={coin} 
+                      index={index} 
+                      onQuickView={handleQuickView}
+                    />
                   ))}
                 </div>
                 
@@ -1009,6 +1048,13 @@ const Marketplace = () => {
       <ListCoinModal 
         open={showListModal} 
         onOpenChange={setShowListModal} 
+      />
+
+      {/* Quick View Modal */}
+      <QuickViewModal
+        coin={quickViewCoin}
+        open={showQuickView}
+        onOpenChange={setShowQuickView}
       />
     </div>
   );

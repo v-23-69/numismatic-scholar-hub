@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, User, ShoppingCart, LogIn, Heart, ChevronDown } from 'lucide-react';
+import { Menu, X, User, ShoppingCart, LogIn, Heart, ChevronDown, TrendingUp, Package } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
@@ -51,6 +51,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchActive, setSearchActive] = useState(false);
   const [aboutDropdownOpen, setAboutDropdownOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const { user, loading } = useAuthState();
   const { wishlist } = useWishlist();
   const location = useLocation();
@@ -89,21 +90,23 @@ const Navbar = () => {
     { name: "Community", path: "/community" },
   ];
 
-  // Close dropdown when clicking outside or on navigation
+  // Close dropdowns when clicking outside or on navigation
   useEffect(() => {
     const handleClickOutside = () => {
       setAboutDropdownOpen(false);
+      setProfileDropdownOpen(false);
     };
 
-    if (aboutDropdownOpen) {
+    if (aboutDropdownOpen || profileDropdownOpen) {
       document.addEventListener('click', handleClickOutside);
       return () => document.removeEventListener('click', handleClickOutside);
     }
-  }, [aboutDropdownOpen]);
+  }, [aboutDropdownOpen, profileDropdownOpen]);
 
-  // Close dropdown on route change
+  // Close dropdowns on route change
   useEffect(() => {
     setAboutDropdownOpen(false);
+    setProfileDropdownOpen(false);
   }, [location.pathname]);
 
   return (
@@ -221,17 +224,64 @@ const Navbar = () => {
           {loading ? (
             <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
           ) : user ? (
-            <Link to="/profile" className="flex items-center">
-              <Avatar className="h-8 w-8">
-                {user.user_metadata?.avatar_url ? (
-                  <AvatarImage src={user.user_metadata.avatar_url} alt="Profile" />
-                ) : (
-                  <AvatarFallback className="bg-royal text-white">
-                    {user.email?.charAt(0).toUpperCase() || 'U'}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-            </Link>
+            <div className="relative">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setProfileDropdownOpen(!profileDropdownOpen);
+                }}
+                className="flex items-center"
+              >
+                <Avatar className="h-8 w-8">
+                  {user.user_metadata?.avatar_url ? (
+                    <AvatarImage src={user.user_metadata.avatar_url} alt="Profile" />
+                  ) : (
+                    <AvatarFallback className="bg-royal text-white">
+                      {user.email?.charAt(0).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+              </button>
+              
+              {profileDropdownOpen && (
+                <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleNavClick('/profile');
+                      setProfileDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors flex items-center"
+                  >
+                    <User className="h-4 w-4 mr-3" />
+                    My Profile
+                  </button>
+                  <div className="border-t border-gray-200 my-2"></div>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleNavClick('/seller-dashboard');
+                      setProfileDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors flex items-center"
+                  >
+                    <TrendingUp className="h-4 w-4 mr-3" />
+                    Seller Dashboard
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleNavClick('/buyer-dashboard');
+                      setProfileDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors flex items-center"
+                  >
+                    <Package className="h-4 w-4 mr-3" />
+                    Buyer Dashboard
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <Link to="/authenticate">
               <Button variant="outline" className="border-royal text-royal hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors duration-200 rounded-xl">
@@ -319,6 +369,31 @@ const Navbar = () => {
           >
             Articles & Blog
           </button>
+          
+          {user && (
+            <>
+              <div className="border-t border-gray-200 my-2"></div>
+              <button 
+                onClick={() => {
+                  handleNavClick('/seller-dashboard');
+                  toggleNav();
+                }}
+                className="block w-full text-left px-3 py-2 rounded-xl text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              >
+                Seller Dashboard
+              </button>
+              
+              <button 
+                onClick={() => {
+                  handleNavClick('/buyer-dashboard');
+                  toggleNav();
+                }}
+                className="block w-full text-left px-3 py-2 rounded-xl text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              >
+                Buyer Dashboard
+              </button>
+            </>
+          )}
           
           <div className="mt-4 flex space-x-2 px-3">
             {user ? (

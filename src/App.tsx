@@ -1,3 +1,4 @@
+
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -56,6 +57,8 @@ const CoinDetails = lazy(() => import("./pages/CoinDetails"));
 const Wishlist = lazy(() => import("./pages/Wishlist"));
 const Cart = lazy(() => import("./pages/Cart"));
 const Checkout = lazy(() => import("./pages/Checkout"));
+const SellerDashboard = lazy(() => import("./pages/SellerDashboard"));
+const BuyerDashboard = lazy(() => import("./pages/BuyerDashboard"));
 
 const App = () => {
   return (
@@ -104,6 +107,10 @@ const App = () => {
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
+          
+          {/* Dashboard Routes */}
+          <Route path="/seller-dashboard" element={<SellerDashboard />} />
+          <Route path="/buyer-dashboard" element={<BuyerDashboard />} />
           
           {/* Search Results */}
           <Route path="/search" element={<Index />} />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Filter, Plus, Upload, Shield, Heart, ShoppingCart, X } from 'lucide-react';
+import { Search, Filter, Plus, Upload, Shield, Heart, ShoppingCart, X, Calendar, Award, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,12 @@ interface MarketplaceFilters {
   maxValue?: number;
   verified?: boolean;
   sortBy?: string;
+  year?: string;
+  minYear?: number;
+  maxYear?: number;
+  metal?: string;
+  condition?: string;
+  dynasty?: string;
 }
 
 const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
@@ -90,6 +96,26 @@ const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
       setAddingToCart(false);
     }
   };
+
+  // Enhanced metadata display
+  const getMetalIcon = (metal: string) => {
+    switch (metal?.toLowerCase()) {
+      case 'gold': return '🥇';
+      case 'silver': return '🥈';
+      case 'copper': return '🟤';
+      default: return '⚪';
+    }
+  };
+
+  const getConditionColor = (condition: string) => {
+    switch (condition?.toLowerCase()) {
+      case 'mint': return 'text-green-600 bg-green-50';
+      case 'good': return 'text-blue-600 bg-blue-50';
+      case 'fair': return 'text-yellow-600 bg-yellow-50';
+      case 'poor': return 'text-red-600 bg-red-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
+  };
   
   return (
     <motion.div 
@@ -134,10 +160,32 @@ const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
       </div>
       
       <div className="p-6">
-        <div className="flex items-center justify-between mb-2">
-          <Badge variant="outline" className="text-gold border-gold">{coin.region}</Badge>
-          <span className="text-sm text-gray-600">{coin.mint_date}</span>
+        {/* Enhanced Metadata Row */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-2">
+            <Badge variant="outline" className="text-gold border-gold">{coin.region}</Badge>
+            {coin.mint_date && (
+              <div className="flex items-center text-xs text-gray-600">
+                <Calendar className="h-3 w-3 mr-1" />
+                {coin.mint_date}
+              </div>
+            )}
+          </div>
+          {coin.metal && (
+            <div className="flex items-center text-xs text-gray-600">
+              <span className="mr-1">{getMetalIcon(coin.metal)}</span>
+              {coin.metal}
+            </div>
+          )}
         </div>
+
+        {/* Dynasty/Category */}
+        {coin.dynasty && (
+          <div className="flex items-center mb-2">
+            <Crown className="h-3 w-3 mr-1 text-royal" />
+            <span className="text-xs text-royal font-medium">{coin.dynasty}</span>
+          </div>
+        )}
         
         <h3 className="text-xl font-bold mb-2 text-royal group-hover:text-gold transition-colors">
           {coin.title}
@@ -147,11 +195,27 @@ const CoinCard = ({ coin, index }: { coin: CoinListing, index: number }) => {
           {coin.description}
         </p>
         
+        {/* Enhanced Metadata Grid */}
+        <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">Rarity:</span>
+            <span className="text-royal font-medium">{coin.rarity}</span>
+          </div>
+          {coin.condition && (
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500">Condition:</span>
+              <span className={`px-1 rounded text-xs font-medium ${getConditionColor(coin.condition)}`}>
+                {coin.condition}
+              </span>
+            </div>
+          )}
+        </div>
+        
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-medium">
-            Rarity: <span className="text-royal">{coin.rarity}</span>
-          </span>
-          <span className="text-royal font-bold">₹{coin.value.toLocaleString()}</span>
+          <div className="flex items-center">
+            <Award className="h-4 w-4 mr-1 text-gold" />
+            <span className="text-royal font-bold text-lg">₹{coin.value.toLocaleString()}</span>
+          </div>
         </div>
         
         <div className="flex items-center justify-between border-t pt-4">
@@ -359,6 +423,8 @@ const Marketplace = () => {
   const [filters, setFilters] = useState<MarketplaceFilters>(() => {
     const minValue = searchParams.get('minValue');
     const maxValue = searchParams.get('maxValue');
+    const minYear = searchParams.get('minYear');
+    const maxYear = searchParams.get('maxYear');
     return {
       search: searchParams.get('search') || '',
       region: searchParams.get('region') || undefined,
@@ -367,6 +433,12 @@ const Marketplace = () => {
       maxValue: maxValue !== null && maxValue !== '' ? Number(maxValue) : undefined,
       verified: searchParams.get('verified') === 'true' ? true : undefined,
       sortBy: searchParams.get('sortBy') || 'newest',
+      year: searchParams.get('year') || undefined,
+      minYear: minYear !== null && minYear !== '' ? Number(minYear) : undefined,
+      maxYear: maxYear !== null && maxYear !== '' ? Number(maxYear) : undefined,
+      metal: searchParams.get('metal') || undefined,
+      condition: searchParams.get('condition') || undefined,
+      dynasty: searchParams.get('dynasty') || undefined,
     };
   });
 
@@ -430,6 +502,12 @@ const Marketplace = () => {
       maxValue: typeof newFilters.maxValue === 'string'
         ? (newFilters.maxValue !== '' ? Number(newFilters.maxValue) : undefined)
         : newFilters.maxValue,
+      minYear: typeof newFilters.minYear === 'string'
+        ? (newFilters.minYear !== '' ? Number(newFilters.minYear) : undefined)
+        : newFilters.minYear,
+      maxYear: typeof newFilters.maxYear === 'string'
+        ? (newFilters.maxYear !== '' ? Number(newFilters.maxYear) : undefined)
+        : newFilters.maxYear,
     }));
   };
 
@@ -444,7 +522,7 @@ const Marketplace = () => {
   };
 
   const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
-    if (key === 'minValue' || key === 'maxValue') {
+    if (['minValue', 'maxValue', 'minYear', 'maxYear'].includes(key)) {
       return typeof value === 'number' && !isNaN(value);
     }
     if (key === 'search' || key === 'sortBy') return false;
@@ -517,110 +595,164 @@ const Marketplace = () => {
           </div>
         </section>
 
-        {/* Featured Coins Section */}
-        <FeaturedCoins />
-        
-        {/* Filters and Main Content */}
-        <section className="py-16" id="filters-section">
+        {/* Enhanced Filters & Sorting Section */}
+        <section className="py-8 bg-white border-b border-gray-200">
           <div className="container mx-auto px-4">
-            {/* Enhanced Filters Bar */}
-            <div className="mb-8">
-              <div className="bg-white border border-royal/20 rounded-lg p-6 shadow-lg">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-semibold text-royal text-lg flex items-center">
-                    <Filter className="h-5 w-5 mr-2" />
-                    Filters & Sorting
-                  </h3>
-                  {hasActiveFilters && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={clearFilters}
-                      className="text-royal hover:text-royal-light hover:bg-royal/10"
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Clear All
-                    </Button>
-                  )}
+            <div className="bg-gradient-to-r from-royal/5 to-gold/5 border border-royal/20 rounded-lg p-6 shadow-lg">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-semibold text-royal text-xl flex items-center">
+                  <Filter className="h-6 w-6 mr-3" />
+                  Professional Filters & Sorting
+                </h3>
+                {hasActiveFilters && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={clearFilters}
+                    className="text-royal hover:text-royal-light hover:bg-royal/10"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Clear All Filters
+                  </Button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {/* Sort By */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                  <Select 
+                    value={filters.sortBy || 'newest'} 
+                    onValueChange={(value: string) => {
+                      handleFiltersChange({ ...filters, sortBy: value });
+                    }}
+                  >
+                    <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
+                      <SelectValue placeholder="Sort by..." />
+                    </SelectTrigger>
+                    <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
+                      <SelectItem value="newest">Newest First</SelectItem>
+                      <SelectItem value="oldest">Oldest First</SelectItem>
+                      <SelectItem value="price-low">Price: Low to High</SelectItem>
+                      <SelectItem value="price-high">Price: High to Low</SelectItem>
+                      <SelectItem value="rulers">Sort by Rulers</SelectItem>
+                      <SelectItem value="popularity">Most Popular</SelectItem>
+                      <SelectItem value="verified">Verified First</SelectItem>
+                      <SelectItem value="featured">Featured</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                  {/* Sort By */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                    <Select 
-                      value={filters.sortBy || 'newest'} 
-                      onValueChange={(value: string) => {
-                        handleFiltersChange({ ...filters, sortBy: value });
-                      }}
-                    >
-                      <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
-                        <SelectValue placeholder="Sort by..." />
-                      </SelectTrigger>
-                      <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
-                        <SelectItem value="newest">Newest First</SelectItem>
-                        <SelectItem value="oldest">Oldest First</SelectItem>
-                        <SelectItem value="price-low">Price: Low to High</SelectItem>
-                        <SelectItem value="price-high">Price: High to Low</SelectItem>
-                        <SelectItem value="featured">Featured</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {/* Region */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
-                    <Select 
-                      value={filters.region || 'all'} 
-                      onValueChange={(value: string) => {
-                        const newValue = value === 'all' ? undefined : value;
-                        handleFiltersChange({ ...filters, region: newValue });
-                      }}
-                    >
-                      <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
-                        <SelectValue placeholder="All regions" />
-                      </SelectTrigger>
-                      <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
-                        <SelectItem value="all">All regions</SelectItem>
-                        <SelectItem value="United States">United States</SelectItem>
-                        <SelectItem value="Roman Empire">Roman Empire</SelectItem>
-                        <SelectItem value="India">India</SelectItem>
-                        <SelectItem value="China">China</SelectItem>
-                        <SelectItem value="Europe">Europe</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {/* Rarity */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Rarity</label>
-                    <Select 
-                      value={filters.rarity || 'all'} 
-                      onValueChange={(value: string) => {
-                        const newValue = value === 'all' ? undefined : value;
-                        handleFiltersChange({ ...filters, rarity: newValue });
-                      }}
-                    >
-                      <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
-                        <SelectValue placeholder="All rarities" />
-                      </SelectTrigger>
-                      <SelectContent className="z-40 bg-white border border-gray-200 shadow-lg">
-                        <SelectItem value="all">All rarities</SelectItem>
-                        <SelectItem value="Common">Common</SelectItem>
-                        <SelectItem value="Uncommon">Uncommon</SelectItem>
-                        <SelectItem value="Rare">Rare</SelectItem>
-                        <SelectItem value="Very Rare">Very Rare</SelectItem>
-                        <SelectItem value="Extremely Rare">Extremely Rare</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {/* Min Price */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Min Price (₹)</label>
+                {/* Dynasty/Category */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Dynasty / Category</label>
+                  <Select 
+                    value={filters.dynasty || 'all'} 
+                    onValueChange={(value: string) => {
+                      const newValue = value === 'all' ? undefined : value;
+                      handleFiltersChange({ ...filters, dynasty: newValue });
+                    }}
+                  >
+                    <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
+                      <SelectValue placeholder="All categories" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
+                      <SelectItem value="all">All Categories</SelectItem>
+                      <SelectItem value="Ancient India">Ancient India</SelectItem>
+                      <SelectItem value="Mughal India">Mughal India</SelectItem>
+                      <SelectItem value="British India">British India</SelectItem>
+                      <SelectItem value="Republic India">Republic India</SelectItem>
+                      <SelectItem value="Notes British">Notes British</SelectItem>
+                      <SelectItem value="Foreign & Accessories">Foreign & Accessories</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Metal Type */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Metal Type</label>
+                  <Select 
+                    value={filters.metal || 'all'} 
+                    onValueChange={(value: string) => {
+                      const newValue = value === 'all' ? undefined : value;
+                      handleFiltersChange({ ...filters, metal: newValue });
+                    }}
+                  >
+                    <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
+                      <SelectValue placeholder="All metals" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
+                      <SelectItem value="all">All Metals</SelectItem>
+                      <SelectItem value="Gold">🥇 Gold</SelectItem>
+                      <SelectItem value="Silver">🥈 Silver</SelectItem>
+                      <SelectItem value="Copper">🟤 Copper</SelectItem>
+                      <SelectItem value="Bronze">🟫 Bronze</SelectItem>
+                      <SelectItem value="Nickel">⚪ Nickel</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Condition */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Condition</label>
+                  <Select 
+                    value={filters.condition || 'all'} 
+                    onValueChange={(value: string) => {
+                      const newValue = value === 'all' ? undefined : value;
+                      handleFiltersChange({ ...filters, condition: newValue });
+                    }}
+                  >
+                    <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
+                      <SelectValue placeholder="All conditions" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
+                      <SelectItem value="all">All Conditions</SelectItem>
+                      <SelectItem value="Mint">Mint State</SelectItem>
+                      <SelectItem value="Good">Good</SelectItem>
+                      <SelectItem value="Fair">Fair</SelectItem>
+                      <SelectItem value="Poor">Poor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Year Range */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Year Range</label>
+                  <div className="grid grid-cols-2 gap-2">
                     <Input
                       type="number"
-                      placeholder="0"
+                      placeholder="From"
+                      value={filters.minYear !== undefined ? String(filters.minYear) : ''}
+                      onChange={e => {
+                        const value = e.target.value;
+                        handleFiltersChange({ ...filters, minYear: value !== '' ? Number(value) : undefined });
+                      }}
+                      min={1000}
+                      max={2024}
+                      className="border-royal/30 focus:border-royal focus:ring-royal/20"
+                    />
+                    <Input
+                      type="number"
+                      placeholder="To"
+                      value={filters.maxYear !== undefined ? String(filters.maxYear) : ''}
+                      onChange={e => {
+                        const value = e.target.value;
+                        handleFiltersChange({ ...filters, maxYear: value !== '' ? Number(value) : undefined });
+                      }}
+                      min={1000}
+                      max={2024}
+                      className="border-royal/30 focus:border-royal focus:ring-royal/20"
+                    />
+                  </div>
+                </div>
+
+                {/* Price Range */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Price Range (₹)</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Min"
                       value={filters.minValue !== undefined ? String(filters.minValue) : ''}
                       onChange={e => {
                         const value = e.target.value;
@@ -629,14 +761,9 @@ const Marketplace = () => {
                       min={0}
                       className="border-royal/30 focus:border-royal focus:ring-royal/20"
                     />
-                  </div>
-
-                  {/* Max Price */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Max Price (₹)</label>
                     <Input
                       type="number"
-                      placeholder="∞"
+                      placeholder="Max"
                       value={filters.maxValue !== undefined ? String(filters.maxValue) : ''}
                       onChange={e => {
                         const value = e.target.value;
@@ -646,35 +773,77 @@ const Marketplace = () => {
                       className="border-royal/30 focus:border-royal focus:ring-royal/20"
                     />
                   </div>
-                  
-                  {/* Verified Only */}
-                  <div className="flex items-end">
-                    <div className="flex items-center p-4 bg-royal/10 rounded-lg h-10">
-                      <input
-                        type="checkbox"
-                        id="verified"
-                        checked={filters.verified || false}
-                        onChange={(e) => handleFiltersChange({ 
-                          ...filters, 
-                          verified: e.target.checked || undefined 
-                        })}
-                        className="rounded border-royal/30 text-royal focus:ring-royal/20 mr-2"
-                      />
-                      <label htmlFor="verified" className="text-sm text-gray-700 flex items-center">
-                        <Shield className="h-4 w-4 mr-1 text-gold" />
-                        Verified only
-                      </label>
-                    </div>
+                </div>
+
+                {/* Region */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Region</label>
+                  <Select 
+                    value={filters.region || 'all'} 
+                    onValueChange={(value: string) => {
+                      const newValue = value === 'all' ? undefined : value;
+                      handleFiltersChange({ ...filters, region: newValue });
+                    }}
+                  >
+                    <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
+                      <SelectValue placeholder="All regions" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
+                      <SelectItem value="all">All regions</SelectItem>
+                      <SelectItem value="United States">United States</SelectItem>
+                      <SelectItem value="Roman Empire">Roman Empire</SelectItem>
+                      <SelectItem value="India">India</SelectItem>
+                      <SelectItem value="China">China</SelectItem>
+                      <SelectItem value="Europe">Europe</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Verified Only Checkbox */}
+                <div className="flex items-end">
+                  <div className="flex items-center p-4 bg-royal/10 rounded-lg h-10 w-full">
+                    <input
+                      type="checkbox"
+                      id="verified"
+                      checked={filters.verified || false}
+                      onChange={(e) => handleFiltersChange({ 
+                        ...filters, 
+                        verified: e.target.checked || undefined 
+                      })}
+                      className="rounded border-royal/30 text-royal focus:ring-royal/20 mr-2"
+                    />
+                    <label htmlFor="verified" className="text-sm text-gray-700 flex items-center">
+                      <Shield className="h-4 w-4 mr-1 text-gold" />
+                      Verified only
+                    </label>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+        </section>
 
-            {/* Results Header and Coins Grid */}
+        {/* Featured Coins Section */}
+        <FeaturedCoins />
+        
+        {/* Main Coins Listing */}
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            {/* Results Header */}
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-bold font-playfair text-royal">
-                {totalCount > 0 ? `${totalCount} Coins Found` : 'All Coins'}
+              <h2 className="text-3xl font-bold font-playfair text-royal">
+                {totalCount > 0 ? `${totalCount} Professional Coins Found` : 'All Coins'}
               </h2>
+              {hasActiveFilters && (
+                <div className="text-sm text-gray-600">
+                  Filtered results • <button 
+                    onClick={clearFilters}
+                    className="text-royal hover:underline"
+                  >
+                    View all coins
+                  </button>
+                </div>
+              )}
             </div>
             
             {loading && page === 1 ? (
@@ -695,21 +864,25 @@ const Marketplace = () => {
                   ))}
                 </div>
                 
-                {/* Load More Button */}
+                {/* Enhanced Load More Button */}
                 {hasMore && (
                   <div className="text-center mt-12">
                     <Button 
                       onClick={loadMore}
                       disabled={loading}
-                      className="bg-royal hover:bg-royal-light text-white px-8 py-3"
+                      className="bg-royal hover:bg-royal-light text-white px-8 py-3 text-lg"
+                      size="lg"
                     >
                       {loading ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Loading...
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                          Loading more coins...
                         </>
                       ) : (
-                        'Load More Coins'
+                        <>
+                          Load More Professional Coins
+                          <span className="ml-2 text-gold">({totalCount - coins.length} remaining)</span>
+                        </>
                       )}
                     </Button>
                   </div>
@@ -717,16 +890,20 @@ const Marketplace = () => {
               </>
             ) : (
               <div className="text-center py-12">
-                <h3 className="text-xl font-bold text-gray-700 mb-2">No coins found</h3>
-                <p className="text-gray-600 mb-8">
-                  Try adjusting your search or filter criteria to find what you're looking for.
-                </p>
-                <Button 
-                  onClick={clearFilters}
-                  className="bg-royal hover:bg-royal-light text-white"
-                >
-                  Clear Filters
-                </Button>
+                <div className="max-w-md mx-auto">
+                  <Shield className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-gray-700 mb-2">No coins match your criteria</h3>
+                  <p className="text-gray-600 mb-8">
+                    Try adjusting your search or filter criteria to find what you're looking for.
+                  </p>
+                  <Button 
+                    onClick={clearFilters}
+                    className="bg-royal hover:bg-royal-light text-white"
+                  >
+                    <Filter className="h-4 w-4 mr-2" />
+                    Clear All Filters
+                  </Button>
+                </div>
               </div>
             )}
           </div>
@@ -770,7 +947,10 @@ const Marketplace = () => {
                   </li>
                 </ul>
                 
-                <Button className="bg-gold hover:bg-gold-light text-royal">
+                <Button 
+                  onClick={() => navigate('/verify-coins')}
+                  className="bg-gold hover:bg-gold-light text-royal"
+                >
                   <Upload className="h-4 w-4 mr-2" />
                   Upload Coin for ₹20
                 </Button>

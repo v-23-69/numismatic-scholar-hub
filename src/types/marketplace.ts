@@ -36,4 +36,11 @@ export interface MarketplaceFilters {
   minValue?: number;
   maxValue?: number;
   verified?: boolean;
+  sortBy?: string;
+  year?: string;
+  minYear?: number;
+  maxYear?: number;
+  metal?: string;
+  condition?: string;
+  dynasty?: string;
 }

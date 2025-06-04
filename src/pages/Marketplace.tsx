@@ -17,23 +17,7 @@ import { useWishlist } from '@/context/WishlistContext';
 import { useToast } from "@/hooks/use-toast";
 import { MarketplaceService } from '@/services/MarketplaceService';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import type { CoinListing } from '@/types/marketplace';
-
-interface MarketplaceFilters {
-  search?: string;
-  region?: string;
-  rarity?: string;
-  minValue?: number;
-  maxValue?: number;
-  verified?: boolean;
-  sortBy?: string;
-  year?: string;
-  minYear?: number;
-  maxYear?: number;
-  metal?: string;
-  condition?: string;
-  dynasty?: string;
-}
+import type { CoinListing, MarketplaceFilters } from '@/types/marketplace';
 
 const CoinCard = ({ coin, index, onQuickView }: { coin: CoinListing, index: number, onQuickView: (coin: CoinListing) => void }) => {
   const navigate = useNavigate();

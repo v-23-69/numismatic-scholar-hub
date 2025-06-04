@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { WishlistItem, WishlistContextType } from '@/types/wishlist';
 import { WishlistService } from '@/services/WishlistService';
@@ -74,8 +73,12 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const isInWishlist = (id: string) => {
+    return wishlist.some(item => item.id === id);
+  };
+
   return (
-    <WishlistContext.Provider value={{ wishlist, addToWishlist, removeFromWishlist }}>
+    <WishlistContext.Provider value={{ wishlist, addToWishlist, removeFromWishlist, isInWishlist }}>
       {children}
     </WishlistContext.Provider>
   );

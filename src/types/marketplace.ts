@@ -15,6 +15,9 @@ export interface CoinListing {
   stock_quantity: number;
   created_at: string;
   updated_at: string;
+  metal: string;
+  dynasty: string;
+  condition: string;
 }
 
 export interface CartItem {

@@ -125,14 +125,17 @@ const Checkout = () => {
       // Clear cart after successful order
       await MarketplaceService.clearCart(user.id);
       
+      // Generate order ID for confirmation
+      const orderId = Math.random().toString(36).substr(2, 9).toUpperCase();
+      
       toast({
         title: "Order Placed Successfully!",
         description: "Thank you for your purchase. You will receive a confirmation email shortly.",
         className: "bg-green-50 border-green-200 text-green-800"
       });
       
-      // Redirect to success page or orders history
-      navigate('/profile?tab=orders');
+      // Redirect to order confirmation page
+      navigate(`/order-confirmation?orderId=${orderId}`);
       
     } catch (error) {
       console.error('Error placing order:', error);

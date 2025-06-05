@@ -1,30 +1,49 @@
-
 import { useState, useEffect } from 'react';
 import { Star, User } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from '@/integrations/supabase/client';
+import supabase from '@/lib/supabaseClient';
 
 interface Review {
   id: string;
+  user_id: string;
+  coin_id: string;
   rating: number;
   comment: string;
-  reviewer_name: string;
   created_at: string;
+  user: {
+    full_name: string;
+    avatar_url?: string;
+  };
+}
+
+interface SupabaseReview {
+  id: string;
+  user_id: string;
+  coin_id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  user: {
+    full_name: string | null;
+    avatar_url: string | null;
+  } | null;
 }
 
 interface ReviewsSectionProps {
   coinId: string;
 }
 
-const ReviewsSection = ({ coinId }: ReviewsSectionProps) => {
+const ReviewsSection: React.FC<ReviewsSectionProps> = ({ coinId }) => {
   const { user } = useSupabaseAuth();
   const { toast } = useToast();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [newRating, setNewRating] = useState(0);
   const [newComment, setNewComment] = useState('');
@@ -39,27 +58,40 @@ const ReviewsSection = ({ coinId }: ReviewsSectionProps) => {
         .from('coin_reviews')
         .select(`
           id,
+          user_id,
+          coin_id,
           rating,
           comment,
           created_at,
-          user:profiles(full_name)
+          user:profiles (
+            full_name,
+            avatar_url
+          )
         `)
         .eq('coin_id', coinId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const formattedReviews = (data || []).map(review => ({
+      // First convert to unknown, then to SupabaseReview[]
+      const typedData = (data as unknown) as SupabaseReview[];
+      const formattedReviews = (typedData || []).map(review => ({
         id: review.id,
+        user_id: review.user_id,
+        coin_id: review.coin_id,
         rating: review.rating,
         comment: review.comment,
-        reviewer_name: review.user?.full_name || 'Anonymous',
-        created_at: review.created_at
+        created_at: review.created_at,
+        user: {
+          full_name: review.user?.full_name || 'Anonymous',
+          avatar_url: review.user?.avatar_url || undefined
+        }
       }));
 
       setReviews(formattedReviews);
-    } catch (error) {
-      console.error('Error loading reviews:', error);
+    } catch (err) {
+      setError('Failed to load reviews');
+      console.error('Error loading reviews:', err);
     } finally {
       setLoading(false);
     }
@@ -140,6 +172,14 @@ const ReviewsSection = ({ coinId }: ReviewsSectionProps) => {
     );
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   if (loading) {
     return (
       <Card>
@@ -155,10 +195,20 @@ const ReviewsSection = ({ coinId }: ReviewsSectionProps) => {
     );
   }
 
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-red-500">{error}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Reviews ({reviews.length})</CardTitle>
+        <CardTitle className="text-royal">Reviews ({reviews.length})</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Add Review Form */}
@@ -205,21 +255,31 @@ const ReviewsSection = ({ coinId }: ReviewsSectionProps) => {
           ) : (
             reviews.map((review) => (
               <div key={review.id} className="border-b last:border-b-0 pb-4 last:pb-0">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-royal rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                      {review.reviewer_name.charAt(0)}
+                <div className="flex items-start space-x-4">
+                  <Avatar className="h-10 w-10">
+                    {review.user.avatar_url ? (
+                      <AvatarImage src={review.user.avatar_url} alt={review.user.full_name} />
+                    ) : (
+                      <AvatarFallback className="bg-royal text-white">
+                        {review.user.full_name.charAt(0)}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-gray-900">
+                        {review.user.full_name}
+                      </h4>
+                      <span className="text-sm text-gray-500">
+                        {formatDate(review.created_at)}
+                      </span>
                     </div>
-                    <span className="font-medium">{review.reviewer_name}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {renderStars(review.rating)}
-                    <span className="text-sm text-gray-500">
-                      {new Date(review.created_at).toLocaleDateString()}
-                    </span>
+                    <div className="flex items-center mt-1 mb-2">
+                      {renderStars(review.rating)}
+                    </div>
+                    <p className="text-gray-600">{review.comment}</p>
                   </div>
                 </div>
-                <p className="text-gray-700 ml-11">{review.comment}</p>
               </div>
             ))
           )}

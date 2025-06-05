@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Heart, Shield, ShoppingCart, Star, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, Shield, ShoppingCart, Star, ArrowLeft, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +13,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { MarketplaceService } from '@/services/MarketplaceService';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import type { CoinListing } from '@/types/marketplace';
+import ReviewsSection from '@/components/coin-details/ReviewsSection';
+import PriceHistorySection from '@/components/coin-details/PriceHistorySection';
+import RelatedProductsSection from '@/components/coin-details/RelatedProductsSection';
 
 const CoinDetails = () => {
   const { coinId } = useParams<{ coinId: string }>();
@@ -25,6 +29,7 @@ const CoinDetails = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState<number>(1);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [buyingNow, setBuyingNow] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -108,6 +113,40 @@ const CoinDetails = () => {
     }
   };
 
+  const handleBuyNow = async () => {
+    if (!coin || !user) {
+      toast({
+        title: "Please sign in",
+        description: "You need to be signed in to make a purchase",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setBuyingNow(true);
+      await MarketplaceService.addToCart(user.id, String(coin.id), quantity);
+      
+      toast({
+        title: "Proceeding to checkout",
+        description: `${coin.title} has been added to your cart`,
+        className: "bg-green-50 border-green-200 text-green-800"
+      });
+      
+      // Redirect to checkout
+      navigate('/checkout');
+    } catch (error) {
+      console.error('Error during buy now:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process purchase",
+        variant: "destructive"
+      });
+    } finally {
+      setBuyingNow(false);
+    }
+  };
+
   const nextImage = () => {
     if (!coin?.images.length) return;
     setCurrentImageIndex((prev) => (prev + 1) % coin.images.length);
@@ -169,7 +208,7 @@ const CoinDetails = () => {
             <span className="text-royal">{coin.title}</span>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
             {/* Image Carousel */}
             <div className="space-y-4">
               <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group">
@@ -294,6 +333,19 @@ const CoinDetails = () => {
                 {/* Action Buttons */}
                 <div className="space-y-3">
                   <Button 
+                    onClick={handleBuyNow}
+                    disabled={buyingNow || coin.stock_quantity === 0}
+                    className="w-full bg-gold hover:bg-gold/90 text-royal-dark h-12 font-semibold"
+                  >
+                    {buyingNow ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-royal-dark mr-2"></div>
+                    ) : (
+                      <CreditCard className="h-4 w-4 mr-2" />
+                    )}
+                    {coin.stock_quantity === 0 ? 'Out of Stock' : 'Buy Now'}
+                  </Button>
+                  
+                  <Button 
                     onClick={handleAddToCart}
                     disabled={addingToCart || coin.stock_quantity === 0}
                     className="w-full bg-royal hover:bg-royal-light text-white h-12"
@@ -303,7 +355,7 @@ const CoinDetails = () => {
                     ) : (
                       <ShoppingCart className="h-4 w-4 mr-2" />
                     )}
-                    {coin.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                    Add to Cart
                   </Button>
                   
                   <Button 
@@ -357,6 +409,21 @@ const CoinDetails = () => {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          </div>
+
+          {/* Additional Sections */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-8">
+              <ReviewsSection coinId={String(coin.id)} />
+              <PriceHistorySection coinId={String(coin.id)} />
+            </div>
+            <div>
+              <RelatedProductsSection 
+                coinId={String(coin.id)} 
+                dynasty={coin.dynasty} 
+                ruler={coin.ruler} 
+              />
             </div>
           </div>
         </div>

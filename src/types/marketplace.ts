@@ -1,3 +1,4 @@
+
 export interface CoinListing {
   id: string;
   title: string;
@@ -17,6 +18,7 @@ export interface CoinListing {
   updated_at: string;
   metal: string;
   dynasty: string;
+  ruler: string;
   condition: string;
 }
 
@@ -43,4 +45,24 @@ export interface MarketplaceFilters {
   metal?: string;
   condition?: string;
   dynasty?: string;
+}
+
+export interface CoinReview {
+  id: string;
+  coin_id: string;
+  user_id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  user?: {
+    full_name: string;
+  };
+}
+
+export interface PriceHistory {
+  id: string;
+  coin_id: string;
+  price: number;
+  date: string;
+  created_at: string;
 }

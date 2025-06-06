@@ -1,6 +1,53 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { CoinListing, CartItem, MarketplaceFilters } from '@/types/marketplace';
 
+// Add new types for orders, shipping addresses, and reviews
+interface Order {
+  id: string;
+  user_id: string;
+  total_amount: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  shipping_address_id: string;
+  created_at: string;
+}
+
+interface OrderItem {
+  id: string;
+  order_id: string;
+  coin_id: string;
+  quantity: number;
+  price: number;
+  created_at: string;
+}
+
+interface ShippingAddress {
+  id: string;
+  user_id: string;
+  address_data: {
+    full_name: string;
+    street_address: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    country: string;
+    phone: string;
+  };
+  created_at: string;
+}
+
+interface Review {
+  id: string;
+  user_id: string;
+  coin_id: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  user?: {
+    full_name: string;
+    avatar_url: string;
+  };
+}
+
 export class MarketplaceService {
   // Fetch coin listings with filters and pagination
   static async getCoinListings(
@@ -205,11 +252,180 @@ export class MarketplaceService {
     }
   }
 
-  // Review operations
-  static async getCoinReviews(coinId: string) {
+  // Order APIs
+  static async placeOrder(userId: string, shippingAddressId: string): Promise<Order | null> {
+    try {
+      // Start a transaction
+      const { data: cartItems, error: cartError } = await supabase
+        .from('cart_items')
+        .select(`
+          *,
+          coin_listing:coin_listings(*)
+        `)
+        .eq('user_id', userId);
+
+      if (cartError) throw cartError;
+      if (!cartItems?.length) throw new Error('Cart is empty');
+
+      // Calculate total amount
+      const totalAmount = cartItems.reduce((sum, item) => {
+        return sum + (item.coin_listing.price * item.quantity);
+      }, 0);
+
+      // Create order
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: userId,
+          total_amount: totalAmount,
+          status: 'pending',
+          shipping_address_id: shippingAddressId
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Create order items
+      const orderItems = cartItems.map(item => ({
+        order_id: order.id,
+        coin_id: item.coin_id,
+        quantity: item.quantity,
+        price: item.coin_listing.price
+      }));
+
+      const { error: orderItemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (orderItemsError) throw orderItemsError;
+
+      // Clear cart
+      await this.clearCart(userId);
+
+      return order;
+    } catch (error) {
+      console.error('Error placing order:', error);
+      throw error;
+    }
+  }
+
+  static async getUserOrders(userId: string): Promise<(Order & { items: OrderItem[] })[]> {
     try {
       const { data, error } = await supabase
-        .from('coin_reviews')
+        .from('orders')
+        .select(`
+          *,
+          items:order_items(
+            *,
+            coin:coin_listings(*)
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching user orders:', error);
+      throw error;
+    }
+  }
+
+  // Shipping Address APIs
+  static async saveShippingAddress(userId: string, addressData: ShippingAddress['address_data']): Promise<ShippingAddress> {
+    try {
+      const { data, error } = await supabase
+        .from('shipping_addresses')
+        .insert({
+          user_id: userId,
+          address_data: addressData
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error saving shipping address:', error);
+      throw error;
+    }
+  }
+
+  static async getShippingAddresses(userId: string): Promise<ShippingAddress[]> {
+    try {
+      const { data, error } = await supabase
+        .from('shipping_addresses')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching shipping addresses:', error);
+      throw error;
+    }
+  }
+
+  // Review APIs
+  static async submitReview(userId: string, coinId: string, rating: number, comment: string): Promise<Review> {
+    try {
+      // Check if user has purchased the coin
+      const { data: hasPurchased, error: purchaseError } = await supabase
+        .from('order_items')
+        .select('id')
+        .eq('coin_id', coinId)
+        .eq('order_id', supabase
+          .from('orders')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('status', 'delivered')
+        )
+        .limit(1);
+
+      if (purchaseError) throw purchaseError;
+      if (!hasPurchased?.length) {
+        throw new Error('You must purchase and receive the coin before reviewing');
+      }
+
+      // Check if user has already reviewed
+      const { data: existingReview, error: reviewError } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('coin_id', coinId)
+        .single();
+
+      if (reviewError && reviewError.code !== 'PGRST116') throw reviewError;
+      if (existingReview) {
+        throw new Error('You have already reviewed this coin');
+      }
+
+      // Submit review
+      const { data, error } = await supabase
+        .from('reviews')
+        .insert({
+          user_id: userId,
+          coin_id: coinId,
+          rating,
+          comment
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      throw error;
+    }
+  }
+
+  static async getCoinReviews(coinId: string): Promise<Review[]> {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
         .select(`
           *,
           user:profiles!user_id(
@@ -223,124 +439,8 @@ export class MarketplaceService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching reviews:', error);
-      return [];
-    }
-  }
-
-  static async submitReview(coinId: string, userId: string, rating: number, comment: string) {
-    try {
-      const { error } = await supabase
-        .from('coin_reviews')
-        .insert({
-          coin_id: coinId,
-          user_id: userId,
-          rating,
-          comment
-        });
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error submitting review:', error);
+      console.error('Error fetching coin reviews:', error);
       throw error;
-    }
-  }
-
-  // Shipping operations
-  static async getShippingAddresses(userId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('shipping_addresses')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching shipping addresses:', error);
-      return [];
-    }
-  }
-
-  static async saveShippingAddress(userId: string, addressData: any) {
-    try {
-      const { data, error } = await supabase
-        .from('shipping_addresses')
-        .insert({
-          user_id: userId,
-          ...addressData
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error saving shipping address:', error);
-      throw error;
-    }
-  }
-
-  // Order operations
-  static async placeOrder(userId: string, orderData: any) {
-    try {
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: userId,
-          total: orderData.total,
-          status: 'pending',
-          shipping_address: orderData.shippingAddress
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Insert order items
-      const orderItems = orderData.items.map((item: any) => ({
-        order_id: order.id,
-        coin_id: item.coin_id,
-        quantity: item.quantity,
-        price: item.price
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
-      // Clear cart
-      await this.clearCart(userId);
-
-      return order;
-    } catch (error) {
-      console.error('Error placing order:', error);
-      throw error;
-    }
-  }
-
-  static async getUserOrders(userId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          order_items(
-            *,
-            coin_listing:coin_listings(*)
-          )
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching user orders:', error);
-      return [];
     }
   }
 }

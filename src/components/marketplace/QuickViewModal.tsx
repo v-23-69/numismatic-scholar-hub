@@ -95,27 +95,12 @@ export const QuickViewModal = ({ coin, open, onOpenChange }: QuickViewModalProps
     }
   };
 
-  const handleBuyNow = async () => {
-    if (!user) {
-      toast({
-        title: "Please sign in",
-        description: "You need to be signed in to purchase items",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      await MarketplaceService.addToCart(user.id, coin.id, 1);
-      navigate('/cart');
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Error adding to cart for buy now:', error);
-      toast({
-        title: "Error",
-        description: "Failed to proceed with purchase",
-        variant: "destructive"
-      });
+  const getMetalIcon = (metal: string) => {
+    switch (metal?.toLowerCase()) {
+      case 'gold': return '🥇';
+      case 'silver': return '🥈';
+      case 'copper': return '🟤';
+      default: return '⚪';
     }
   };
 
@@ -143,7 +128,7 @@ export const QuickViewModal = ({ coin, open, onOpenChange }: QuickViewModalProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 z-[100] bg-white border border-royal/20 shadow-2xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
         <DialogTitle className="sr-only">Quick View: {coin.title}</DialogTitle>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
@@ -248,7 +233,10 @@ export const QuickViewModal = ({ coin, open, onOpenChange }: QuickViewModalProps
                 {coin.metal && (
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">Metal:</span>
-                    <span className="text-royal font-medium">{coin.metal}</span>
+                    <span className="flex items-center text-royal font-medium">
+                      <span className="mr-1">{getMetalIcon(coin.metal)}</span>
+                      {coin.metal}
+                    </span>
                   </div>
                 )}
                 <div className="flex items-center justify-between text-sm">
@@ -301,27 +289,17 @@ export const QuickViewModal = ({ coin, open, onOpenChange }: QuickViewModalProps
             <div className="space-y-3 mt-auto">
               <div className="flex space-x-3">
                 <Button 
-                  onClick={handleBuyNow}
-                  disabled={coin.stock_quantity === 0}
-                  className="flex-1 bg-gold hover:bg-gold-light text-royal"
-                  size="lg"
-                >
-                  {coin.stock_quantity === 0 ? 'Out of Stock' : 'Buy Now'}
-                </Button>
-                
-                <Button 
                   onClick={handleAddToCart}
                   disabled={addingToCart || coin.stock_quantity === 0}
-                  variant="outline"
+                  className="flex-1 bg-royal hover:bg-royal-light text-white"
                   size="lg"
-                  className="flex-1 border-royal text-royal hover:bg-royal hover:text-white"
                 >
                   {addingToCart ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-royal mr-2"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   ) : (
                     <ShoppingCart className="h-4 w-4 mr-2" />
                   )}
-                  Add to Cart
+                  {coin.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
                 </Button>
                 
                 <Button 

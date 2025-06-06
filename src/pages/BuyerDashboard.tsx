@@ -1,415 +1,373 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Package, Heart, Bell, ShoppingCart, Star, Truck, CheckCircle } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { 
+  Package, 
+  Download, 
+  Phone, 
+  RefreshCw, 
+  Eye,
+  Truck,
+  CheckCircle,
+  Clock,
+  ShoppingBag
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useToast } from "@/hooks/use-toast";
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
-// Mock data for buyer dashboard
-const mockBuyerStats = {
-  totalOrders: 12,
-  wishlistItems: 8,
-  unreadNotifications: 3,
-  totalSpent: 125000
-};
-
-const mockOrders = [
-  {
-    id: 'ORD-001',
-    coinTitle: 'Mughal Empire Gold Mohur 1658',
-    seller: 'Ancient Coins Co.',
-    amount: 25000,
-    status: 'shipped',
-    orderDate: '2024-06-01',
-    estimatedDelivery: '2024-06-08',
-    trackingNumber: 'TRK123456789',
-    progress: 75,
-    image: '/placeholder.svg'
-  },
-  {
-    id: 'ORD-002',
-    coinTitle: 'British India Silver Rupee 1835',
-    seller: 'Heritage Coins',
-    amount: 3500,
-    status: 'delivered',
-    orderDate: '2024-05-28',
-    deliveryDate: '2024-06-02',
-    progress: 100,
-    image: '/placeholder.svg'
-  },
-  {
-    id: 'ORD-003',
-    coinTitle: 'Gupta Empire Gold Dinar 375 AD',
-    seller: 'Rare Collectibles',
-    amount: 85000,
-    status: 'pending',
-    orderDate: '2024-06-03',
-    estimatedDelivery: '2024-06-10',
-    progress: 25,
-    image: '/placeholder.svg'
-  }
-];
-
-const mockWishlistItems = [
-  {
-    id: '1',
-    title: 'Chola Dynasty Bronze Coin 1010 AD',
-    price: 12000,
-    seller: 'South Indian Coins',
-    addedDate: '2024-05-30',
-    image: '/placeholder.svg',
-    inStock: true
-  },
-  {
-    id: '2',
-    title: 'Maratha Empire Silver Coin 1760',
-    price: 8500,
-    seller: 'Royal Collections',
-    addedDate: '2024-05-28',
-    image: '/placeholder.svg',
-    inStock: true
-  },
-  {
-    id: '3',
-    title: 'Delhi Sultanate Gold Tanka 1320',
-    price: 45000,
-    seller: 'Medieval Coins',
-    addedDate: '2024-05-25',
-    image: '/placeholder.svg',
-    inStock: false
-  }
-];
-
-const mockNotifications = [
-  {
-    id: '1',
-    type: 'order',
-    title: 'Order shipped',
-    message: 'Your Mughal Empire Gold Mohur has been shipped',
-    time: '2 hours ago',
-    read: false
-  },
-  {
-    id: '2',
-    type: 'wishlist',
-    title: 'Price drop alert',
-    message: 'Chola Dynasty Bronze Coin price reduced by ₹1,500',
-    time: '1 day ago',
-    read: false
-  },
-  {
-    id: '3',
-    type: 'promotion',
-    title: 'Special offer',
-    message: 'Get 10% off on all British India coins this week',
-    time: '2 days ago',
-    read: true
-  }
-];
-
-const mockRecommendations = [
-  {
-    id: '1',
-    title: 'Vijayanagara Empire Gold Pagoda 1500',
-    price: 18000,
-    reason: 'Based on your recent purchases',
-    image: '/placeholder.svg'
-  },
-  {
-    id: '2',
-    title: 'Mysore Kingdom Silver Rupee 1790',
-    price: 6500,
-    reason: 'Similar to items in your wishlist',
-    image: '/placeholder.svg'
-  }
-];
+interface Order {
+  id: string;
+  order_id: string;
+  total_amount: number;
+  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered';
+  created_at: string;
+  estimated_delivery: string;
+  shipping_address: any;
+  items: any[];
+}
 
 const BuyerDashboard = () => {
-  const [activeTab, setActiveTab] = useState('orders');
+  const navigate = useNavigate();
+  const { user } = useSupabaseAuth();
+  const { toast } = useToast();
+  
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Package className="h-4 w-4" />;
-      case 'shipped':
-        return <Truck className="h-4 w-4" />;
-      case 'delivered':
-        return <CheckCircle className="h-4 w-4" />;
-      default:
-        return <Package className="h-4 w-4" />;
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!user) {
+      navigate('/authenticate');
+      return;
+    }
+    loadOrders();
+  }, [user, navigate]);
+
+  const loadOrders = async () => {
+    try {
+      setLoading(true);
+      // Mock orders for demonstration - replace with actual Supabase query
+      const mockOrders: Order[] = [
+        {
+          id: '1',
+          order_id: 'CG-2024-001',
+          total_amount: 15000,
+          status: 'shipped',
+          created_at: '2024-01-15T10:00:00Z',
+          estimated_delivery: '2024-01-20',
+          shipping_address: {
+            name: 'John Doe',
+            address: '123 Main St, Mumbai',
+            phone: '+91 9876543210'
+          },
+          items: [
+            {
+              title: 'Ancient Roman Denarius',
+              quantity: 1,
+              price: 15000,
+              image: 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=600&auto=format&fit=crop&q=80'
+            }
+          ]
+        },
+        {
+          id: '2',
+          order_id: 'CG-2024-002',
+          total_amount: 8500,
+          status: 'confirmed',
+          created_at: '2024-01-10T14:30:00Z',
+          estimated_delivery: '2024-01-18',
+          shipping_address: {
+            name: 'John Doe',
+            address: '123 Main St, Mumbai',
+            phone: '+91 9876543210'
+          },
+          items: [
+            {
+              title: 'Mughal Silver Rupee',
+              quantity: 1,
+              price: 8500,
+              image: 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=600&auto=format&fit=crop&q=80'
+            }
+          ]
+        }
+      ];
+      setOrders(mockOrders);
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load your orders",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'shipped':
-        return 'bg-blue-100 text-blue-800';
-      case 'delivered':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'confirmed': return 'bg-blue-100 text-blue-800';
+      case 'processing': return 'bg-purple-100 text-purple-800';
+      case 'shipped': return 'bg-green-100 text-green-800';
+      case 'delivered': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending': return <Clock className="h-4 w-4" />;
+      case 'confirmed': return <CheckCircle className="h-4 w-4" />;
+      case 'processing': return <Package className="h-4 w-4" />;
+      case 'shipped': return <Truck className="h-4 w-4" />;
+      case 'delivered': return <CheckCircle className="h-4 w-4" />;
+      default: return <Clock className="h-4 w-4" />;
+    }
+  };
+
+  const handleReorder = (orderId: string) => {
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+      toast({
+        title: "Items added to cart",
+        description: "Previous order items have been added to your cart",
+        className: "bg-green-50 border-green-200 text-green-800"
+      });
+      navigate('/cart');
+    }
+  };
+
+  const handleDownloadInvoice = (orderId: string) => {
+    toast({
+      title: "Invoice downloaded",
+      description: "Your invoice has been downloaded successfully",
+      className: "bg-green-50 border-green-200 text-green-800"
+    });
+  };
+
+  const handleContactSalesperson = () => {
+    toast({
+      title: "Connecting to support",
+      description: "You will be connected to our sales team shortly",
+      className: "bg-blue-50 border-blue-200 text-blue-800"
+    });
+  };
+
+  if (!user) {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-royal mb-2">Buyer Dashboard</h1>
-              <p className="text-gray-600">Track your orders and manage your coin collection</p>
-            </div>
-            <div className="mt-4 md:mt-0 flex gap-3">
-              <Link to="/wishlist">
-                <Button variant="outline" className="border-royal text-royal hover:bg-blue-50">
-                  <Heart className="h-4 w-4 mr-2" />
-                  Wishlist
-                </Button>
-              </Link>
-              <Link to="/coins-market">
-                <Button className="bg-royal hover:bg-blue-600">
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Browse Coins
-                </Button>
-              </Link>
-            </div>
+      <main className="flex-grow pt-8 pb-16">
+        <div className="container mx-auto px-4">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-royal font-playfair">Buyer Dashboard</h1>
+            <p className="text-lg text-gray-600">Track your orders and manage your purchases</p>
           </div>
-        </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <Card className="border-royal/20 hover:shadow-lg transition-shadow">
+              <CardContent className="p-6 text-center">
+                <Package className="h-8 w-8 text-royal mx-auto mb-2" />
+                <h3 className="font-semibold text-royal">Total Orders</h3>
+                <p className="text-2xl font-bold text-royal">{orders.length}</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-royal/20 hover:shadow-lg transition-shadow">
+              <CardContent className="p-6 text-center">
+                <Truck className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                <h3 className="font-semibold text-royal">In Transit</h3>
+                <p className="text-2xl font-bold text-green-600">
+                  {orders.filter(o => o.status === 'shipped').length}
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-royal/20 hover:shadow-lg transition-shadow">
+              <CardContent className="p-6 text-center">
+                <CheckCircle className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                <h3 className="font-semibold text-royal">Delivered</h3>
+                <p className="text-2xl font-bold text-blue-600">
+                  {orders.filter(o => o.status === 'delivered').length}
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-royal/20 hover:shadow-lg transition-shadow">
+              <CardContent className="p-6 text-center">
+                <ShoppingBag className="h-8 w-8 text-gold mx-auto mb-2" />
+                <h3 className="font-semibold text-royal">Total Spent</h3>
+                <p className="text-2xl font-bold text-royal">
+                  ₹{orders.reduce((sum, order) => sum + order.total_amount, 0).toLocaleString()}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Orders List */}
+          <Card className="border-royal/20">
+            <CardHeader>
+              <CardTitle className="text-royal flex items-center justify-between">
+                <span>Your Orders</span>
+                <Button
+                  onClick={loadOrders}
+                  variant="outline"
+                  size="sm"
+                  className="border-royal text-royal hover:bg-royal hover:text-white"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh
+                </Button>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-royal">{mockBuyerStats.totalOrders}</div>
-              <p className="text-xs text-muted-foreground">+3 this month</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Wishlist Items</CardTitle>
-              <Heart className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-royal">{mockBuyerStats.wishlistItems}</div>
-              <p className="text-xs text-muted-foreground">2 on sale now</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Notifications</CardTitle>
-              <Bell className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-royal">{mockBuyerStats.unreadNotifications}</div>
-              <p className="text-xs text-muted-foreground">Unread messages</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-royal">₹{mockBuyerStats.totalSpent.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">This year</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Order Tracking */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
-                <CardDescription>Track your coin orders and delivery status</CardDescription>
-              </CardHeader>
-              <CardContent>
+              {loading ? (
+                <div className="text-center py-16">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-royal mx-auto"></div>
+                  <p className="text-gray-600 mt-4">Loading your orders...</p>
+                </div>
+              ) : orders.length === 0 ? (
+                <div className="text-center py-16">
+                  <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-gray-600 mb-2">No orders yet</h3>
+                  <p className="text-gray-500 mb-6">Start shopping to see your orders here</p>
+                  <Button 
+                    onClick={() => navigate('/coins-market')}
+                    className="bg-royal hover:bg-royal-light text-white"
+                  >
+                    Browse Coins
+                  </Button>
+                </div>
+              ) : (
                 <div className="space-y-6">
-                  {mockOrders.map((order) => (
-                    <div key={order.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start gap-4">
-                        <img
-                          src={order.image}
-                          alt={order.coinTitle}
-                          className="w-16 h-16 object-cover rounded-md flex-shrink-0"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h3 className="font-medium text-sm mb-1">{order.coinTitle}</h3>
-                              <p className="text-sm text-gray-600">Sold by {order.seller}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-bold text-royal">₹{order.amount.toLocaleString()}</p>
-                              <Badge className={`${getStatusColor(order.status)} mt-1`}>
-                                {getStatusIcon(order.status)}
-                                <span className="ml-1 capitalize">{order.status}</span>
-                              </Badge>
-                            </div>
-                          </div>
-                          
-                          <div className="mb-3">
-                            <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                              <span>Order Progress</span>
-                              <span>{order.progress}%</span>
-                            </div>
-                            <Progress value={order.progress} className="h-2" />
-                          </div>
-                          
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">
-                              Ordered: {new Date(order.orderDate).toLocaleDateString()}
-                            </span>
-                            {order.status === 'delivered' ? (
-                              <span className="text-green-600">
-                                Delivered: {new Date(order.deliveryDate!).toLocaleDateString()}
-                              </span>
-                            ) : (
-                              <span className="text-blue-600">
-                                Expected: {new Date(order.estimatedDelivery).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                          
-                          {order.trackingNumber && order.status === 'shipped' && (
-                            <div className="mt-2 text-sm">
-                              <span className="text-gray-600">Tracking: </span>
-                              <span className="font-mono text-blue-600">{order.trackingNumber}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Notifications */}
-          <div>
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Notifications</CardTitle>
-                <CardDescription>Recent updates and alerts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {mockNotifications.slice(0, 3).map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`p-3 rounded-lg border ${
-                        !notification.read ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'
-                      }`}
+                  {orders.map((order, index) => (
+                    <motion.div
+                      key={order.id}
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      className="border border-gray-200 rounded-lg p-6"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-sm mb-1">{notification.title}</h4>
-                          <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
-                          <span className="text-xs text-gray-500">{notification.time}</span>
+                      <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-lg font-bold text-royal">Order #{order.order_id}</h3>
+                          <p className="text-sm text-gray-600">
+                            Placed on {new Date(order.created_at).toLocaleDateString()}
+                          </p>
                         </div>
-                        {!notification.read && (
-                          <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-2"></div>
-                        )}
+                        <div className="flex items-center space-x-3 mt-3 md:mt-0">
+                          <Badge className={`${getStatusColor(order.status)} flex items-center`}>
+                            {getStatusIcon(order.status)}
+                            <span className="ml-1 capitalize">{order.status}</span>
+                          </Badge>
+                          <span className="text-lg font-bold text-royal">
+                            ₹{order.total_amount.toLocaleString()}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="outline" className="w-full mt-4" size="sm">
-                  View All Notifications
-                </Button>
-              </CardContent>
-            </Card>
 
-            {/* Recommendations */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recommended for You</CardTitle>
-                <CardDescription>Based on your interests</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {mockRecommendations.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3 p-3 border rounded-lg hover:shadow-md transition-shadow">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-12 h-12 object-cover rounded-md flex-shrink-0"
-                      />
-                      <div className="flex-1">
-                        <h4 className="font-medium text-sm mb-1">{item.title}</h4>
-                        <p className="text-xs text-gray-600 mb-1">{item.reason}</p>
-                        <p className="font-bold text-royal text-sm">₹{item.price.toLocaleString()}</p>
+                      {/* Order Items */}
+                      <div className="space-y-3 mb-4">
+                        {order.items.map((item, itemIndex) => (
+                          <div key={itemIndex} className="flex items-center space-x-4">
+                            <img
+                              src={item.image}
+                              alt={item.title}
+                              className="w-16 h-16 object-cover rounded-lg"
+                            />
+                            <div className="flex-grow">
+                              <h4 className="font-medium text-royal">{item.title}</h4>
+                              <p className="text-sm text-gray-600">
+                                Quantity: {item.quantity} × ₹{item.price.toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
+
+                      <Separator className="my-4" />
+
+                      {/* Shipping Info */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <h4 className="font-medium text-royal mb-2">Shipping Address</h4>
+                          <p className="text-sm text-gray-600">
+                            {order.shipping_address.name}<br />
+                            {order.shipping_address.address}<br />
+                            {order.shipping_address.phone}
+                          </p>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-royal mb-2">Delivery Information</h4>
+                          <p className="text-sm text-gray-600">
+                            Estimated delivery: {new Date(order.estimated_delivery).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap gap-3">
+                        <Button
+                          onClick={() => navigate(`/order/${order.order_id}`)}
+                          variant="outline"
+                          size="sm"
+                          className="border-royal text-royal hover:bg-royal hover:text-white"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Details
+                        </Button>
+                        
+                        <Button
+                          onClick={() => handleReorder(order.id)}
+                          variant="outline"
+                          size="sm"
+                          className="border-royal text-royal hover:bg-royal hover:text-white"
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Reorder
+                        </Button>
+                        
+                        <Button
+                          onClick={() => handleDownloadInvoice(order.id)}
+                          variant="outline"
+                          size="sm"
+                          className="border-royal text-royal hover:bg-royal hover:text-white"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Invoice
+                        </Button>
+                        
+                        <Button
+                          onClick={handleContactSalesperson}
+                          variant="outline"
+                          size="sm"
+                          className="border-royal text-royal hover:bg-royal hover:text-white"
+                        >
+                          <Phone className="h-4 w-4 mr-2" />
+                          Contact Support
+                        </Button>
+                      </div>
+                    </motion.div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
-
-        {/* Wishlist Summary */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Wishlist Summary</CardTitle>
-            <CardDescription>Your saved coins and their current status</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockWishlistItems.map((item) => (
-                <div key={item.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-32 object-cover rounded-md mb-3"
-                  />
-                  <h3 className="font-medium text-sm mb-2 line-clamp-2">{item.title}</h3>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-royal">₹{item.price.toLocaleString()}</span>
-                    <Badge className={item.inStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                      {item.inStock ? 'In Stock' : 'Out of Stock'}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3">By {item.seller}</p>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-royal hover:bg-blue-600"
-                      disabled={!item.inStock}
-                    >
-                      Add to Cart
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      Remove
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
+      </main>
       <Footer />
     </div>
   );

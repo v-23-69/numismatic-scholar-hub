@@ -1,10 +1,11 @@
 import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Router } from "react-router-dom";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import WelcomeModal from "./components/WelcomeModal";
 import PromotionalPopup from "./components/PromotionalPopup";
+import { WishlistProvider } from "@/components/WishlistProvider";
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -61,69 +62,70 @@ const SellerDashboard = lazy(() => import("./pages/SellerDashboard"));
 const BuyerDashboard = lazy(() => import("./pages/BuyerDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
-const App = () => {
+function App() {
   return (
-    <>
-      <Toaster />
-      <Sonner />
-      <WelcomeModal />
-      <PromotionalPopup />
-      <Suspense fallback={<LoadingFallback />}>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/courses" element={<Courses />} />
-          <Route path="/courses/:courseId" element={<Courses />} />
-          <Route path="/articles" element={<Articles />} />
-          <Route path="/articles/:articleId" element={<Articles />} />
-          <Route path="/community" element={<Community />} />
-          <Route path="/mentors" element={<Mentors />} />
-          <Route path="/mentors/:mentorId" element={<Mentors />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/authenticate" element={<Authenticate />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/verify-coins" element={<VerifyCoins />} />
-          <Route path="/verification-process" element={<VerificationProcess />} />
-          <Route path="/verification-agent" element={<VerificationAgent />} />
-          <Route path="/agent-support" element={<AgentSupport />} />
-          <Route path="/live-support" element={<LiveSupport />} />
-          
-          {/* Legal Pages - New individual pages */}
-          <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/legal/terms-of-service" element={<TermsOfService />} />
-          <Route path="/legal/refund-policy" element={<RefundPolicy />} />
-          <Route path="/legal/verification-process" element={<VerificationProcess />} />
-          <Route path="/legal/cookie-policy" element={<CookiePolicy />} />
-          
-          {/* Legacy Legal Pages - Keep existing LegalPage for backwards compatibility */}
-          <Route path="/legal/privacy" element={<LegalPage type="privacy" />} />
-          <Route path="/legal/terms" element={<LegalPage type="terms" />} />
-          <Route path="/legal/refund" element={<LegalPage type="refund" />} />
-          <Route path="/legal/verification" element={<LegalPage type="verification" />} />
-          <Route path="/legal/cookie" element={<LegalPage type="cookie" />} />
-          
-          <Route path="/purchases" element={<Purchases />} />
-          <Route path="/coins-market" element={<Marketplace />} />
-          <Route path="/coins-market/:coinId" element={<CoinDetails />} />
-          <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/order-confirmation" element={<OrderConfirmation />} />
-          
-          {/* Dashboard Routes */}
-          <Route path="/seller-dashboard" element={<SellerDashboard />} />
-          <Route path="/buyer-dashboard" element={<BuyerDashboard />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          
-          {/* Search Results */}
-          <Route path="/search" element={<Index />} />
-          
-          {/* Catch-all */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
-    </>
+    <Router>
+      <div className="min-h-screen bg-background text-foreground">
+        <WelcomeModal />
+        <PromotionalPopup />
+        <WishlistProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/courses/:courseId" element={<Courses />} />
+            <Route path="/articles" element={<Articles />} />
+            <Route path="/articles/:articleId" element={<Articles />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/mentors" element={<Mentors />} />
+            <Route path="/mentors/:mentorId" element={<Mentors />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/authenticate" element={<Authenticate />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/verify-coins" element={<VerifyCoins />} />
+            <Route path="/verification-process" element={<VerificationProcess />} />
+            <Route path="/verification-agent" element={<VerificationAgent />} />
+            <Route path="/agent-support" element={<AgentSupport />} />
+            <Route path="/live-support" element={<LiveSupport />} />
+            
+            {/* Legal Pages - New individual pages */}
+            <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/legal/terms-of-service" element={<TermsOfService />} />
+            <Route path="/legal/refund-policy" element={<RefundPolicy />} />
+            <Route path="/legal/verification-process" element={<VerificationProcess />} />
+            <Route path="/legal/cookie-policy" element={<CookiePolicy />} />
+            
+            {/* Legacy Legal Pages - Keep existing LegalPage for backwards compatibility */}
+            <Route path="/legal/privacy" element={<LegalPage type="privacy" />} />
+            <Route path="/legal/terms" element={<LegalPage type="terms" />} />
+            <Route path="/legal/refund" element={<LegalPage type="refund" />} />
+            <Route path="/legal/verification" element={<LegalPage type="verification" />} />
+            <Route path="/legal/cookie" element={<LegalPage type="cookie" />} />
+            
+            <Route path="/purchases" element={<Purchases />} />
+            <Route path="/coins-market" element={<Marketplace />} />
+            <Route path="/coins-market/:coinId" element={<CoinDetails />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/order-confirmation" element={<OrderConfirmation />} />
+            
+            {/* Dashboard Routes */}
+            <Route path="/seller-dashboard" element={<SellerDashboard />} />
+            <Route path="/buyer-dashboard" element={<BuyerDashboard />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
+            
+            {/* Search Results */}
+            <Route path="/search" element={<Index />} />
+            
+            {/* Catch-all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </WishlistProvider>
+        <Toaster />
+      </div>
+    </Router>
   );
-};
+}
 
 export default App;

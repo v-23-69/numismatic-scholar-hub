@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from "@/components/layout/Navbar";
@@ -8,10 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { CreditCard, MapPin, Package } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CreditCard, MapPin, Package, Smartphone, Building, QrCode } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { MarketplaceService } from '@/services/MarketplaceService';
+import { PaymentService } from '@/services/PaymentService';
+import { NotificationService } from '@/services/NotificationService';
 import type { CartItem } from '@/types/marketplace';
 
 const Checkout = () => {
@@ -22,6 +25,11 @@ const Checkout = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('upi');
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const [orderId, setOrderId] = useState('');
+  
   const [shippingAddress, setShippingAddress] = useState({
     full_name: '',
     phone: '',
@@ -100,6 +108,7 @@ const Checkout = () => {
     try {
       setPlacingOrder(true);
       
+      // Create order first
       const orderData = {
         total: calculateTotal(),
         shippingAddress,
@@ -111,14 +120,11 @@ const Checkout = () => {
       };
 
       const order = await MarketplaceService.placeOrder(user.id, orderData);
+      setOrderId(order.id);
       
-      toast({
-        title: "Order placed successfully!",
-        description: `Order #${order.id} has been created`,
-        className: "bg-green-50 border-green-200 text-green-800"
-      });
-
-      navigate('/checkout/confirmation', { state: { orderId: order.id } });
+      // Show payment modal
+      setShowPaymentModal(true);
+      
     } catch (error) {
       console.error('Error placing order:', error);
       toast({
@@ -128,6 +134,82 @@ const Checkout = () => {
       });
     } finally {
       setPlacingOrder(false);
+    }
+  };
+
+  const handlePayment = async () => {
+    if (!user || !orderId) return;
+
+    try {
+      setProcessingPayment(true);
+      
+      const paymentRequest = {
+        amount: calculateTotal(),
+        currency: 'INR',
+        orderId: orderId,
+        customerEmail: user.email || '',
+        customerPhone: shippingAddress.phone
+      };
+
+      let paymentResponse;
+      
+      switch (paymentMethod) {
+        case 'upi':
+          paymentResponse = await PaymentService.processUPIPayment(paymentRequest);
+          break;
+        case 'card':
+          paymentResponse = await PaymentService.processCardPayment(paymentRequest);
+          break;
+        case 'netbanking':
+          paymentResponse = await PaymentService.processNetBanking(paymentRequest);
+          break;
+        default:
+          throw new Error('Invalid payment method');
+      }
+
+      if (paymentResponse.success) {
+        // Send notifications
+        await NotificationService.sendAllOrderNotifications({
+          orderId: orderId,
+          customerName: shippingAddress.full_name,
+          customerEmail: user.email || '',
+          customerPhone: shippingAddress.phone,
+          orderAmount: calculateTotal(),
+          orderItems: cartItems,
+          shippingAddress: shippingAddress,
+          paymentStatus: 'completed'
+        });
+
+        toast({
+          title: "Payment Successful!",
+          description: paymentResponse.message,
+          className: "bg-green-50 border-green-200 text-green-800"
+        });
+
+        setShowPaymentModal(false);
+        navigate('/checkout/confirmation', { 
+          state: { 
+            orderId: orderId,
+            transactionId: paymentResponse.transactionId,
+            paymentMethod: paymentResponse.paymentMethod 
+          } 
+        });
+      } else {
+        toast({
+          title: "Payment Failed",
+          description: paymentResponse.message,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      toast({
+        title: "Payment Error",
+        description: "Failed to process payment. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessingPayment(false);
     }
   };
 
@@ -306,41 +388,87 @@ const Checkout = () => {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-royal">
-                    <CreditCard className="h-5 w-5 mr-2" />
-                    Payment Method
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
-                      <p className="text-sm text-blue-800">
-                        Payment will be processed securely. For this demo, orders will be marked as "Pending Payment".
-                      </p>
-                    </div>
-                    
-                    <Button 
-                      onClick={handlePlaceOrder}
-                      disabled={placingOrder}
-                      className="w-full bg-royal hover:bg-royal-light text-white py-3"
-                      size="lg"
-                    >
-                      {placingOrder ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      ) : (
-                        <CreditCard className="h-4 w-4 mr-2" />
-                      )}
-                      Place Order - ₹{calculateTotal().toLocaleString()}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <Button 
+                onClick={handlePlaceOrder}
+                disabled={placingOrder}
+                className="w-full bg-royal hover:bg-royal-light text-white py-3"
+                size="lg"
+              >
+                {placingOrder ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                ) : (
+                  <CreditCard className="h-4 w-4 mr-2" />
+                )}
+                Place Order - ₹{calculateTotal().toLocaleString()}
+              </Button>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Payment Modal */}
+      <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Choose Payment Method</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
+              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                <RadioGroupItem value="upi" id="upi" />
+                <Label htmlFor="upi" className="flex items-center cursor-pointer">
+                  <Smartphone className="h-4 w-4 mr-2 text-blue-600" />
+                  UPI Payment
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                <RadioGroupItem value="card" id="card" />
+                <Label htmlFor="card" className="flex items-center cursor-pointer">
+                  <CreditCard className="h-4 w-4 mr-2 text-green-600" />
+                  Credit/Debit Card
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                <RadioGroupItem value="netbanking" id="netbanking" />
+                <Label htmlFor="netbanking" className="flex items-center cursor-pointer">
+                  <Building className="h-4 w-4 mr-2 text-purple-600" />
+                  Net Banking
+                </Label>
+              </div>
+            </RadioGroup>
+
+            {paymentMethod === 'upi' && (
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <QrCode className="h-16 w-16 mx-auto mb-2 text-blue-600" />
+                <p className="text-sm text-blue-800">Scan QR code with any UPI app</p>
+                <p className="text-xs text-blue-600 mt-1">Amount: ₹{calculateTotal().toLocaleString()}</p>
+              </div>
+            )}
+
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowPaymentModal(false)}
+                className="flex-1"
+                disabled={processingPayment}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handlePayment}
+                disabled={processingPayment}
+                className="flex-1 bg-royal hover:bg-royal-light"
+              >
+                {processingPayment ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                ) : null}
+                Pay ₹{calculateTotal().toLocaleString()}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </div>
   );

@@ -252,34 +252,29 @@ export class MarketplaceService {
     }
   }
 
-  // Order APIs
-  static async placeOrder(userId: string, shippingAddressId: string): Promise<Order | null> {
+  // Enhanced Order APIs with proper order data structure
+  static async placeOrder(userId: string, orderData: any): Promise<Order> {
     try {
-      // Start a transaction
-      const { data: cartItems, error: cartError } = await supabase
-        .from('cart_items')
-        .select(`
-          *,
-          coin_listing:coin_listings(*)
-        `)
-        .eq('user_id', userId);
+      // First save shipping address
+      const { data: address, error: addressError } = await supabase
+        .from('shipping_addresses')
+        .insert({
+          user_id: userId,
+          address_data: orderData.shippingAddress
+        })
+        .select()
+        .single();
 
-      if (cartError) throw cartError;
-      if (!cartItems?.length) throw new Error('Cart is empty');
+      if (addressError) throw addressError;
 
-      // Calculate total amount
-      const totalAmount = cartItems.reduce((sum, item) => {
-        return sum + (item.coin_listing.price * item.quantity);
-      }, 0);
-
-      // Create order
+      // Create order with the address ID
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: userId,
-          total_amount: totalAmount,
+          total_amount: orderData.total,
           status: 'pending',
-          shipping_address_id: shippingAddressId
+          shipping_address_id: address.id
         })
         .select()
         .single();
@@ -287,11 +282,11 @@ export class MarketplaceService {
       if (orderError) throw orderError;
 
       // Create order items
-      const orderItems = cartItems.map(item => ({
+      const orderItems = orderData.items.map((item: any) => ({
         order_id: order.id,
         coin_id: item.coin_id,
         quantity: item.quantity,
-        price: item.coin_listing.price
+        price: item.price
       }));
 
       const { error: orderItemsError } = await supabase
@@ -319,7 +314,8 @@ export class MarketplaceService {
           items:order_items(
             *,
             coin:coin_listings(*)
-          )
+          ),
+          shipping_address:shipping_addresses(*)
         `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -369,26 +365,8 @@ export class MarketplaceService {
   }
 
   // Review APIs
-  static async submitReview(userId: string, coinId: string, rating: number, comment: string): Promise<Review> {
+  static async submitReview(coinId: string, userId: string, rating: number, comment: string): Promise<Review> {
     try {
-      // Check if user has purchased the coin
-      const { data: hasPurchased, error: purchaseError } = await supabase
-        .from('order_items')
-        .select('id')
-        .eq('coin_id', coinId)
-        .eq('order_id', supabase
-          .from('orders')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('status', 'delivered')
-        )
-        .limit(1);
-
-      if (purchaseError) throw purchaseError;
-      if (!hasPurchased?.length) {
-        throw new Error('You must purchase and receive the coin before reviewing');
-      }
-
       // Check if user has already reviewed
       const { data: existingReview, error: reviewError } = await supabase
         .from('reviews')

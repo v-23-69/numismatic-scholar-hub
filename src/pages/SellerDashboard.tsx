@@ -1,103 +1,150 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, TrendingUp, Package, AlertCircle, Eye, Edit, Trash2 } from 'lucide-react';
+import { Plus, TrendingUp, Package, AlertCircle, Eye, Edit, Trash2, Star } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-
-// Mock data for seller dashboard
-const mockSellerStats = {
-  activeListings: 24,
-  totalSales: 156,
-  monthlyRevenue: 45200,
-  averageRating: 4.8,
-  pendingOrders: 3,
-  expiringListings: 2
-};
-
-const mockRecentOrders = [
-  {
-    id: '1',
-    coinTitle: 'Mughal Empire Gold Mohur 1658',
-    buyer: 'Rajesh Kumar',
-    amount: 25000,
-    status: 'pending',
-    date: '2024-06-03'
-  },
-  {
-    id: '2',
-    coinTitle: 'British India Silver Rupee 1835',
-    buyer: 'Priya Sharma',
-    amount: 3500,
-    status: 'shipped',
-    date: '2024-06-02'
-  },
-  {
-    id: '3',
-    coinTitle: 'Gupta Empire Gold Dinar 375 AD',
-    buyer: 'Amit Patel',
-    amount: 85000,
-    status: 'delivered',
-    date: '2024-06-01'
-  }
-];
-
-const mockActiveListings = [
-  {
-    id: '1',
-    title: 'Mughal Empire Gold Mohur 1658',
-    price: 25000,
-    views: 45,
-    status: 'active',
-    expiresIn: '12 days',
-    image: '/placeholder.svg'
-  },
-  {
-    id: '2',
-    title: 'British India Silver Rupee 1835',
-    price: 3500,
-    views: 23,
-    status: 'active',
-    expiresIn: '8 days',
-    image: '/placeholder.svg'
-  },
-  {
-    id: '3',
-    title: 'Chola Dynasty Bronze Coin 1010 AD',
-    price: 12000,
-    views: 67,
-    status: 'pending',
-    expiresIn: '2 days',
-    image: '/placeholder.svg'
-  }
-];
-
-const mockSalesData = [
-  { month: 'Jan', sales: 8, revenue: 15000 },
-  { month: 'Feb', sales: 12, revenue: 22000 },
-  { month: 'Mar', sales: 15, revenue: 28000 },
-  { month: 'Apr', sales: 18, revenue: 35000 },
-  { month: 'May', sales: 22, revenue: 45000 },
-  { month: 'Jun', sales: 14, revenue: 32000 }
-];
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { MarketplaceService } from '@/services/MarketplaceService';
+import { useToast } from "@/hooks/use-toast";
+import type { CoinListing } from '@/types/marketplace';
 
 const SellerDashboard = () => {
+  const { user } = useSupabaseAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
+  const [listings, setListings] = useState<CoinListing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newCoin, setNewCoin] = useState({
+    title: '',
+    description: '',
+    mint_date: '',
+    region: '',
+    value: 0,
+    rarity: 'Common' as const,
+    verified: false,
+    images: [''],
+    stock_quantity: 1,
+    metal: '',
+    dynasty: '',
+    ruler: '',
+    condition: ''
+  });
+
+  useEffect(() => {
+    if (user) {
+      loadSellerListings();
+    }
+  }, [user]);
+
+  const loadSellerListings = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      // In a real app, this would filter by seller_id
+      const { data } = await MarketplaceService.getCoinListings({}, 1, 50);
+      setListings(data);
+    } catch (error) {
+      console.error('Error loading seller listings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load your listings",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddCoin = async () => {
+    if (!user) return;
+
+    try {
+      // In a real implementation, this would call a createListing API
+      console.log('Adding new coin:', newCoin);
+      
+      toast({
+        title: "Coin listed successfully!",
+        description: "Your coin has been added to the marketplace",
+        className: "bg-green-50 border-green-200 text-green-800"
+      });
+      
+      setShowAddModal(false);
+      setNewCoin({
+        title: '',
+        description: '',
+        mint_date: '',
+        region: '',
+        value: 0,
+        rarity: 'Common',
+        verified: false,
+        images: [''],
+        stock_quantity: 1,
+        metal: '',
+        dynasty: '',
+        ruler: '',
+        condition: ''
+      });
+      
+      loadSellerListings();
+    } catch (error) {
+      console.error('Error adding coin:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add coin listing",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const mockStats = {
+    activeListings: listings.length,
+    totalSales: 156,
+    monthlyRevenue: 45200,
+    averageRating: 4.8,
+    pendingOrders: 3,
+    totalViews: 2847
+  };
 
   const getStatusBadge = (status: string) => {
     const statusColors = {
       active: 'bg-green-100 text-green-800',
       pending: 'bg-yellow-100 text-yellow-800',
-      shipped: 'bg-blue-100 text-blue-800',
-      delivered: 'bg-green-100 text-green-800',
+      sold: 'bg-blue-100 text-blue-800',
       expired: 'bg-red-100 text-red-800'
     };
     return statusColors[status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800';
   };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-royal mb-4">Please sign in to access Seller Dashboard</h1>
+            <Link to="/authenticate">
+              <Button className="bg-royal hover:bg-royal-light text-white">
+                Sign In
+              </Button>
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -117,10 +164,157 @@ const SellerDashboard = () => {
                   View Marketplace
                 </Button>
               </Link>
-              <Button className="bg-royal hover:bg-blue-600">
-                <Plus className="h-4 w-4 mr-2" />
-                Add New Listing
-              </Button>
+              <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+                <DialogTrigger asChild>
+                  <Button className="bg-royal hover:bg-blue-600">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add New Listing
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Add New Coin Listing</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="title">Coin Title *</Label>
+                        <Input
+                          id="title"
+                          value={newCoin.title}
+                          onChange={(e) => setNewCoin(prev => ({ ...prev, title: e.target.value }))}
+                          placeholder="e.g., Mughal Gold Mohur 1658"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="value">Price (₹) *</Label>
+                        <Input
+                          id="value"
+                          type="number"
+                          value={newCoin.value}
+                          onChange={(e) => setNewCoin(prev => ({ ...prev, value: Number(e.target.value) }))}
+                          placeholder="25000"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="description">Description *</Label>
+                      <Textarea
+                        id="description"
+                        value={newCoin.description}
+                        onChange={(e) => setNewCoin(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Detailed description of the coin..."
+                        rows={3}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="region">Region/Country</Label>
+                        <Input
+                          id="region"
+                          value={newCoin.region}
+                          onChange={(e) => setNewCoin(prev => ({ ...prev, region: e.target.value }))}
+                          placeholder="e.g., Mughal Empire"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="mint_date">Mint Date/Year</Label>
+                        <Input
+                          id="mint_date"
+                          value={newCoin.mint_date}
+                          onChange={(e) => setNewCoin(prev => ({ ...prev, mint_date: e.target.value }))}
+                          placeholder="e.g., 1658 AD"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="metal">Metal</Label>
+                        <Input
+                          id="metal"
+                          value={newCoin.metal}
+                          onChange={(e) => setNewCoin(prev => ({ ...prev, metal: e.target.value }))}
+                          placeholder="e.g., Gold, Silver, Copper"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="condition">Condition</Label>
+                        <Select onValueChange={(value) => setNewCoin(prev => ({ ...prev, condition: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select condition" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Mint">Mint</SelectItem>
+                            <SelectItem value="Excellent">Excellent</SelectItem>
+                            <SelectItem value="Very Fine">Very Fine</SelectItem>
+                            <SelectItem value="Fine">Fine</SelectItem>
+                            <SelectItem value="Good">Good</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="rarity">Rarity</Label>
+                        <Select onValueChange={(value) => setNewCoin(prev => ({ ...prev, rarity: value as any }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select rarity" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Common">Common</SelectItem>
+                            <SelectItem value="Uncommon">Uncommon</SelectItem>
+                            <SelectItem value="Rare">Rare</SelectItem>
+                            <SelectItem value="Very Rare">Very Rare</SelectItem>
+                            <SelectItem value="Extremely Rare">Extremely Rare</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="stock">Stock Quantity</Label>
+                        <Input
+                          id="stock"
+                          type="number"
+                          value={newCoin.stock_quantity}
+                          onChange={(e) => setNewCoin(prev => ({ ...prev, stock_quantity: Number(e.target.value) }))}
+                          min="1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="dynasty">Dynasty/Ruler</Label>
+                        <Input
+                          id="dynasty"
+                          value={newCoin.dynasty}
+                          onChange={(e) => setNewCoin(prev => ({ ...prev, dynasty: e.target.value }))}
+                          placeholder="e.g., Akbar"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="images">Image URL</Label>
+                      <Input
+                        id="images"
+                        value={newCoin.images[0]}
+                        onChange={(e) => setNewCoin(prev => ({ ...prev, images: [e.target.value] }))}
+                        placeholder="https://example.com/coin-image.jpg"
+                      />
+                    </div>
+                    
+                    <div className="flex justify-end space-x-2 pt-4">
+                      <Button variant="outline" onClick={() => setShowAddModal(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleAddCoin} className="bg-royal hover:bg-royal-light">
+                        Add Listing
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>
@@ -133,7 +327,7 @@ const SellerDashboard = () => {
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-royal">{mockSellerStats.activeListings}</div>
+              <div className="text-2xl font-bold text-royal">{mockStats.activeListings}</div>
               <p className="text-xs text-muted-foreground">+2 from last month</p>
             </CardContent>
           </Card>
@@ -144,7 +338,7 @@ const SellerDashboard = () => {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-royal">{mockSellerStats.totalSales}</div>
+              <div className="text-2xl font-bold text-royal">{mockStats.totalSales}</div>
               <p className="text-xs text-muted-foreground">+12% from last month</p>
             </CardContent>
           </Card>
@@ -155,152 +349,105 @@ const SellerDashboard = () => {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-royal">₹{mockSellerStats.monthlyRevenue.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-royal">₹{mockStats.monthlyRevenue.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">+8% from last month</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
-              <AlertCircle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Total Views</CardTitle>
+              <Eye className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-royal">{mockSellerStats.pendingOrders}</div>
-              <p className="text-xs text-muted-foreground">Requires attention</p>
+              <div className="text-2xl font-bold text-royal">{mockStats.totalViews}</div>
+              <p className="text-xs text-muted-foreground">This month</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Alerts */}
-        {mockSellerStats.expiringListings > 0 && (
-          <Card className="mb-8 border-yellow-200 bg-yellow-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center">
-                <AlertCircle className="h-5 w-5 text-yellow-600 mr-3" />
-                <div>
-                  <p className="font-medium text-yellow-800">
-                    {mockSellerStats.expiringListings} listings expiring soon
-                  </p>
-                  <p className="text-sm text-yellow-700">
-                    Review and renew your listings to keep them active
-                  </p>
-                </div>
-                <Button variant="outline" className="ml-auto" size="sm">
-                  View Listings
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Recent Orders */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
-                <CardDescription>Your latest customer orders and their status</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Coin</TableHead>
-                      <TableHead>Buyer</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {mockRecentOrders.map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">{order.coinTitle}</TableCell>
-                        <TableCell>{order.buyer}</TableCell>
-                        <TableCell>₹{order.amount.toLocaleString()}</TableCell>
-                        <TableCell>
-                          <Badge className={getStatusBadge(order.status)}>
-                            {order.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sales Chart */}
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Monthly Sales</CardTitle>
-                <CardDescription>Sales trend over the last 6 months</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {mockSalesData.map((data, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{data.month}</span>
-                      <div className="flex items-center gap-2">
-                        <div className="w-20 bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-royal h-2 rounded-full"
-                            style={{ width: `${(data.sales / 25) * 100}%` }}
-                          />
-                        </div>
-                        <span className="text-sm text-gray-600">{data.sales}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Active Listings */}
-        <Card className="mt-8">
+        {/* Listings Table */}
+        <Card>
           <CardHeader>
-            <CardTitle>Your Active Listings</CardTitle>
-            <CardDescription>Manage your current coin listings</CardDescription>
+            <CardTitle>Your Coin Listings</CardTitle>
+            <CardDescription>Manage your active and pending coin listings</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockActiveListings.map((listing) => (
-                <div key={listing.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <img
-                    src={listing.image}
-                    alt={listing.title}
-                    className="w-full h-32 object-cover rounded-md mb-3"
-                  />
-                  <h3 className="font-medium text-sm mb-2 line-clamp-2">{listing.title}</h3>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-royal">₹{listing.price.toLocaleString()}</span>
-                    <Badge className={getStatusBadge(listing.status)}>
-                      {listing.status}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600 mb-3">
-                    <Eye className="h-4 w-4 mr-1" />
-                    {listing.views} views • Expires in {listing.expiresIn}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-royal mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading your listings...</p>
+              </div>
+            ) : listings.length === 0 ? (
+              <div className="text-center py-8">
+                <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-4">You haven't listed any coins yet</p>
+                <Button onClick={() => setShowAddModal(true)} className="bg-royal hover:bg-royal-light">
+                  <Plus className="h-4 w-4 mr-2" />
+                  List Your First Coin
+                </Button>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Coin</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Views</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Rating</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {listings.slice(0, 10).map((listing) => (
+                    <TableRow key={listing.id}>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <img
+                            src={listing.images[0] || 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=600&auto=format&fit=crop&q=80'}
+                            alt={listing.title}
+                            className="w-10 h-10 rounded object-cover"
+                          />
+                          <div>
+                            <p className="font-medium text-sm">{listing.title}</p>
+                            <p className="text-xs text-gray-500">{listing.region}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">₹{listing.value.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Eye className="h-4 w-4 mr-1 text-gray-400" />
+                          {Math.floor(Math.random() * 200) + 50}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusBadge('active')}>
+                          Active
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Star className="h-4 w-4 text-gold fill-current mr-1" />
+                          {listing.seller_rating.toFixed(1)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-1">
+                          <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

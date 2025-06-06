@@ -151,225 +151,227 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-white z-[80] border border-royal/20 shadow-2xl">
+        <DialogHeader className="sticky top-0 bg-white border-b pb-4 mb-4">
           <DialogTitle className="text-2xl font-bold text-royal">List Your Coin</DialogTitle>
           <DialogDescription>
             Add your coin to the marketplace for other collectors to discover and purchase.
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Image Upload */}
-            <div className="space-y-4">
-              <label className="text-sm font-medium text-gray-700">Coin Images *</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  id="image-upload"
-                  disabled={uploading}
-                />
-                <label htmlFor="image-upload" className="cursor-pointer">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <p className="text-gray-600">
-                    {uploading ? 'Uploading...' : 'Click to upload coin images'}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 10MB each</p>
-                </label>
+        <div className="px-1">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Image Upload */}
+              <div className="space-y-4">
+                <label className="text-sm font-medium text-gray-700">Coin Images *</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="image-upload"
+                    disabled={uploading}
+                  />
+                  <label htmlFor="image-upload" className="cursor-pointer">
+                    <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-600">
+                      {uploading ? 'Uploading...' : 'Click to upload coin images'}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 10MB each</p>
+                  </label>
+                </div>
+
+                {/* Preview uploaded images */}
+                {uploadedImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-4">
+                    {uploadedImages.map((url, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={url}
+                          alt={`Coin ${index + 1}`}
+                          className="w-full h-24 object-cover rounded border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Preview uploaded images */}
-              {uploadedImages.length > 0 && (
-                <div className="grid grid-cols-3 gap-4">
-                  {uploadedImages.map((url, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={url}
-                        alt={`Coin ${index + 1}`}
-                        className="w-full h-24 object-cover rounded border"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., 1921 Morgan Silver Dollar" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., 1921 Morgan Silver Dollar" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price (₹) *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={form.control}
-                name="price"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price (₹) *</FormLabel>
+                    <FormLabel>Description *</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
+                      <Textarea
+                        placeholder="Describe your coin's condition, history, and unique features..."
+                        className="min-h-[100px]"
                         {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description *</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe your coin's condition, history, and unique features..."
-                      className="min-h-[100px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="z-[100]">
+                          <SelectItem value="ancient">Ancient</SelectItem>
+                          <SelectItem value="medieval">Medieval</SelectItem>
+                          <SelectItem value="modern">Modern</SelectItem>
+                          <SelectItem value="commemorative">Commemorative</SelectItem>
+                          <SelectItem value="bullion">Bullion</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField
+                  control={form.control}
+                  name="region"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Region *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select region" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="z-[100]">
+                          <SelectItem value="United States">United States</SelectItem>
+                          <SelectItem value="Roman Empire">Roman Empire</SelectItem>
+                          <SelectItem value="India">India</SelectItem>
+                          <SelectItem value="China">China</SelectItem>
+                          <SelectItem value="Europe">Europe</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="rarity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Rarity *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select rarity" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="z-[100]">
+                          <SelectItem value="Common">Common</SelectItem>
+                          <SelectItem value="Uncommon">Uncommon</SelectItem>
+                          <SelectItem value="Rare">Rare</SelectItem>
+                          <SelectItem value="Very Rare">Very Rare</SelectItem>
+                          <SelectItem value="Extremely Rare">Extremely Rare</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
-                name="category"
+                name="mint_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="ancient">Ancient</SelectItem>
-                        <SelectItem value="medieval">Medieval</SelectItem>
-                        <SelectItem value="modern">Modern</SelectItem>
-                        <SelectItem value="commemorative">Commemorative</SelectItem>
-                        <SelectItem value="bullion">Bullion</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Mint Date (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., 1921, 1800-1850, Ancient Rome" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="region"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Region *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select region" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="United States">United States</SelectItem>
-                        <SelectItem value="Roman Empire">Roman Empire</SelectItem>
-                        <SelectItem value="India">India</SelectItem>
-                        <SelectItem value="China">China</SelectItem>
-                        <SelectItem value="Europe">Europe</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="rarity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Rarity *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select rarity" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Common">Common</SelectItem>
-                        <SelectItem value="Uncommon">Uncommon</SelectItem>
-                        <SelectItem value="Rare">Rare</SelectItem>
-                        <SelectItem value="Very Rare">Very Rare</SelectItem>
-                        <SelectItem value="Extremely Rare">Extremely Rare</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="mint_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mint Date (Optional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., 1921, 1800-1850, Ancient Rome" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end space-x-4 pt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="bg-royal hover:bg-royal-light text-white"
-                disabled={uploading}
-              >
-                {uploading ? 'Uploading...' : 'List Coin'}
-              </Button>
-            </div>
-          </form>
-        </Form>
+              <div className="flex justify-end space-x-4 pt-6 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-royal hover:bg-royal-light text-white"
+                  disabled={uploading}
+                >
+                  {uploading ? 'Uploading...' : 'List Coin'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
       </DialogContent>
     </Dialog>
   );

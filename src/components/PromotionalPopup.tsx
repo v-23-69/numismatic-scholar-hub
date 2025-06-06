@@ -20,7 +20,7 @@ const PromotionalPopup = () => {
     {
       id: 'course-offer',
       icon: <BookOpen className="h-6 w-6 text-blue-600" />,
-      title: '📚 25% OFF on Rare Coin Courses',
+      title: '25% OFF on Rare Coin Courses',
       description: 'Today Only! Learn from expert numismatists',
       buttonText: 'Explore Courses',
       action: () => window.location.href = '/courses'
@@ -28,7 +28,7 @@ const PromotionalPopup = () => {
     {
       id: 'verification-offer',
       icon: <Shield className="h-6 w-6 text-blue-600" />,
-      title: '💰 ₹20 Coin Authentication',
+      title: '₹20 Coin Authentication',
       description: 'Quick & Reliable expert verification',
       buttonText: 'Verify Now',
       action: () => window.location.href = '/verify-coins'
@@ -36,7 +36,7 @@ const PromotionalPopup = () => {
     {
       id: 'agent-support',
       icon: <Headphones className="h-6 w-6 text-blue-600" />,
-      title: '🆕 Live Agent Support Available',
+      title: 'Live Agent Support Available',
       description: 'Get instant help from our coin experts',
       buttonText: 'Get Support',
       action: () => window.location.href = '/agent-support'
@@ -49,17 +49,17 @@ const PromotionalPopup = () => {
       setCurrentPopup(randomOffer);
       setShowPopup(true);
       
-      // Auto-close after 6 seconds
+      // Auto-close after 8 seconds
       setTimeout(() => {
         setShowPopup(false);
-      }, 6000);
+      }, 8000);
     };
 
-    // Show popup after 3 seconds on page load
-    const initialTimer = setTimeout(showRandomPopup, 3000);
+    // Show popup after 5 seconds on page load (after welcome modal)
+    const initialTimer = setTimeout(showRandomPopup, 5000);
 
-    // Show popup every 45 seconds
-    const intervalTimer = setInterval(showRandomPopup, 45000);
+    // Show popup every 60 seconds
+    const intervalTimer = setInterval(showRandomPopup, 60000);
 
     return () => {
       clearTimeout(initialTimer);
@@ -74,8 +74,8 @@ const PromotionalPopup = () => {
   if (!showPopup || !currentPopup) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 pointer-events-none">
-      <div className="bg-white rounded-xl shadow-lg border border-blue-100 max-w-sm w-full pointer-events-auto animate-scale-in">
+    <div className="fixed bottom-4 right-4 z-[90] pointer-events-none">
+      <div className="bg-white rounded-xl shadow-2xl border border-blue-100 max-w-sm w-full pointer-events-auto animate-scale-in">
         <div className="p-4">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center space-x-3">

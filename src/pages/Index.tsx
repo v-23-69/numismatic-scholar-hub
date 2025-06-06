@@ -37,7 +37,9 @@ const Index = () => {
       <Navbar />
       <main className="flex-grow">
         <Hero />
-        <FeaturedSections />
+        <div id="featured-sections">
+          <FeaturedSections />
+        </div>
         <CoinAuthenticationFeature />
         <LatestSection />
         <FeaturedCourses />

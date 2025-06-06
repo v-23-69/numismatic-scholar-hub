@@ -1,83 +1,81 @@
+
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const WelcomeModal = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Check if modal has been shown before
-    const hasModalBeenShown = localStorage.getItem('welcomeModalShown');
+    // Check if user has seen the welcome modal before
+    const hasSeenWelcome = localStorage.getItem('coinglobe-welcome-seen');
     
-    if (!hasModalBeenShown) {
-      // Show modal after a short delay
+    if (!hasSeenWelcome) {
+      // Show modal after a short delay to ensure page is loaded
       const timer = setTimeout(() => {
         setIsOpen(true);
-        // Set flag in localStorage
-        localStorage.setItem('welcomeModalShown', 'true');
-      }, 2000);
+      }, 1000);
       
       return () => clearTimeout(timer);
     }
   }, []);
 
-  // Reset localStorage for testing (remove in production)
-  const resetModal = () => {
-    localStorage.removeItem('welcomeModalShown');
-    setIsOpen(true);
+  const handleClose = () => {
+    setIsOpen(false);
+    localStorage.setItem('coinglobe-welcome-seen', 'true');
+  };
+
+  const handleGetStarted = () => {
+    handleClose();
+    // Scroll to featured sections
+    setTimeout(() => {
+      const featuredSection = document.getElementById('featured-sections');
+      if (featuredSection) {
+        featuredSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-md mx-auto bg-white border border-royal/20 shadow-2xl z-[100]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-playfair text-royal">Welcome to NumismaticScholar!</DialogTitle>
-          <DialogDescription>
-            Your trusted platform for coin authentication, education, and community.
+          <DialogTitle className="text-2xl font-bold font-playfair text-royal text-center mb-2">
+            Welcome to CoinGlobe!
+          </DialogTitle>
+          <DialogDescription className="text-center text-gray-600">
+            Discover authentic coins, get expert verification, and connect with fellow numismatists worldwide.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="py-4">
-          <div className="bg-royal/5 p-4 rounded-lg mb-4">
-            <h3 className="font-bold text-royal mb-2">🔍 New: Professional Coin Verification</h3>
+        <div className="space-y-4 mt-6">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-royal/10 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="text-2xl">🏛️</span>
+            </div>
+            <h3 className="font-semibold text-royal mb-2">Your Numismatic Journey Starts Here</h3>
             <p className="text-sm text-gray-600">
-              Get your coins verified by our numismatic experts for just ₹20 per coin.
-              Receive a detailed authenticity report within 24 hours!
+              Explore rare coins, get professional authentication, and build your collection with confidence.
             </p>
           </div>
           
-          <div className="bg-royal/5 p-4 rounded-lg">
-            <h3 className="font-bold text-royal mb-2">👨‍🏫 Expert-Led Numismatic Courses</h3>
-            <p className="text-sm text-gray-600">
-              Learn coin grading, authentication, and history from top experts.
-              New courses added monthly!
-            </p>
+          <div className="flex space-x-3 mt-6">
+            <Button 
+              onClick={handleGetStarted}
+              className="flex-1 bg-royal hover:bg-royal-light text-white"
+            >
+              Get Started
+            </Button>
+            <Button 
+              onClick={handleClose}
+              variant="outline"
+              className="flex-1 border-royal text-royal hover:bg-royal hover:text-white"
+            >
+              Maybe Later
+            </Button>
           </div>
         </div>
-        
-        <DialogFooter className="sm:justify-between">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsOpen(false)}
-          >
-            Remind me later
-          </Button>
-          
-          <Button
-            onClick={() => window.location.href = '/marketplace'}
-          >
-            Verify My Coins
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

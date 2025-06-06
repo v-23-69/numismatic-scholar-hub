@@ -56,7 +56,41 @@ export interface CoinReview {
   created_at: string;
   user?: {
     full_name: string;
+    avatar_url?: string;
   };
+}
+
+export interface ShippingAddress {
+  id: string;
+  user_id: string;
+  full_name: string;
+  phone: string;
+  address_line_1: string;
+  address_line_2?: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  created_at: string;
+}
+
+export interface Order {
+  id: string;
+  user_id: string;
+  total: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  shipping_address: ShippingAddress;
+  created_at: string;
+  order_items?: OrderItem[];
+}
+
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  coin_id: string;
+  quantity: number;
+  price: number;
+  coin_listing?: CoinListing;
 }
 
 export interface PriceHistory {

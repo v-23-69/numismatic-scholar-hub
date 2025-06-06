@@ -60,6 +60,7 @@ const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
 const SellerDashboard = lazy(() => import("./pages/SellerDashboard"));
 const BuyerDashboard = lazy(() => import("./pages/BuyerDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const Orders = lazy(() => import("./pages/Orders"));
 
 const App = () => {
   return (
@@ -108,7 +109,8 @@ const App = () => {
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
-          <Route path="/order-confirmation" element={<OrderConfirmation />} />
+          <Route path="/checkout/confirmation" element={<OrderConfirmation />} />
+          <Route path="/orders" element={<Orders />} />
           
           {/* Dashboard Routes */}
           <Route path="/seller-dashboard" element={<SellerDashboard />} />

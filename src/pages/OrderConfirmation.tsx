@@ -1,180 +1,98 @@
 
-import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Package, Truck, Calendar, ArrowLeft } from 'lucide-react';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { Card, CardContent } from "@/components/ui/card";
+import { CheckCircle, Package, ArrowRight } from 'lucide-react';
 
 const OrderConfirmation = () => {
+  const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useSupabaseAuth();
-  const [searchParams] = useSearchParams();
-  const orderId = searchParams.get('orderId') || Math.random().toString(36).substr(2, 9).toUpperCase();
+  const orderId = location.state?.orderId;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    if (!user) {
-      navigate('/authenticate');
-      return;
+    if (!orderId) {
+      navigate('/');
     }
-  }, [user, navigate]);
-
-  const estimatedDelivery = new Date();
-  estimatedDelivery.setDate(estimatedDelivery.getDate() + 7);
-
-  if (!user) {
-    return null;
-  }
+  }, [orderId, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow pt-8 pb-16">
         <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto">
-            {/* Success Header */}
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
-              <h1 className="text-3xl font-bold text-royal font-playfair mb-2">
-                Order Confirmed!
-              </h1>
+          <div className="max-w-2xl mx-auto text-center">
+            {/* Success Icon */}
+            <div className="mb-8">
+              <CheckCircle className="h-24 w-24 text-green-600 mx-auto mb-4" />
+              <h1 className="text-4xl font-bold text-royal font-playfair mb-2">Order Confirmed!</h1>
               <p className="text-lg text-gray-600">
                 Thank you for your purchase. Your order has been successfully placed.
               </p>
             </div>
 
             {/* Order Details */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Order Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-gray-600">Order ID:</span>
-                    <span className="font-mono font-medium">#{orderId}</span>
+            <Card className="mb-8">
+              <CardContent className="p-8">
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-royal mb-2">Order Details</h2>
+                    <p className="text-gray-600">Order ID: <span className="font-mono font-medium">#{orderId}</span></p>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-gray-600">Order Date:</span>
-                    <span className="font-medium">{new Date().toLocaleDateString()}</span>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start space-x-3">
+                      <Package className="h-5 w-5 text-blue-600 mt-0.5" />
+                      <div className="text-left">
+                        <h3 className="font-medium text-blue-900">What happens next?</h3>
+                        <ul className="text-sm text-blue-800 mt-2 space-y-1">
+                          <li>• You'll receive an order confirmation email shortly</li>
+                          <li>• Our team will verify and process your order</li>
+                          <li>• You'll get shipping updates via email and SMS</li>
+                          <li>• Expected delivery: 3-7 business days</li>
+                        </ul>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-gray-600">Status:</span>
-                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-medium">
-                      Confirmed
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-gray-600">Estimated Delivery:</span>
-                    <span className="font-medium">{estimatedDelivery.toLocaleDateString()}</span>
+
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Button 
+                      onClick={() => navigate('/orders')}
+                      className="bg-royal hover:bg-royal-light text-white"
+                    >
+                      View My Orders
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                    
+                    <Button 
+                      onClick={() => navigate('/coins-market')}
+                      variant="outline"
+                      className="border-royal text-royal hover:bg-royal hover:text-white"
+                    >
+                      Continue Shopping
+                    </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Order Status Steps */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Order Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col items-center">
-                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center mb-2">
-                      <CheckCircle className="h-5 w-5 text-white" />
-                    </div>
-                    <span className="text-sm font-medium text-green-600">Confirmed</span>
-                  </div>
-                  
-                  <div className="flex-1 h-1 bg-gray-200 mx-4"></div>
-                  
-                  <div className="flex flex-col items-center">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mb-2">
-                      <Package className="h-5 w-5 text-gray-500" />
-                    </div>
-                    <span className="text-sm text-gray-500">Processing</span>
-                  </div>
-                  
-                  <div className="flex-1 h-1 bg-gray-200 mx-4"></div>
-                  
-                  <div className="flex flex-col items-center">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mb-2">
-                      <Truck className="h-5 w-5 text-gray-500" />
-                    </div>
-                    <span className="text-sm text-gray-500">Shipped</span>
-                  </div>
-                  
-                  <div className="flex-1 h-1 bg-gray-200 mx-4"></div>
-                  
-                  <div className="flex flex-col items-center">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mb-2">
-                      <CheckCircle className="h-5 w-5 text-gray-500" />
-                    </div>
-                    <span className="text-sm text-gray-500">Delivered</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Next Steps */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>What's Next?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <Calendar className="h-5 w-5 text-royal mt-1" />
-                    <div>
-                      <h4 className="font-medium">Order Processing</h4>
-                      <p className="text-gray-600 text-sm">
-                        We'll process your order within 1-2 business days and send you a confirmation email.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <Truck className="h-5 w-5 text-royal mt-1" />
-                    <div>
-                      <h4 className="font-medium">Shipping Updates</h4>
-                      <p className="text-gray-600 text-sm">
-                        You'll receive tracking information once your order has been shipped.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <Package className="h-5 w-5 text-royal mt-1" />
-                    <div>
-                      <h4 className="font-medium">Delivery</h4>
-                      <p className="text-gray-600 text-sm">
-                        Your coins will be carefully packaged and delivered to your address.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button
-                onClick={() => navigate('/coins-market')}
-                className="flex-1 bg-royal hover:bg-royal-light text-white"
-              >
-                Continue Shopping
-              </Button>
-              <Button
-                onClick={() => navigate('/profile?tab=orders')}
-                variant="outline"
-                className="flex-1 border-royal text-royal hover:bg-royal hover:text-white"
-              >
-                View My Orders
-              </Button>
+            {/* Support Information */}
+            <div className="text-center text-gray-600">
+              <p className="mb-2">Need help with your order?</p>
+              <p>
+                Contact us at{' '}
+                <a href="mailto:support@coinglobe.com" className="text-royal hover:underline">
+                  support@coinglobe.com
+                </a>{' '}
+                or call{' '}
+                <a href="tel:+91-9876543210" className="text-royal hover:underline">
+                  +91-9876543210
+                </a>
+              </p>
             </div>
           </div>
         </div>

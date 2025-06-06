@@ -2,20 +2,17 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Heart, Shield, ShoppingCart, Star, ArrowLeft, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useWishlist } from '@/context/WishlistContext';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { MarketplaceService } from '@/services/MarketplaceService';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import type { CoinListing } from '@/types/marketplace';
-import ReviewsSection from '@/components/coin-details/ReviewsSection';
-import PriceHistorySection from '@/components/coin-details/PriceHistorySection';
-import RelatedProductsSection from '@/components/coin-details/RelatedProductsSection';
 
 const CoinDetails = () => {
   const { coinId } = useParams<{ coinId: string }>();
@@ -25,17 +22,21 @@ const CoinDetails = () => {
   const { toast } = useToast();
   
   const [coin, setCoin] = useState<CoinListing | null>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [quantity, setQuantity] = useState<number>(1);
+  const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [buyingNow, setBuyingNow] = useState(false);
+  const [newRating, setNewRating] = useState(0);
+  const [newComment, setNewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    
     if (coinId) {
       loadCoinDetails();
+      loadReviews();
     }
   }, [coinId]);
 
@@ -56,29 +57,12 @@ const CoinDetails = () => {
     }
   };
 
-  const toggleWishlist = () => {
-    if (!coin) return;
-    
-    const coinIdStr = String(coin.id);
-    if (isInWishlist(coinIdStr)) {
-      removeFromWishlist(coinIdStr);
-      toast({
-        title: "Removed from wishlist",
-        description: `${coin.title} has been removed from your wishlist`,
-      });
-    } else {
-      addToWishlist({
-        id: coinIdStr,
-        title: coin.title,
-        description: coin.description,
-        value: coin.value,
-        images: coin.images,
-        seller_name: coin.seller_name
-      });
-      toast({
-        title: "Added to wishlist",
-        description: `${coin.title} has been added to your wishlist`,
-      });
+  const loadReviews = async () => {
+    try {
+      const reviewsData = await MarketplaceService.getCoinReviews(coinId!);
+      setReviews(reviewsData);
+    } catch (error) {
+      console.error('Error loading reviews:', error);
     }
   };
 
@@ -126,14 +110,6 @@ const CoinDetails = () => {
     try {
       setBuyingNow(true);
       await MarketplaceService.addToCart(user.id, String(coin.id), quantity);
-      
-      toast({
-        title: "Proceeding to checkout",
-        description: `${coin.title} has been added to your cart`,
-        className: "bg-green-50 border-green-200 text-green-800"
-      });
-      
-      // Redirect to checkout
       navigate('/checkout');
     } catch (error) {
       console.error('Error during buy now:', error);
@@ -147,14 +123,70 @@ const CoinDetails = () => {
     }
   };
 
-  const nextImage = () => {
-    if (!coin?.images.length) return;
-    setCurrentImageIndex((prev) => (prev + 1) % coin.images.length);
+  const handleSubmitReview = async () => {
+    if (!user) {
+      toast({
+        title: "Please sign in",
+        description: "You need to be signed in to add a review",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (newRating === 0 || !newComment.trim()) {
+      toast({
+        title: "Please complete your review",
+        description: "Both rating and comment are required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setSubmittingReview(true);
+      await MarketplaceService.submitReview(coinId!, user.id, newRating, newComment.trim());
+      
+      toast({
+        title: "Review added",
+        description: "Your review has been posted successfully",
+        className: "bg-green-50 border-green-200 text-green-800"
+      });
+
+      setNewRating(0);
+      setNewComment('');
+      loadReviews();
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit review",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
-  const prevImage = () => {
-    if (!coin?.images.length) return;
-    setCurrentImageIndex((prev) => (prev - 1 + coin.images.length) % coin.images.length);
+  const renderStars = (rating: number, interactive = false, onRate?: (rating: number) => void) => {
+    return (
+      <div className="flex space-x-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            disabled={!interactive}
+            onClick={() => interactive && onRate?.(star)}
+            className={`${interactive ? 'cursor-pointer hover:scale-110' : 'cursor-default'} transition-transform`}
+          >
+            <Star
+              className={`h-4 w-4 ${
+                star <= rating ? 'text-gold fill-current' : 'text-gray-300'
+              }`}
+            />
+          </button>
+        ))}
+      </div>
+    );
   };
 
   if (loading) {
@@ -209,39 +241,14 @@ const CoinDetails = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
-            {/* Image Carousel */}
+            {/* Image Section */}
             <div className="space-y-4">
               <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group">
-                {coin.images.length > 0 ? (
-                  <>
-                    <img 
-                      src={coin.images[currentImageIndex]} 
-                      alt={`${coin.title} - Image ${currentImageIndex + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                    
-                    {coin.images.length > 1 && (
-                      <>
-                        <button
-                          onClick={prevImage}
-                          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={nextImage}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </button>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
-                    No image available
-                  </div>
-                )}
+                <img 
+                  src={coin.images[currentImageIndex] || coin.images[0] || 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=600&auto=format&fit=crop&q=80'} 
+                  alt={coin.title}
+                  className="w-full h-full object-cover"
+                />
                 
                 {coin.verified && (
                   <div className="absolute top-4 right-4 bg-gold text-royal-dark text-xs font-bold px-3 py-1 rounded-full flex items-center">
@@ -249,28 +256,24 @@ const CoinDetails = () => {
                     VERIFIED
                   </div>
                 )}
-              </div>
 
-              {/* Thumbnail Gallery */}
-              {coin.images.length > 1 && (
-                <div className="flex space-x-2 overflow-x-auto">
-                  {coin.images.map((image, index) => (
+                {coin.images.length > 1 && (
+                  <>
                     <button
-                      key={index}
-                      onClick={() => setCurrentImageIndex(index)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                        currentImageIndex === index ? 'border-royal' : 'border-gray-200'
-                      }`}
+                      onClick={() => setCurrentImageIndex((prev) => (prev - 1 + coin.images.length) % coin.images.length)}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <img 
-                        src={image} 
-                        alt={`${coin.title} thumbnail ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
+                      <ChevronLeft className="h-4 w-4" />
                     </button>
-                  ))}
-                </div>
-              )}
+                    <button
+                      onClick={() => setCurrentImageIndex((prev) => (prev + 1) % coin.images.length)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Product Info */}
@@ -290,11 +293,6 @@ const CoinDetails = () => {
                 </h1>
                 
                 <p className="text-gray-600 mb-4">{coin.description}</p>
-                
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  <span>Mint Date: <strong>{coin.mint_date}</strong></span>
-                  <span>Stock: <strong>{coin.stock_quantity} available</strong></span>
-                </div>
               </div>
 
               {/* Price */}
@@ -357,75 +355,84 @@ const CoinDetails = () => {
                     )}
                     Add to Cart
                   </Button>
-                  
-                  <Button 
-                    onClick={toggleWishlist}
-                    variant="outline" 
-                    className="w-full border-royal text-royal hover:bg-royal hover:text-white h-12"
-                  >
-                    <Heart 
-                      className="h-4 w-4 mr-2" 
-                      fill={isInWishlist(String(coin.id)) ? "currentColor" : "none"} 
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Reviews Section */}
+          <Card className="mb-8">
+            <CardContent className="p-6">
+              <h3 className="text-xl font-bold text-royal mb-6">Reviews ({reviews.length})</h3>
+              
+              {/* Add Review Form */}
+              <div className="border-b pb-6 mb-6">
+                <h4 className="font-semibold mb-4">Add Your Review</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Rating
+                    </label>
+                    {renderStars(newRating, true, setNewRating)}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Comment
+                    </label>
+                    <Textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Share your thoughts about this coin..."
+                      className="min-h-[100px]"
                     />
-                    {isInWishlist(String(coin.id)) ? 'Remove from Wishlist' : 'Add to Wishlist'}
+                  </div>
+                  <Button
+                    onClick={handleSubmitReview}
+                    disabled={submittingReview || newRating === 0 || !newComment.trim()}
+                    className="bg-royal hover:bg-royal-light text-white"
+                  >
+                    {submittingReview ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    ) : null}
+                    Post Review
                   </Button>
                 </div>
               </div>
 
-              {/* Seller Info */}
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="font-semibold text-royal mb-4">Seller Information</h3>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-royal rounded-full flex items-center justify-center text-white font-semibold">
-                      {coin.seller_avatar ? (
-                        <img 
-                          src={coin.seller_avatar} 
-                          alt={coin.seller_name}
-                          className="w-full h-full rounded-full object-cover"
-                        />
-                      ) : (
-                        coin.seller_name.charAt(0)
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{coin.seller_name}</p>
-                      <div className="flex items-center space-x-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i}
-                            className={`h-4 w-4 ${
-                              i < Math.floor(coin.seller_rating) 
-                                ? 'text-gold fill-current' 
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                        <span className="text-sm text-gray-600 ml-1">
-                          {coin.seller_rating.toFixed(1)}
-                        </span>
+              {/* Reviews List */}
+              <div className="space-y-4">
+                {reviews.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No reviews yet. Be the first to review this coin!</p>
+                  </div>
+                ) : (
+                  reviews.map((review) => (
+                    <div key={review.id} className="border-b last:border-b-0 pb-4 last:pb-0">
+                      <div className="flex items-start space-x-4">
+                        <div className="w-10 h-10 bg-royal rounded-full flex items-center justify-center text-white font-semibold">
+                          {review.user?.full_name?.charAt(0) || 'A'}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium text-gray-900">
+                              {review.user?.full_name || 'Anonymous'}
+                            </h4>
+                            <span className="text-sm text-gray-500">
+                              {new Date(review.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center mt-1 mb-2">
+                            {renderStars(review.rating)}
+                          </div>
+                          <p className="text-gray-600">{review.comment}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {/* Additional Sections */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-8">
-              <ReviewsSection coinId={String(coin.id)} />
-              <PriceHistorySection coinId={String(coin.id)} />
-            </div>
-            <div>
-              <RelatedProductsSection 
-                coinId={String(coin.id)} 
-                dynasty={coin.dynasty} 
-                ruler={coin.ruler} 
-              />
-            </div>
-          </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
       <Footer />

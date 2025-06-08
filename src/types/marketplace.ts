@@ -1,4 +1,3 @@
-
 export interface CoinListing {
   id: string;
   title: string;
@@ -20,6 +19,7 @@ export interface CoinListing {
   dynasty: string;
   ruler: string;
   condition: string;
+  category?: string;
 }
 
 export interface CartItem {
@@ -45,6 +45,7 @@ export interface MarketplaceFilters {
   metal?: string;
   condition?: string;
   dynasty?: string;
+  category?: string;
 }
 
 export interface CoinReview {

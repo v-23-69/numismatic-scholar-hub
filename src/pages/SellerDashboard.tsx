@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, TrendingUp, Package, AlertCircle, Eye, Edit, Trash2, Star } from 'lucide-react';
@@ -28,21 +27,19 @@ const SellerDashboard = () => {
   const [listings, setListings] = useState<CoinListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newCoin, setNewCoin] = useState({
+  const [newCoin, setNewCoin] = useState<Partial<CoinListing>>({
     title: '',
     description: '',
-    mint_date: '',
-    region: '',
     value: 0,
-    rarity: 'Common' as const,
-    verified: false,
     images: [''],
-    stock_quantity: 1,
+    category: undefined,
+    region: '',
+    rarity: 'Common' as const,
+    mint_date: '',
     metal: '',
-    dynasty: '',
-    ruler: '',
     condition: '',
-    category: ''
+    dynasty: '',
+    stock_quantity: 1
   });
 
   useEffect(() => {
@@ -52,8 +49,6 @@ const SellerDashboard = () => {
   }, [user, isSellerAllowed]);
 
   const loadSellerListings = async () => {
-    if (!user) return;
-    
     try {
       setLoading(true);
       console.log('Loading listings for seller:', user.id);
@@ -82,7 +77,14 @@ const SellerDashboard = () => {
   };
 
   const handleAddCoin = async () => {
-    if (!user) return;
+    if (!newCoin.title || !newCoin.description || !newCoin.value) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -108,8 +110,8 @@ const SellerDashboard = () => {
       if (error) throw error;
       
       toast({
-        title: "Coin listed successfully!",
-        description: "Your coin has been added to the marketplace",
+        title: "Success",
+        description: "Your coin has been listed",
         className: "bg-green-50 border-green-200 text-green-800"
       });
       
@@ -117,18 +119,16 @@ const SellerDashboard = () => {
       setNewCoin({
         title: '',
         description: '',
-        mint_date: '',
-        region: '',
         value: 0,
-        rarity: 'Common',
-        verified: false,
         images: [''],
-        stock_quantity: 1,
+        category: undefined,
+        region: '',
+        rarity: 'Common' as const,
+        mint_date: '',
         metal: '',
-        dynasty: '',
-        ruler: '',
         condition: '',
-        category: ''
+        dynasty: '',
+        stock_quantity: 1
       });
       
       loadSellerListings();
@@ -171,11 +171,9 @@ const SellerDashboard = () => {
 
   const mockStats = {
     activeListings: listings.length,
-    totalSales: 156,
-    monthlyRevenue: 45200,
-    averageRating: 4.8,
-    pendingOrders: 3,
-    totalViews: 2847
+    totalSales: 0,
+    averageRating: 0,
+    pendingVerifications: 0
   };
 
   const getStatusBadge = (status: string) => {
@@ -195,7 +193,8 @@ const SellerDashboard = () => {
         <Navbar />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-royal mb-4">Please sign in to access Seller Dashboard</h1>
+            <h1 className="text-2xl font-bold text-royal mb-4">Please Sign In</h1>
+            <p className="text-gray-600 mb-4">You need to be signed in to access the Seller Dashboard.</p>
             <Link to="/authenticate">
               <Button className="bg-royal hover:bg-royal-light text-white">
                 Sign In
@@ -359,7 +358,12 @@ const SellerDashboard = () => {
                       </div>
                       <div>
                         <Label htmlFor="rarity">Rarity</Label>
-                        <Select onValueChange={(value) => setNewCoin(prev => ({ ...prev, rarity: value as any }))}>
+                        <Select 
+                          value={newCoin.rarity}
+                          onValueChange={(value: 'Common' | 'Uncommon' | 'Rare' | 'Very Rare' | 'Extremely Rare') => 
+                            setNewCoin(prev => ({ ...prev, rarity: value }))
+                          }
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Select rarity" />
                           </SelectTrigger>
@@ -375,11 +379,17 @@ const SellerDashboard = () => {
                       <div>
                         <Label htmlFor="stock">Stock Quantity</Label>
                         <Input
-                          id="stock"
+                          id="stock_quantity"
                           type="number"
                           value={newCoin.stock_quantity}
-                          onChange={(e) => setNewCoin(prev => ({ ...prev, stock_quantity: Number(e.target.value) }))}
-                          min="1"
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value, 10);
+                            setNewCoin(prev => ({ 
+                              ...prev, 
+                              stock_quantity: isNaN(value) ? 1 : value 
+                            }));
+                          }}
+                          min={1}
                         />
                       </div>
                     </div>
@@ -445,22 +455,22 @@ const SellerDashboard = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
+              <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-royal">₹{mockStats.monthlyRevenue.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">+8% from last month</p>
+              <div className="text-2xl font-bold text-royal">{mockStats.averageRating}</div>
+              <p className="text-xs text-muted-foreground">This month</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Views</CardTitle>
-              <Eye className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Pending Verifications</CardTitle>
+              <AlertCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-royal">{mockStats.totalViews}</div>
+              <div className="text-2xl font-bold text-royal">{mockStats.pendingVerifications}</div>
               <p className="text-xs text-muted-foreground">This month</p>
             </CardContent>
           </Card>
@@ -534,7 +544,7 @@ const SellerDashboard = () => {
                             variant="outline" 
                             size="sm" 
                             className="text-red-600 hover:text-red-700"
-                            onClick={() => handleDeleteListing(listing.id)}
+                            onClick={() => handleDeleteListing(Number(listing.id))}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

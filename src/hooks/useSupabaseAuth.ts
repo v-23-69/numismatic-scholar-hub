@@ -13,10 +13,10 @@ export const useSupabaseAuth = () => {
   
   // Initialize auth state with better session handling
   useEffect(() => {
+    let mounted = true;
+    
     const initializeAuth = async () => {
       try {
-        setIsLoading(true);
-        
         // Get current session
         const { data: { session }, error } = await supabase.auth.getSession();
         
@@ -25,41 +25,44 @@ export const useSupabaseAuth = () => {
         }
         
         console.log('Initial session:', session?.user?.email);
-        setUser(session?.user || null);
-        setIsInitialized(true);
         
-        // Listen to auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-          console.log('Auth state changed:', event, session?.user?.email);
-          
-          // Handle different auth events
-          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-            setUser(session?.user || null);
-            if (session?.user && event === 'SIGNED_IN') {
-              await ensureProfileExists(session.user);
-            }
-          } else if (event === 'SIGNED_OUT') {
-            setUser(null);
-          }
-        });
-        
-        return () => {
-          subscription.unsubscribe();
-        };
+        if (mounted) {
+          setUser(session?.user || null);
+          setIsInitialized(true);
+          setIsLoading(false);
+        }
       } catch (error) {
         console.error("Failed to initialize auth:", error);
-        toast({
-          title: "Authentication Error",
-          description: "Could not connect to authentication service.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+          setIsInitialized(true);
+        }
       }
     };
     
     initializeAuth();
-  }, [toast]);
+
+    // Listen to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
+      
+      if (mounted) {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          setUser(session?.user || null);
+          if (session?.user && event === 'SIGNED_IN') {
+            await ensureProfileExists(session.user);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+      }
+    });
+    
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Ensure user profile exists in profiles table
   const ensureProfileExists = async (user: any) => {

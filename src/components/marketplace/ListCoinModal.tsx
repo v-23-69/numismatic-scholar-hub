@@ -23,10 +23,10 @@ interface CoinFormData {
   category?: string;
   region: string;
   rarity: 'Common' | 'Uncommon' | 'Rare' | 'Very Rare' | 'Extremely Rare';
-  mint_date: string;
-  metal: string;
-  condition: string;
-  dynasty: string;
+  mint_date?: string;
+  metal?: string;
+  condition?: string;
+  dynasty?: string;
   stock_quantity: number;
 }
 
@@ -66,23 +66,29 @@ export const ListCoinModal: React.FC<ListCoinModalProps> = ({ open, onOpenChange
   const uploadImage = async (file: File): Promise<string> => {
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      console.log('Uploading to coin-images bucket:', filePath);
 
       const { error: uploadError } = await supabase.storage
         .from('coin-images')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
 
       const { data } = supabase.storage
         .from('coin-images')
         .getPublicUrl(filePath);
 
+      console.log('Image uploaded successfully:', data.publicUrl);
       return data.publicUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
-      throw error;
+      throw new Error('Failed to upload image. Please try again.');
     }
   };
 
@@ -101,7 +107,7 @@ export const ListCoinModal: React.FC<ListCoinModalProps> = ({ open, onOpenChange
     if (!formData.title || !formData.description || !formData.value) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields",
+        description: "Please fill in title, description, and price",
         variant: "destructive"
       });
       return;
@@ -115,6 +121,23 @@ export const ListCoinModal: React.FC<ListCoinModalProps> = ({ open, onOpenChange
         imageUrl = await uploadImage(imageFile);
       }
 
+      console.log('Inserting coin listing with data:', {
+        title: formData.title,
+        description: formData.description,
+        value: formData.value,
+        images: imageUrl ? [imageUrl] : [],
+        category: formData.category || null,
+        region: formData.region || null,
+        rarity: formData.rarity,
+        mint_date: formData.mint_date || null,
+        metal: formData.metal || null,
+        condition: formData.condition || null,
+        dynasty: formData.dynasty || null,
+        seller_id: user.id,
+        seller_name: user.user_metadata?.full_name || user.email || 'Anonymous',
+        stock_quantity: formData.stock_quantity,
+      });
+
       const { error } = await supabase
         .from('coin_listings')
         .insert({
@@ -122,8 +145,8 @@ export const ListCoinModal: React.FC<ListCoinModalProps> = ({ open, onOpenChange
           description: formData.description,
           value: formData.value,
           images: imageUrl ? [imageUrl] : [],
-          category: formData.category,
-          region: formData.region,
+          category: formData.category || null,
+          region: formData.region || null,
           rarity: formData.rarity,
           mint_date: formData.mint_date || null,
           metal: formData.metal || null,
@@ -131,11 +154,13 @@ export const ListCoinModal: React.FC<ListCoinModalProps> = ({ open, onOpenChange
           dynasty: formData.dynasty || null,
           seller_id: user.id,
           seller_name: user.user_metadata?.full_name || user.email || 'Anonymous',
-          verified: false,
           stock_quantity: formData.stock_quantity,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database insert error:', error);
+        throw error;
+      }
       
       toast({
         title: "Success!",
@@ -163,11 +188,11 @@ export const ListCoinModal: React.FC<ListCoinModalProps> = ({ open, onOpenChange
       
       // Refresh the page to show new listing
       window.location.reload();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding coin:', error);
       toast({
         title: "Error",
-        description: "Failed to list your coin. Please try again.",
+        description: error.message || "Failed to list your coin. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -201,10 +226,11 @@ export const ListCoinModal: React.FC<ListCoinModalProps> = ({ open, onOpenChange
               <Input
                 id="value"
                 type="number"
-                value={formData.value}
-                onChange={(e) => setFormData(prev => ({ ...prev, value: Number(e.target.value) }))}
+                value={formData.value || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, value: Number(e.target.value) || 0 }))}
                 placeholder="25000"
                 className="mt-1 h-11"
+                min="0"
                 required
               />
             </div>
@@ -272,7 +298,7 @@ export const ListCoinModal: React.FC<ListCoinModalProps> = ({ open, onOpenChange
                 <SelectTrigger className="mt-1 h-11">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent className="z-[70]">
+                <SelectContent className="z-[70] bg-white">
                   <SelectItem value="Ancient India">Ancient India</SelectItem>
                   <SelectItem value="Mughal India">Mughal India</SelectItem>
                   <SelectItem value="British India">British India</SelectItem>
@@ -312,7 +338,7 @@ export const ListCoinModal: React.FC<ListCoinModalProps> = ({ open, onOpenChange
                 <SelectTrigger className="mt-1 h-11">
                   <SelectValue placeholder="Select metal" />
                 </SelectTrigger>
-                <SelectContent className="z-[70]">
+                <SelectContent className="z-[70] bg-white">
                   <SelectItem value="Gold">Gold</SelectItem>
                   <SelectItem value="Silver">Silver</SelectItem>
                   <SelectItem value="Copper">Copper</SelectItem>
@@ -321,7 +347,7 @@ export const ListCoinModal: React.FC<ListCoinModalProps> = ({ open, onOpenChange
               </Select>
             </div>
             <div>
-              <Label htmlFor="dynasty" className="text-sm font-medium text-gray-700">Dynasty/Ruler</Label>
+              <Label htmlFor="dynasty" className="text-sm font-medium text-gray-700">Dynasty/Ruler (Optional)</Label>
               <Input
                 id="dynasty"
                 value={formData.dynasty}
@@ -339,7 +365,7 @@ export const ListCoinModal: React.FC<ListCoinModalProps> = ({ open, onOpenChange
                 <SelectTrigger className="mt-1 h-11">
                   <SelectValue placeholder="Select condition" />
                 </SelectTrigger>
-                <SelectContent className="z-[70]">
+                <SelectContent className="z-[70] bg-white">
                   <SelectItem value="Mint">Mint</SelectItem>
                   <SelectItem value="Excellent">Excellent</SelectItem>
                   <SelectItem value="Very Fine">Very Fine</SelectItem>
@@ -359,7 +385,7 @@ export const ListCoinModal: React.FC<ListCoinModalProps> = ({ open, onOpenChange
                 <SelectTrigger className="mt-1 h-11">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="z-[70]">
+                <SelectContent className="z-[70] bg-white">
                   <SelectItem value="Common">Common</SelectItem>
                   <SelectItem value="Uncommon">Uncommon</SelectItem>
                   <SelectItem value="Rare">Rare</SelectItem>
@@ -378,7 +404,7 @@ export const ListCoinModal: React.FC<ListCoinModalProps> = ({ open, onOpenChange
                   const value = parseInt(e.target.value, 10);
                   setFormData(prev => ({ 
                     ...prev, 
-                    stock_quantity: isNaN(value) ? 1 : value 
+                    stock_quantity: isNaN(value) ? 1 : Math.max(1, value)
                   }));
                 }}
                 min={1}
@@ -394,6 +420,7 @@ export const ListCoinModal: React.FC<ListCoinModalProps> = ({ open, onOpenChange
               variant="outline" 
               onClick={() => onOpenChange(false)}
               disabled={loading}
+              className="border-royal text-royal hover:bg-blue-50"
             >
               Cancel
             </Button>

@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabaseAuth } from './useSupabaseAuth';
 
@@ -15,6 +15,7 @@ export const useSellerAccess = () => {
   const { user, isInitialized } = useSupabaseAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [accessChecked, setAccessChecked] = useState(false);
   
   const isSellerAllowed = () => {
     if (!user || !user.email) return false;
@@ -23,20 +24,23 @@ export const useSellerAccess = () => {
 
   // Protect seller routes
   useEffect(() => {
-    if (isInitialized && user) {
+    if (isInitialized) {
       const isSellerRoute = SELLER_PROTECTED_ROUTES.some(route => 
         location.pathname.startsWith(route)
       );
       
-      if (isSellerRoute && !isSellerAllowed()) {
+      if (isSellerRoute && user && !isSellerAllowed()) {
         console.log('Unauthorized access to seller route, redirecting...');
         navigate('/coins-market', { replace: true });
       }
+      
+      setAccessChecked(true);
     }
   }, [user, isInitialized, location.pathname, navigate]);
 
   return {
     isSellerAllowed: isSellerAllowed(),
-    userEmail: user?.email || null
+    userEmail: user?.email || null,
+    accessChecked
   };
 };

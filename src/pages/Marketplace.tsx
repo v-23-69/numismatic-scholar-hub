@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Filter, Plus, Upload, Shield, Heart, ShoppingCart, X, Calendar, Award, Crown, Eye, LogIn } from 'lucide-react';
+import { Search, Filter, Plus, Shield, Heart, ShoppingCart, Eye, LogIn } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -411,7 +411,7 @@ const Marketplace = () => {
                 {isInitialized && user && isSellerAllowed && (
                   <Button 
                     onClick={() => setShowListModal(true)} 
-                    className="bg-royal hover:bg-royal-light text-white"
+                    className="bg-royal hover:bg-royal-light text-white rounded-lg"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     List Your Coin
@@ -457,7 +457,7 @@ const Marketplace = () => {
             </div>
 
             {/* Compact Filter Presets Section */}
-            <section className="py-4 bg-gray-50 rounded-lg mb-6">
+            <section className="py-3 bg-gray-50 rounded-lg mb-6">
               <div className="container mx-auto px-4">
                 <FilterPresets 
                   onApplyPreset={handleFiltersChange}
@@ -466,13 +466,13 @@ const Marketplace = () => {
               </div>
             </section>
 
-            {/* Professional Filters & Sorting Section - Restored to prominence */}
-            <section id="filters-section" className="py-6 bg-white border border-gray-200 rounded-lg shadow-sm mb-8">
-              <div className="container mx-auto px-4">
-                <div className="bg-gradient-to-r from-royal/5 to-gold/5 border border-royal/20 rounded-lg p-6 shadow-lg">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="font-semibold text-royal text-lg flex items-center">
-                      <Filter className="h-5 w-5 mr-2" />
+            {/* Professional Filters & Sorting Section - Prominently Displayed */}
+            <section id="filters-section" className="py-8 bg-white border border-gray-200 rounded-lg shadow-lg mb-8">
+              <div className="container mx-auto px-6">
+                <div className="bg-gradient-to-r from-royal/5 to-gold/5 border border-royal/20 rounded-lg p-8 shadow-lg">
+                  <div className="flex items-center justify-between mb-8">
+                    <h3 className="font-semibold text-royal text-xl flex items-center">
+                      <Filter className="h-6 w-6 mr-3" />
                       Professional Filters & Sorting
                     </h3>
                     {hasActiveFilters && (
@@ -480,25 +480,25 @@ const Marketplace = () => {
                         onClick={clearFilters}
                         variant="outline"
                         size="sm"
-                        className="border-royal text-royal hover:bg-blue-50"
+                        className="border-royal text-royal hover:bg-blue-50 rounded-lg"
                       >
                         Clear All Filters
                       </Button>
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
                     {/* Sort By */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">Sort By</label>
                       <Select 
                         value={filters.sortBy || 'newest'} 
                         onValueChange={(value: string) => handleFiltersChange({ ...filters, sortBy: value })}
                       >
-                        <SelectTrigger className="h-10">
+                        <SelectTrigger className="h-12">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white z-50">
                           <SelectItem value="newest">Newest First</SelectItem>
                           <SelectItem value="oldest">Oldest First</SelectItem>
                           <SelectItem value="price_asc">Price: Low to High</SelectItem>
@@ -509,7 +509,7 @@ const Marketplace = () => {
 
                     {/* Category */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">Category</label>
                       <Select 
                         value={filters.category || 'all'} 
                         onValueChange={(value: string) => {
@@ -517,10 +517,10 @@ const Marketplace = () => {
                           handleFiltersChange({ ...filters, category: newValue });
                         }}
                       >
-                        <SelectTrigger className="h-10">
+                        <SelectTrigger className="h-12">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white z-50">
                           <SelectItem value="all">All Categories</SelectItem>
                           <SelectItem value="Ancient India">Ancient India</SelectItem>
                           <SelectItem value="Mughal India">Mughal India</SelectItem>
@@ -535,7 +535,7 @@ const Marketplace = () => {
 
                     {/* Rarity */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Rarity</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">Rarity</label>
                       <Select 
                         value={filters.rarity || 'all'} 
                         onValueChange={(value: string) => {
@@ -543,10 +543,10 @@ const Marketplace = () => {
                           handleFiltersChange({ ...filters, rarity: newValue });
                         }}
                       >
-                        <SelectTrigger className="h-10">
+                        <SelectTrigger className="h-12">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white z-50">
                           <SelectItem value="all">All Rarities</SelectItem>
                           <SelectItem value="Common">Common</SelectItem>
                           <SelectItem value="Uncommon">Uncommon</SelectItem>
@@ -559,8 +559,8 @@ const Marketplace = () => {
 
                     {/* Price Range */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
-                      <div className="flex space-x-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-3">Price Range</label>
+                      <div className="flex space-x-2">
                         <Input
                           type="number"
                           placeholder="Min"
@@ -572,7 +572,7 @@ const Marketplace = () => {
                               minValue: value !== '' ? Number(value) : undefined 
                             });
                           }}
-                          className="h-10"
+                          className="h-12"
                         />
                         <Input
                           type="number"
@@ -585,14 +585,14 @@ const Marketplace = () => {
                               maxValue: value !== '' ? Number(value) : undefined 
                             });
                           }}
-                          className="h-10"
+                          className="h-12"
                         />
                       </div>
                     </div>
 
                     {/* Metal */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Metal</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">Metal</label>
                       <Select 
                         value={filters.metal || 'all'} 
                         onValueChange={(value: string) => {
@@ -600,10 +600,10 @@ const Marketplace = () => {
                           handleFiltersChange({ ...filters, metal: newValue });
                         }}
                       >
-                        <SelectTrigger className="h-10">
+                        <SelectTrigger className="h-12">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white z-50">
                           <SelectItem value="all">All Metals</SelectItem>
                           <SelectItem value="Gold">Gold</SelectItem>
                           <SelectItem value="Silver">Silver</SelectItem>
@@ -615,7 +615,7 @@ const Marketplace = () => {
 
                     {/* Verified Only Toggle */}
                     <div className="flex items-end">
-                      <div className="flex items-center p-3 bg-royal/10 rounded-lg h-10">
+                      <div className="flex items-center p-4 bg-royal/10 rounded-lg h-12">
                         <input
                           type="checkbox"
                           id="verified"
@@ -680,6 +680,7 @@ const Marketplace = () => {
                             variant="outline" 
                             size="sm"
                             onClick={() => handleQuickView(coin)}
+                            className="border-royal text-royal hover:bg-blue-50 rounded-lg"
                           >
                             Quick View
                           </Button>
@@ -697,7 +698,7 @@ const Marketplace = () => {
                 <Button 
                   onClick={loadMore}
                   variant="outline"
-                  className="border-royal text-royal hover:bg-blue-50"
+                  className="border-royal text-royal hover:bg-blue-50 rounded-lg"
                 >
                   Load More
                 </Button>

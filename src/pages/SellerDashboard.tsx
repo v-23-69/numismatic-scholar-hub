@@ -1,20 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, TrendingUp, Package, AlertCircle, Eye, Edit, Trash2, Star } from 'lucide-react';
+import { TrendingUp, Package, AlertCircle, Edit, Trash2, Star } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useSellerAccess } from '@/hooks/useSellerAccess';
-import { MarketplaceService } from '@/services/MarketplaceService';
+import { ListCoinModal } from '@/components/marketplace/ListCoinModal';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import type { CoinListing } from '@/types/marketplace';
@@ -23,24 +19,9 @@ const SellerDashboard = () => {
   const { user } = useSupabaseAuth();
   const { isSellerAllowed } = useSellerAccess();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('overview');
   const [listings, setListings] = useState<CoinListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newCoin, setNewCoin] = useState<Partial<CoinListing>>({
-    title: '',
-    description: '',
-    value: 0,
-    images: [''],
-    category: undefined,
-    region: '',
-    rarity: 'Common' as const,
-    mint_date: '',
-    metal: '',
-    condition: '',
-    dynasty: '',
-    stock_quantity: 1
-  });
 
   useEffect(() => {
     if (user && isSellerAllowed) {
@@ -73,72 +54,6 @@ const SellerDashboard = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleAddCoin = async () => {
-    if (!newCoin.title || !newCoin.description || !newCoin.value) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('coin_listings')
-        .insert({
-          title: newCoin.title,
-          description: newCoin.description,
-          value: newCoin.value,
-          images: newCoin.images.filter(img => img.trim() !== ''),
-          category: newCoin.category,
-          region: newCoin.region,
-          rarity: newCoin.rarity,
-          mint_date: newCoin.mint_date || null,
-          metal: newCoin.metal || null,
-          condition: newCoin.condition || null,
-          dynasty: newCoin.dynasty || null,
-          seller_id: user.id,
-          seller_name: user.user_metadata?.full_name || user.email || 'Anonymous',
-          verified: false,
-          stock_quantity: newCoin.stock_quantity,
-        });
-
-      if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Your coin has been listed",
-        className: "bg-green-50 border-green-200 text-green-800"
-      });
-      
-      setShowAddModal(false);
-      setNewCoin({
-        title: '',
-        description: '',
-        value: 0,
-        images: [''],
-        category: undefined,
-        region: '',
-        rarity: 'Common' as const,
-        mint_date: '',
-        metal: '',
-        condition: '',
-        dynasty: '',
-        stock_quantity: 1
-      });
-      
-      loadSellerListings();
-    } catch (error) {
-      console.error('Error adding coin:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add coin listing",
-        variant: "destructive"
-      });
     }
   };
 
@@ -196,7 +111,7 @@ const SellerDashboard = () => {
             <h1 className="text-2xl font-bold text-royal mb-4">Please Sign In</h1>
             <p className="text-gray-600 mb-4">You need to be signed in to access the Seller Dashboard.</p>
             <Link to="/authenticate">
-              <Button className="bg-royal hover:bg-royal-light text-white">
+              <Button className="bg-royal hover:bg-royal-light text-white rounded-lg">
                 Sign In
               </Button>
             </Link>
@@ -216,7 +131,7 @@ const SellerDashboard = () => {
             <h1 className="text-2xl font-bold text-royal mb-4">Access Denied</h1>
             <p className="text-gray-600 mb-4">You don't have permission to access the Seller Dashboard.</p>
             <Link to="/coins-market">
-              <Button className="bg-royal hover:bg-royal-light text-white">
+              <Button className="bg-royal hover:bg-royal-light text-white rounded-lg">
                 Back to Marketplace
               </Button>
             </Link>
@@ -241,190 +156,16 @@ const SellerDashboard = () => {
             </div>
             <div className="mt-4 md:mt-0 flex gap-3">
               <Link to="/coins-market">
-                <Button variant="outline" className="border-royal text-royal hover:bg-blue-50">
+                <Button variant="outline" className="border-royal text-royal hover:bg-blue-50 rounded-lg">
                   View Marketplace
                 </Button>
               </Link>
-              <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-                <DialogTrigger asChild>
-                  <Button className="bg-royal hover:bg-blue-600">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New Listing
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Add New Coin Listing</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="title">Coin Title *</Label>
-                        <Input
-                          id="title"
-                          value={newCoin.title}
-                          onChange={(e) => setNewCoin(prev => ({ ...prev, title: e.target.value }))}
-                          placeholder="e.g., Mughal Gold Mohur 1658"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="value">Price (₹) *</Label>
-                        <Input
-                          id="value"
-                          type="number"
-                          value={newCoin.value}
-                          onChange={(e) => setNewCoin(prev => ({ ...prev, value: Number(e.target.value) }))}
-                          placeholder="25000"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="description">Description *</Label>
-                      <Textarea
-                        id="description"
-                        value={newCoin.description}
-                        onChange={(e) => setNewCoin(prev => ({ ...prev, description: e.target.value }))}
-                        placeholder="Detailed description of the coin..."
-                        rows={3}
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="category">Category</Label>
-                        <Select onValueChange={(value) => setNewCoin(prev => ({ ...prev, category: value }))}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Ancient India">Ancient India</SelectItem>
-                            <SelectItem value="Mughal India">Mughal India</SelectItem>
-                            <SelectItem value="British India">British India</SelectItem>
-                            <SelectItem value="Republic India">Republic India</SelectItem>
-                            <SelectItem value="Ancient">Ancient</SelectItem>
-                            <SelectItem value="Medieval">Medieval</SelectItem>
-                            <SelectItem value="Modern">Modern</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="region">Region/Country</Label>
-                        <Input
-                          id="region"
-                          value={newCoin.region}
-                          onChange={(e) => setNewCoin(prev => ({ ...prev, region: e.target.value }))}
-                          placeholder="e.g., Mughal Empire"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="mint_date">Mint Date/Year</Label>
-                        <Input
-                          id="mint_date"
-                          value={newCoin.mint_date}
-                          onChange={(e) => setNewCoin(prev => ({ ...prev, mint_date: e.target.value }))}
-                          placeholder="e.g., 1658 AD"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="metal">Metal</Label>
-                        <Input
-                          id="metal"
-                          value={newCoin.metal}
-                          onChange={(e) => setNewCoin(prev => ({ ...prev, metal: e.target.value }))}
-                          placeholder="e.g., Gold, Silver, Copper"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="condition">Condition</Label>
-                        <Select onValueChange={(value) => setNewCoin(prev => ({ ...prev, condition: value }))}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select condition" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Mint">Mint</SelectItem>
-                            <SelectItem value="Excellent">Excellent</SelectItem>
-                            <SelectItem value="Very Fine">Very Fine</SelectItem>
-                            <SelectItem value="Fine">Fine</SelectItem>
-                            <SelectItem value="Good">Good</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="rarity">Rarity</Label>
-                        <Select 
-                          value={newCoin.rarity}
-                          onValueChange={(value: 'Common' | 'Uncommon' | 'Rare' | 'Very Rare' | 'Extremely Rare') => 
-                            setNewCoin(prev => ({ ...prev, rarity: value }))
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select rarity" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Common">Common</SelectItem>
-                            <SelectItem value="Uncommon">Uncommon</SelectItem>
-                            <SelectItem value="Rare">Rare</SelectItem>
-                            <SelectItem value="Very Rare">Very Rare</SelectItem>
-                            <SelectItem value="Extremely Rare">Extremely Rare</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="stock">Stock Quantity</Label>
-                        <Input
-                          id="stock_quantity"
-                          type="number"
-                          value={newCoin.stock_quantity}
-                          onChange={(e) => {
-                            const value = parseInt(e.target.value, 10);
-                            setNewCoin(prev => ({ 
-                              ...prev, 
-                              stock_quantity: isNaN(value) ? 1 : value 
-                            }));
-                          }}
-                          min={1}
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="dynasty">Dynasty/Ruler</Label>
-                      <Input
-                        id="dynasty"
-                        value={newCoin.dynasty}
-                        onChange={(e) => setNewCoin(prev => ({ ...prev, dynasty: e.target.value }))}
-                        placeholder="e.g., Akbar"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="images">Image URL</Label>
-                      <Input
-                        id="images"
-                        value={newCoin.images[0]}
-                        onChange={(e) => setNewCoin(prev => ({ ...prev, images: [e.target.value] }))}
-                        placeholder="https://example.com/coin-image.jpg"
-                      />
-                    </div>
-                    
-                    <div className="flex justify-end space-x-2 pt-4">
-                      <Button variant="outline" onClick={() => setShowAddModal(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={handleAddCoin} className="bg-royal hover:bg-royal-light">
-                        Add Listing
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <Button 
+                onClick={() => setShowAddModal(true)}
+                className="bg-royal hover:bg-blue-600 text-white rounded-lg"
+              >
+                Add New Listing
+              </Button>
             </div>
           </div>
         </div>
@@ -489,12 +230,15 @@ const SellerDashboard = () => {
                 <p className="text-gray-600">Loading your listings...</p>
               </div>
             ) : listings.length === 0 ? (
-              <div className="text-center py-8">
-                <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">You haven't listed any coins yet</p>
-                <Button onClick={() => setShowAddModal(true)} className="bg-royal hover:bg-royal-light">
-                  <Plus className="h-4 w-4 mr-2" />
-                  List Your First Coin
+              <div className="text-center py-12">
+                <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-4 text-lg">No coins listed yet</p>
+                <p className="text-gray-500 mb-6">Start building your coin collection marketplace by listing your first coin.</p>
+                <Button 
+                  onClick={() => setShowAddModal(true)} 
+                  className="bg-royal hover:bg-royal-light text-white rounded-lg"
+                >
+                  Add Your First Listing
                 </Button>
               </div>
             ) : (
@@ -537,13 +281,13 @@ const SellerDashboard = () => {
                       <TableCell>{listing.stock_quantity}</TableCell>
                       <TableCell>
                         <div className="flex space-x-1">
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" className="rounded-lg">
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="text-red-600 hover:text-red-700"
+                            className="text-red-600 hover:text-red-700 rounded-lg"
                             onClick={() => handleDeleteListing(Number(listing.id))}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -560,6 +304,12 @@ const SellerDashboard = () => {
       </div>
 
       <Footer />
+      
+      {/* List Coin Modal */}
+      <ListCoinModal 
+        open={showAddModal} 
+        onOpenChange={setShowAddModal} 
+      />
     </div>
   );
 };

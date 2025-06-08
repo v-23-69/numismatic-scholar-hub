@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const useSupabaseAuth = () => {
   const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -14,14 +15,17 @@ export const useSupabaseAuth = () => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        setIsLoading(true);
         const { data } = await supabase.auth.getSession();
         setUser(data.session?.user || null);
+        setIsInitialized(true);
         
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log('Auth state changed:', event, session?.user?.email);
           setUser(session?.user || null);
           
           // Handle profile creation on successful sign in
-          if (session?.user && _event === 'SIGNED_IN') {
+          if (session?.user && event === 'SIGNED_IN') {
             await ensureProfileExists(session.user);
           }
         });
@@ -36,6 +40,8 @@ export const useSupabaseAuth = () => {
           description: "Could not connect to authentication service.",
           variant: "destructive"
         });
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -263,6 +269,7 @@ export const useSupabaseAuth = () => {
   return { 
     user,
     isLoading, 
+    isInitialized,
     setIsLoading,
     handleGoogleSignIn,
     handleEmailSignIn,

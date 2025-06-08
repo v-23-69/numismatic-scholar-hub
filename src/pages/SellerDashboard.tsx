@@ -14,12 +14,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useSellerAccess } from '@/hooks/useSellerAccess';
 import { MarketplaceService } from '@/services/MarketplaceService';
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/integrations/supabase/client';
 import type { CoinListing } from '@/types/marketplace';
 
 const SellerDashboard = () => {
   const { user } = useSupabaseAuth();
+  const { isSellerAllowed } = useSellerAccess();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [listings, setListings] = useState<CoinListing[]>([]);
@@ -38,23 +41,34 @@ const SellerDashboard = () => {
     metal: '',
     dynasty: '',
     ruler: '',
-    condition: ''
+    condition: '',
+    category: ''
   });
 
   useEffect(() => {
-    if (user) {
+    if (user && isSellerAllowed) {
       loadSellerListings();
     }
-  }, [user]);
+  }, [user, isSellerAllowed]);
 
   const loadSellerListings = async () => {
     if (!user) return;
     
     try {
       setLoading(true);
-      // In a real app, this would filter by seller_id
-      const { data } = await MarketplaceService.getCoinListings({}, 1, 50);
-      setListings(data);
+      console.log('Loading listings for seller:', user.id);
+      
+      // Get coins listed by this specific seller
+      const { data, error } = await supabase
+        .from('coin_listings')
+        .select('*')
+        .eq('seller_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      console.log('Found listings:', data);
+      setListings(data || []);
     } catch (error) {
       console.error('Error loading seller listings:', error);
       toast({
@@ -71,8 +85,27 @@ const SellerDashboard = () => {
     if (!user) return;
 
     try {
-      // In a real implementation, this would call a createListing API
-      console.log('Adding new coin:', newCoin);
+      const { error } = await supabase
+        .from('coin_listings')
+        .insert({
+          title: newCoin.title,
+          description: newCoin.description,
+          value: newCoin.value,
+          images: newCoin.images.filter(img => img.trim() !== ''),
+          category: newCoin.category,
+          region: newCoin.region,
+          rarity: newCoin.rarity,
+          mint_date: newCoin.mint_date || null,
+          metal: newCoin.metal || null,
+          condition: newCoin.condition || null,
+          dynasty: newCoin.dynasty || null,
+          seller_id: user.id,
+          seller_name: user.user_metadata?.full_name || user.email || 'Anonymous',
+          verified: false,
+          stock_quantity: newCoin.stock_quantity,
+        });
+
+      if (error) throw error;
       
       toast({
         title: "Coin listed successfully!",
@@ -94,7 +127,8 @@ const SellerDashboard = () => {
         metal: '',
         dynasty: '',
         ruler: '',
-        condition: ''
+        condition: '',
+        category: ''
       });
       
       loadSellerListings();
@@ -103,6 +137,33 @@ const SellerDashboard = () => {
       toast({
         title: "Error",
         description: "Failed to add coin listing",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteListing = async (listingId: number) => {
+    try {
+      const { error } = await supabase
+        .from('coin_listings')
+        .delete()
+        .eq('id', listingId)
+        .eq('seller_id', user?.id); // Ensure only the seller can delete their own listings
+
+      if (error) throw error;
+
+      toast({
+        title: "Listing deleted",
+        description: "Your coin listing has been removed",
+        className: "bg-green-50 border-green-200 text-green-800"
+      });
+
+      loadSellerListings();
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete listing",
         variant: "destructive"
       });
     }
@@ -127,6 +188,7 @@ const SellerDashboard = () => {
     return statusColors[status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800';
   };
 
+  // Check if user is authorized
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -137,6 +199,26 @@ const SellerDashboard = () => {
             <Link to="/authenticate">
               <Button className="bg-royal hover:bg-royal-light text-white">
                 Sign In
+              </Button>
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!isSellerAllowed) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-royal mb-4">Access Denied</h1>
+            <p className="text-gray-600 mb-4">You don't have permission to access the Seller Dashboard.</p>
+            <Link to="/coins-market">
+              <Button className="bg-royal hover:bg-royal-light text-white">
+                Back to Marketplace
               </Button>
             </Link>
           </div>
@@ -211,6 +293,23 @@ const SellerDashboard = () => {
                     
                     <div className="grid grid-cols-2 gap-4">
                       <div>
+                        <Label htmlFor="category">Category</Label>
+                        <Select onValueChange={(value) => setNewCoin(prev => ({ ...prev, category: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Ancient India">Ancient India</SelectItem>
+                            <SelectItem value="Mughal India">Mughal India</SelectItem>
+                            <SelectItem value="British India">British India</SelectItem>
+                            <SelectItem value="Republic India">Republic India</SelectItem>
+                            <SelectItem value="Ancient">Ancient</SelectItem>
+                            <SelectItem value="Medieval">Medieval</SelectItem>
+                            <SelectItem value="Modern">Modern</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
                         <Label htmlFor="region">Region/Country</Label>
                         <Input
                           id="region"
@@ -219,6 +318,9 @@ const SellerDashboard = () => {
                           placeholder="e.g., Mughal Empire"
                         />
                       </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="mint_date">Mint Date/Year</Label>
                         <Input
@@ -228,9 +330,6 @@ const SellerDashboard = () => {
                           placeholder="e.g., 1658 AD"
                         />
                       </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="metal">Metal</Label>
                         <Input
@@ -240,6 +339,9 @@ const SellerDashboard = () => {
                           placeholder="e.g., Gold, Silver, Copper"
                         />
                       </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4">
                       <div>
                         <Label htmlFor="condition">Condition</Label>
                         <Select onValueChange={(value) => setNewCoin(prev => ({ ...prev, condition: value }))}>
@@ -255,9 +357,6 @@ const SellerDashboard = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-4">
                       <div>
                         <Label htmlFor="rarity">Rarity</Label>
                         <Select onValueChange={(value) => setNewCoin(prev => ({ ...prev, rarity: value as any }))}>
@@ -283,15 +382,16 @@ const SellerDashboard = () => {
                           min="1"
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="dynasty">Dynasty/Ruler</Label>
-                        <Input
-                          id="dynasty"
-                          value={newCoin.dynasty}
-                          onChange={(e) => setNewCoin(prev => ({ ...prev, dynasty: e.target.value }))}
-                          placeholder="e.g., Akbar"
-                        />
-                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="dynasty">Dynasty/Ruler</Label>
+                      <Input
+                        id="dynasty"
+                        value={newCoin.dynasty}
+                        onChange={(e) => setNewCoin(prev => ({ ...prev, dynasty: e.target.value }))}
+                        placeholder="e.g., Akbar"
+                      />
                     </div>
                     
                     <div>
@@ -328,7 +428,7 @@ const SellerDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-royal">{mockStats.activeListings}</div>
-              <p className="text-xs text-muted-foreground">+2 from last month</p>
+              <p className="text-xs text-muted-foreground">Your current listings</p>
             </CardContent>
           </Card>
 
@@ -393,14 +493,14 @@ const SellerDashboard = () => {
                   <TableRow>
                     <TableHead>Coin</TableHead>
                     <TableHead>Price</TableHead>
-                    <TableHead>Views</TableHead>
+                    <TableHead>Category</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Rating</TableHead>
+                    <TableHead>Stock</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {listings.slice(0, 10).map((listing) => (
+                  {listings.map((listing) => (
                     <TableRow key={listing.id}>
                       <TableCell>
                         <div className="flex items-center space-x-3">
@@ -417,28 +517,25 @@ const SellerDashboard = () => {
                       </TableCell>
                       <TableCell className="font-medium">₹{listing.value.toLocaleString()}</TableCell>
                       <TableCell>
-                        <div className="flex items-center">
-                          <Eye className="h-4 w-4 mr-1 text-gray-400" />
-                          {Math.floor(Math.random() * 200) + 50}
-                        </div>
+                        <Badge variant="outline">{listing.category || 'Uncategorized'}</Badge>
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusBadge('active')}>
                           Active
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Star className="h-4 w-4 text-gold fill-current mr-1" />
-                          {listing.seller_rating.toFixed(1)}
-                        </div>
-                      </TableCell>
+                      <TableCell>{listing.stock_quantity}</TableCell>
                       <TableCell>
                         <div className="flex space-x-1">
                           <Button variant="outline" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleDeleteListing(listing.id)}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>

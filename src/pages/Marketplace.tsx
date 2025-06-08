@@ -87,7 +87,7 @@ const CoinCard = ({ coin, index, onQuickView }: { coin: CoinListing, index: numb
     }
   };
 
-  // Enhanced metadata display without emojis
+  // Enhanced metadata display
   const getConditionColor = (condition: string) => {
     switch (condition?.toLowerCase()) {
       case 'mint': return 'text-green-600 bg-green-50';
@@ -249,7 +249,7 @@ const CoinCard = ({ coin, index, onQuickView }: { coin: CoinListing, index: numb
 const Marketplace = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useSupabaseAuth();
+  const { user, isInitialized } = useSupabaseAuth();
   const { isSellerAllowed } = useSellerAccess();
   const { toast } = useToast();
   
@@ -283,6 +283,7 @@ const Marketplace = () => {
       metal: searchParams.get('metal') || undefined,
       condition: searchParams.get('condition') || undefined,
       dynasty: searchParams.get('dynasty') || undefined,
+      category: searchParams.get('category') || undefined,
     };
   });
 
@@ -322,8 +323,10 @@ const Marketplace = () => {
 
   // Initialize and handle filter changes
   useEffect(() => {
-    loadCoins(1, true);
-  }, [filters]);
+    if (isInitialized) {
+      loadCoins(1, true);
+    }
+  }, [filters, isInitialized]);
 
   // Update URL params when filters change
   useEffect(() => {
@@ -405,8 +408,8 @@ const Marketplace = () => {
               </div>
               
               <div className="flex flex-wrap justify-center mt-6 space-x-0 space-y-2 sm:space-x-4 sm:space-y-0">
-                {/* Only show seller buttons if user is allowed seller */}
-                {isSellerAllowed && (
+                {/* Only show seller buttons if user is allowed seller and authenticated */}
+                {isInitialized && user && isSellerAllowed && (
                   <Button 
                     onClick={() => setShowListModal(true)} 
                     className="bg-gold hover:bg-gold-light text-royal"
@@ -416,7 +419,7 @@ const Marketplace = () => {
                   </Button>
                 )}
                 
-                {!user && (
+                {(!user || !isSellerAllowed) && (
                   <Button 
                     onClick={() => navigate('/authenticate')} 
                     className="bg-gold hover:bg-gold-light text-royal"
@@ -458,7 +461,7 @@ const Marketplace = () => {
         </section>
 
         {/* Compact Filter Presets Section */}
-        <section className="py-4 bg-gray-50">
+        <section className="py-3 bg-gray-50">
           <div className="container mx-auto px-4">
             <FilterPresets 
               currentFilters={filters}
@@ -468,12 +471,12 @@ const Marketplace = () => {
         </section>
 
         {/* Compact Filters & Sorting Section */}
-        <section id="filters-section" className="py-6 bg-white border-b border-gray-200">
+        <section id="filters-section" className="py-4 bg-white border-b border-gray-200">
           <div className="container mx-auto px-4">
-            <div className="bg-gradient-to-r from-royal/5 to-gold/5 border border-royal/20 rounded-lg p-4 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-royal text-lg flex items-center">
-                  <Filter className="h-5 w-5 mr-2" />
+            <div className="bg-gradient-to-r from-royal/5 to-gold/5 border border-royal/20 rounded-lg p-3 shadow-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-royal text-base flex items-center">
+                  <Filter className="h-4 w-4 mr-2" />
                   Professional Filters & Sorting
                 </h3>
                 {hasActiveFilters && (
@@ -489,7 +492,7 @@ const Marketplace = () => {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
                 {/* Sort By */}
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Sort By</label>
@@ -512,14 +515,14 @@ const Marketplace = () => {
                   </Select>
                 </div>
 
-                {/* Dynasty/Category */}
+                {/* Category */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Dynasty / Category</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
                   <Select 
-                    value={filters.dynasty || 'all'} 
+                    value={filters.category || 'all'} 
                     onValueChange={(value: string) => {
                       const newValue = value === 'all' ? undefined : value;
-                      handleFiltersChange({ ...filters, dynasty: newValue });
+                      handleFiltersChange({ ...filters, category: newValue });
                     }}
                   >
                     <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20 h-8 text-sm">
@@ -531,6 +534,9 @@ const Marketplace = () => {
                       <SelectItem value="Mughal India">Mughal India</SelectItem>
                       <SelectItem value="British India">British India</SelectItem>
                       <SelectItem value="Republic India">Republic India</SelectItem>
+                      <SelectItem value="Ancient">Ancient</SelectItem>
+                      <SelectItem value="Medieval">Medieval</SelectItem>
+                      <SelectItem value="Modern">Modern</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -585,7 +591,7 @@ const Marketplace = () => {
 
                 {/* Price Range */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Price Range (₹)</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Price Range</label>
                   <div className="flex space-x-1">
                     <Input
                       type="number"
@@ -824,7 +830,7 @@ const Marketplace = () => {
       <Footer />
       
       {/* List Coin Modal - only show if user is allowed seller */}
-      {isSellerAllowed && (
+      {isInitialized && user && isSellerAllowed && (
         <ListCoinModal 
           open={showListModal} 
           onOpenChange={setShowListModal} 

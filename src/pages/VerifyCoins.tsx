@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Info, Award, CheckCircle, Plus, Minus, AlertCircle, QrCode, X, LogIn } from 'lucide-react';
+import { Upload, Info, Award, CheckCircle, Plus, Minus, AlertCircle, QrCode, X, LogIn, Calendar, Crown } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate, Link } from 'react-router-dom';
 import supabase from '@/lib/supabaseClient';

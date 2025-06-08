@@ -11,27 +11,40 @@ export const useSupabaseAuth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // Initialize auth state
+  // Initialize auth state with better session handling
   useEffect(() => {
     const initializeAuth = async () => {
       try {
         setIsLoading(true);
-        const { data } = await supabase.auth.getSession();
-        setUser(data.session?.user || null);
+        
+        // Get current session
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Session error:', error);
+        }
+        
+        console.log('Initial session:', session?.user?.email);
+        setUser(session?.user || null);
         setIsInitialized(true);
         
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        // Listen to auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
           console.log('Auth state changed:', event, session?.user?.email);
-          setUser(session?.user || null);
           
-          // Handle profile creation on successful sign in
-          if (session?.user && event === 'SIGNED_IN') {
-            await ensureProfileExists(session.user);
+          // Handle different auth events
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            setUser(session?.user || null);
+            if (session?.user && event === 'SIGNED_IN') {
+              await ensureProfileExists(session.user);
+            }
+          } else if (event === 'SIGNED_OUT') {
+            setUser(null);
           }
         });
         
         return () => {
-          authListener.subscription.unsubscribe();
+          subscription.unsubscribe();
         };
       } catch (error) {
         console.error("Failed to initialize auth:", error);

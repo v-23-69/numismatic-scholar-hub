@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, User, ShoppingCart, LogIn, Heart, ChevronDown, TrendingUp, Package } from 'lucide-react';
@@ -7,52 +6,16 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
 import SearchDropdown from '@/components/search/SearchDropdown';
 import { useWishlist } from '@/context/WishlistContext';
-import supabase from '@/lib/supabaseClient';
-
-// Create a placeholder or mock auth state when Supabase isn't configured
-const useAuthState = () => {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const initSupabase = async () => {
-      try {
-        setLoading(true);
-        const { data } = await supabase.auth.getSession();
-        setUser(data.session?.user || null);
-        setLoading(false);
-        
-        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-          setUser(session?.user || null);
-        });
-        
-        return () => {
-          authListener.subscription.unsubscribe();
-        };
-      } catch (error) {
-        console.error("Failed to initialize Supabase:", error);
-        toast({
-          title: "Authentication Error",
-          description: "Could not connect to authentication service.",
-          variant: "destructive"
-        });
-        setLoading(false);
-      }
-    };
-    
-    initSupabase();
-  }, [toast]);
-  
-  return { user, loading };
-};
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useSellerAccess } from '@/hooks/useSellerAccess';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchActive, setSearchActive] = useState(false);
   const [aboutDropdownOpen, setAboutDropdownOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const { user, loading } = useAuthState();
+  const { user, isLoading } = useSupabaseAuth();
+  const { isSellerAllowed } = useSellerAccess();
   const { wishlist } = useWishlist();
   const location = useLocation();
   
@@ -69,6 +32,13 @@ const Navbar = () => {
       return 0;
     }
   })();
+
+  // Get user's first name for dashboard naming
+  const getUserFirstName = () => {
+    if (!user) return '';
+    const fullName = user.user_metadata?.full_name || user.user_metadata?.name || '';
+    return fullName.split(' ')[0] || 'User';
+  };
 
   // Handle navigation with scroll-to-top for same page
   const handleNavClick = (path: string) => {
@@ -221,7 +191,7 @@ const Navbar = () => {
             )}
           </Link>
           
-          {loading ? (
+          {isLoading ? (
             <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
           ) : user ? (
             <div className="relative">
@@ -257,17 +227,22 @@ const Navbar = () => {
                     My Profile
                   </button>
                   <div className="border-t border-gray-200 my-2"></div>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleNavClick('/seller-dashboard');
-                      setProfileDropdownOpen(false);
-                    }}
-                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors flex items-center"
-                  >
-                    <TrendingUp className="h-4 w-4 mr-3" />
-                    Seller Dashboard
-                  </button>
+                  
+                  {/* Only show Seller Dashboard for authorized users */}
+                  {isSellerAllowed && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleNavClick('/seller-dashboard');
+                        setProfileDropdownOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors flex items-center"
+                    >
+                      <TrendingUp className="h-4 w-4 mr-3" />
+                      Seller Dashboard
+                    </button>
+                  )}
+                  
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
@@ -277,7 +252,7 @@ const Navbar = () => {
                     className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors flex items-center"
                   >
                     <Package className="h-4 w-4 mr-3" />
-                    Buyer Dashboard
+                    {getUserFirstName()}'s Dashboard
                   </button>
                 </div>
               )}
@@ -373,15 +348,19 @@ const Navbar = () => {
           {user && (
             <>
               <div className="border-t border-gray-200 my-2"></div>
-              <button 
-                onClick={() => {
-                  handleNavClick('/seller-dashboard');
-                  toggleNav();
-                }}
-                className="block w-full text-left px-3 py-2 rounded-xl text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-              >
-                Seller Dashboard
-              </button>
+              
+              {/* Only show Seller Dashboard for authorized users */}
+              {isSellerAllowed && (
+                <button 
+                  onClick={() => {
+                    handleNavClick('/seller-dashboard');
+                    toggleNav();
+                  }}
+                  className="block w-full text-left px-3 py-2 rounded-xl text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  Seller Dashboard
+                </button>
+              )}
               
               <button 
                 onClick={() => {
@@ -390,7 +369,7 @@ const Navbar = () => {
                 }}
                 className="block w-full text-left px-3 py-2 rounded-xl text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
               >
-                Buyer Dashboard
+                {getUserFirstName()}'s Dashboard
               </button>
             </>
           )}

@@ -2,8 +2,8 @@
 import { useSupabaseAuth } from './useSupabaseAuth';
 
 const ALLOWED_SELLER_EMAILS = [
-  'vishal23mentoratnsh@gmail.com',
-  // Add more allowed seller emails here
+  'nsh.development.acc1.00@gmail.com',
+  // Add more allowed seller emails here if needed
 ];
 
 export const useSellerAccess = () => {

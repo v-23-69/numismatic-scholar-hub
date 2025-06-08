@@ -458,7 +458,7 @@ const Marketplace = () => {
         </section>
 
         {/* Compact Filter Presets Section */}
-        <section className="py-4 bg-gray-50">
+        <section className="py-3 bg-gray-50">
           <div className="container mx-auto px-4">
             <FilterPresets 
               currentFilters={filters}
@@ -468,12 +468,12 @@ const Marketplace = () => {
         </section>
 
         {/* Compact Filters & Sorting Section */}
-        <section id="filters-section" className="py-6 bg-white border-b border-gray-200">
+        <section id="filters-section" className="py-4 bg-white border-b border-gray-200">
           <div className="container mx-auto px-4">
-            <div className="bg-gradient-to-r from-royal/5 to-gold/5 border border-royal/20 rounded-lg p-4 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-royal text-lg flex items-center">
-                  <Filter className="h-5 w-5 mr-2" />
+            <div className="bg-gradient-to-r from-royal/5 to-gold/5 border border-royal/20 rounded-lg p-3 shadow-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-royal text-base flex items-center">
+                  <Filter className="h-4 w-4 mr-2" />
                   Professional Filters & Sorting
                 </h3>
                 {hasActiveFilters && (
@@ -481,15 +481,15 @@ const Marketplace = () => {
                     variant="ghost" 
                     size="sm" 
                     onClick={clearFilters}
-                    className="text-royal hover:text-royal-light hover:bg-royal/10"
+                    className="text-royal hover:text-royal-light hover:bg-royal/10 h-7 text-xs"
                   >
-                    <X className="h-4 w-4 mr-1" />
+                    <X className="h-3 w-3 mr-1" />
                     Clear All Filters
                   </Button>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
                 {/* Sort By */}
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Sort By</label>
@@ -499,7 +499,7 @@ const Marketplace = () => {
                       handleFiltersChange({ ...filters, sortBy: value });
                     }}
                   >
-                    <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20 h-8 text-sm">
+                    <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20 h-7 text-xs">
                       <SelectValue placeholder="Sort by..." />
                     </SelectTrigger>
                     <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
@@ -522,7 +522,7 @@ const Marketplace = () => {
                       handleFiltersChange({ ...filters, dynasty: newValue });
                     }}
                   >
-                    <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20 h-8 text-sm">
+                    <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20 h-7 text-xs">
                       <SelectValue placeholder="All categories" />
                     </SelectTrigger>
                     <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
@@ -545,7 +545,7 @@ const Marketplace = () => {
                       handleFiltersChange({ ...filters, metal: newValue });
                     }}
                   >
-                    <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20 h-8 text-sm">
+                    <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20 h-7 text-xs">
                       <SelectValue placeholder="All metals" />
                     </SelectTrigger>
                     <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
@@ -569,7 +569,7 @@ const Marketplace = () => {
                       handleFiltersChange({ ...filters, region: newValue });
                     }}
                   >
-                    <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20 h-8 text-sm">
+                    <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20 h-7 text-xs">
                       <SelectValue placeholder="All regions" />
                     </SelectTrigger>
                     <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
@@ -585,7 +585,7 @@ const Marketplace = () => {
 
                 {/* Price Range */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Price Range (₹)</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Price Range</label>
                   <div className="flex space-x-1">
                     <Input
                       type="number"
@@ -596,7 +596,7 @@ const Marketplace = () => {
                         handleFiltersChange({ ...filters, minValue: value !== '' ? Number(value) : undefined });
                       }}
                       min={0}
-                      className="border-royal/30 focus:border-royal focus:ring-royal/20 h-8 text-xs"
+                      className="border-royal/30 focus:border-royal focus:ring-royal/20 h-7 text-xs"
                     />
                     <Input
                       type="number"
@@ -607,14 +607,14 @@ const Marketplace = () => {
                         handleFiltersChange({ ...filters, maxValue: value !== '' ? Number(value) : undefined });
                       }}
                       min={0}
-                      className="border-royal/30 focus:border-royal focus:ring-royal/20 h-8 text-xs"
+                      className="border-royal/30 focus:border-royal focus:ring-royal/20 h-7 text-xs"
                     />
                   </div>
                 </div>
 
                 {/* Verified Only Checkbox */}
                 <div className="flex items-end">
-                  <div className="flex items-center p-2 bg-royal/10 rounded-lg h-8">
+                  <div className="flex items-center p-2 bg-royal/10 rounded-lg h-7">
                     <input
                       type="checkbox"
                       id="verified"

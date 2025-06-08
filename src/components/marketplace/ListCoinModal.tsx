@@ -22,6 +22,9 @@ const formSchema = z.object({
   region: z.string().min(1, 'Region is required'),
   rarity: z.string().min(1, 'Rarity is required'),
   mint_date: z.string().optional(),
+  metal: z.string().optional(),
+  condition: z.string().optional(),
+  dynasty: z.string().optional(),
 });
 
 interface ListCoinModalProps {
@@ -33,6 +36,7 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
   const { user } = useSupabaseAuth();
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -45,6 +49,9 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
       region: '',
       rarity: '',
       mint_date: '',
+      metal: '',
+      condition: '',
+      dynasty: '',
     },
   });
 
@@ -75,6 +82,11 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
       }
 
       setUploadedImages(prev => [...prev, ...uploadedUrls]);
+      toast({
+        title: "Images uploaded successfully",
+        description: `${uploadedUrls.length} image(s) uploaded`,
+        className: "bg-green-50 border-green-200 text-green-800"
+      });
     } catch (error) {
       console.error('Error uploading images:', error);
       toast({
@@ -111,6 +123,8 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
     }
 
     try {
+      setSubmitting(true);
+      
       const { error } = await supabase
         .from('coin_listings')
         .insert({
@@ -122,8 +136,10 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
           region: values.region,
           rarity: values.rarity,
           mint_date: values.mint_date || null,
+          metal: values.metal || null,
+          condition: values.condition || null,
+          dynasty: values.dynasty || null,
           seller_id: user.id,
-          seller_name: user.user_metadata?.full_name || user.email || 'Anonymous',
           verified: false,
           stock_quantity: 1,
         });
@@ -139,6 +155,9 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
       form.reset();
       setUploadedImages([]);
       onOpenChange(false);
+      
+      // Refresh the page to show the new listing
+      window.location.reload();
     } catch (error) {
       console.error('Error listing coin:', error);
       toast({
@@ -146,26 +165,28 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
         description: "Failed to list your coin. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-white z-[80] border border-royal/20 shadow-2xl">
-        <DialogHeader className="sticky top-0 bg-white border-b pb-4 mb-4">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white z-[100] border border-royal/20 shadow-2xl">
+        <DialogHeader className="sticky top-0 bg-white border-b pb-4 mb-6 z-10">
           <DialogTitle className="text-2xl font-bold text-royal">List Your Coin</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-gray-600">
             Add your coin to the marketplace for other collectors to discover and purchase.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-1">
+        <div className="px-2">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Image Upload */}
+              {/* Image Upload Section */}
               <div className="space-y-4">
-                <label className="text-sm font-medium text-gray-700">Coin Images *</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <label className="block text-sm font-medium text-gray-700">Coin Images *</label>
+                <div className="border-2 border-dashed border-royal/30 rounded-lg p-8 text-center bg-royal/5">
                   <input
                     type="file"
                     accept="image/*"
@@ -176,9 +197,9 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
                     disabled={uploading}
                   />
                   <label htmlFor="image-upload" className="cursor-pointer">
-                    <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <p className="text-gray-600">
-                      {uploading ? 'Uploading...' : 'Click to upload coin images'}
+                    <Upload className="mx-auto h-12 w-12 text-royal mb-4" />
+                    <p className="text-royal font-medium">
+                      {uploading ? 'Uploading images...' : 'Click to upload coin images from your device'}
                     </p>
                     <p className="text-sm text-gray-500 mt-2">PNG, JPG up to 10MB each</p>
                   </label>
@@ -186,18 +207,18 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
 
                 {/* Preview uploaded images */}
                 {uploadedImages.length > 0 && (
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {uploadedImages.map((url, index) => (
                       <div key={index} className="relative">
                         <img
                           src={url}
                           alt={`Coin ${index + 1}`}
-                          className="w-full h-24 object-cover rounded border"
+                          className="w-full h-32 object-cover rounded border border-royal/20"
                         />
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -213,9 +234,13 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title *</FormLabel>
+                      <FormLabel className="text-royal font-medium">Title *</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., 1921 Morgan Silver Dollar" {...field} />
+                        <Input 
+                          placeholder="e.g., 1921 Morgan Silver Dollar" 
+                          className="border-royal/30 focus:border-royal focus:ring-royal/20"
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -227,12 +252,13 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Price (₹) *</FormLabel>
+                      <FormLabel className="text-royal font-medium">Price (₹) *</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           step="0.01"
                           placeholder="0.00"
+                          className="border-royal/30 focus:border-royal focus:ring-royal/20"
                           {...field}
                           onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                         />
@@ -248,11 +274,11 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description *</FormLabel>
+                    <FormLabel className="text-royal font-medium">Description *</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Describe your coin's condition, history, and unique features..."
-                        className="min-h-[100px]"
+                        className="min-h-[120px] border-royal/30 focus:border-royal focus:ring-royal/20"
                         {...field}
                       />
                     </FormControl>
@@ -267,19 +293,19 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category *</FormLabel>
+                      <FormLabel className="text-royal font-medium">Category *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className="z-[100]">
-                          <SelectItem value="ancient">Ancient</SelectItem>
-                          <SelectItem value="medieval">Medieval</SelectItem>
-                          <SelectItem value="modern">Modern</SelectItem>
-                          <SelectItem value="commemorative">Commemorative</SelectItem>
-                          <SelectItem value="bullion">Bullion</SelectItem>
+                        <SelectContent className="z-[200] bg-white border border-gray-200 shadow-lg">
+                          <SelectItem value="Ancient India">Ancient India</SelectItem>
+                          <SelectItem value="Mughal India">Mughal India</SelectItem>
+                          <SelectItem value="British India">British India</SelectItem>
+                          <SelectItem value="Republic India">Republic India</SelectItem>
+                          <SelectItem value="World Coins">World Coins</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -292,20 +318,19 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
                   name="region"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Region *</FormLabel>
+                      <FormLabel className="text-royal font-medium">Region *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
                             <SelectValue placeholder="Select region" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className="z-[100]">
-                          <SelectItem value="United States">United States</SelectItem>
-                          <SelectItem value="Roman Empire">Roman Empire</SelectItem>
+                        <SelectContent className="z-[200] bg-white border border-gray-200 shadow-lg">
                           <SelectItem value="India">India</SelectItem>
-                          <SelectItem value="China">China</SelectItem>
+                          <SelectItem value="United States">United States</SelectItem>
                           <SelectItem value="Europe">Europe</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
+                          <SelectItem value="China">China</SelectItem>
+                          <SelectItem value="Roman Empire">Roman Empire</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -318,14 +343,14 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
                   name="rarity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Rarity *</FormLabel>
+                      <FormLabel className="text-royal font-medium">Rarity *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
                             <SelectValue placeholder="Select rarity" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className="z-[100]">
+                        <SelectContent className="z-[200] bg-white border border-gray-200 shadow-lg">
                           <SelectItem value="Common">Common</SelectItem>
                           <SelectItem value="Uncommon">Uncommon</SelectItem>
                           <SelectItem value="Rare">Rare</SelectItem>
@@ -339,34 +364,110 @@ export const ListCoinModal = ({ open, onOpenChange }: ListCoinModalProps) => {
                 />
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField
+                  control={form.control}
+                  name="metal"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-royal font-medium">Metal</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g., Gold, Silver, Copper"
+                          className="border-royal/30 focus:border-royal focus:ring-royal/20"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="condition"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-royal font-medium">Condition</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="border-royal/30 focus:border-royal focus:ring-royal/20">
+                            <SelectValue placeholder="Select condition" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="z-[200] bg-white border border-gray-200 shadow-lg">
+                          <SelectItem value="Mint">Mint</SelectItem>
+                          <SelectItem value="Excellent">Excellent</SelectItem>
+                          <SelectItem value="Very Fine">Very Fine</SelectItem>
+                          <SelectItem value="Fine">Fine</SelectItem>
+                          <SelectItem value="Good">Good</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="dynasty"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-royal font-medium">Dynasty/Ruler</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g., Akbar, Shah Jahan"
+                          className="border-royal/30 focus:border-royal focus:ring-royal/20"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
                 name="mint_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Mint Date (Optional)</FormLabel>
+                    <FormLabel className="text-royal font-medium">Mint Date</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., 1921, 1800-1850, Ancient Rome" {...field} />
+                      <Input 
+                        placeholder="e.g., 1658 AD, 1800-1850, Ancient"
+                        className="border-royal/30 focus:border-royal focus:ring-royal/20"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="flex justify-end space-x-4 pt-6 border-t">
+              <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => onOpenChange(false)}
+                  disabled={submitting}
+                  className="border-royal text-royal hover:bg-royal/10"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-royal hover:bg-royal-light text-white"
-                  disabled={uploading}
+                  className="bg-royal hover:bg-royal-light text-white px-8"
+                  disabled={uploading || submitting}
                 >
-                  {uploading ? 'Uploading...' : 'List Coin'}
+                  {submitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Adding Listing...
+                    </>
+                  ) : (
+                    'Add Listing'
+                  )}
                 </Button>
               </div>
             </form>

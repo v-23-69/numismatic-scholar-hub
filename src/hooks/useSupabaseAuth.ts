@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const useSupabaseAuth = () => {
   const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with loading true
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -14,23 +14,28 @@ export const useSupabaseAuth = () => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const { data } = await supabase.auth.getSession();
-        setUser(data.session?.user || null);
+        // Get current session immediately
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user || null);
+        setIsLoading(false);
         
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        // Set up auth state listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log('Auth state changed:', event, session?.user?.email);
           setUser(session?.user || null);
           
           // Handle profile creation on successful sign in
-          if (session?.user && _event === 'SIGNED_IN') {
+          if (session?.user && event === 'SIGNED_IN') {
             await ensureProfileExists(session.user);
           }
         });
         
         return () => {
-          authListener.subscription.unsubscribe();
+          subscription.unsubscribe();
         };
       } catch (error) {
         console.error("Failed to initialize auth:", error);
+        setIsLoading(false);
         toast({
           title: "Authentication Error",
           description: "Could not connect to authentication service.",
@@ -257,6 +262,69 @@ export const useSupabaseAuth = () => {
       return false;
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Ensure user profile exists in profiles table
+  const ensureProfileExists = async (user: any) => {
+    try {
+      // Check if profile already exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (!existingProfile) {
+        // Create new profile
+        const { error } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            phone: user.phone,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+            avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+          });
+
+        if (error) {
+          console.error('Error creating profile:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Error ensuring profile exists:', error);
+    }
+  };
+
+  // Check for existing user by email or phone
+  const checkExistingUser = async (email: string, phone?: string) => {
+    try {
+      const { data: emailExists } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (emailExists) {
+        return { exists: true, type: 'email' };
+      }
+
+      if (phone) {
+        const { data: phoneExists } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('phone', phone)
+          .single();
+
+        if (phoneExists) {
+          return { exists: true, type: 'phone' };
+        }
+      }
+
+      return { exists: false, type: null };
+    } catch (error) {
+      // If no records found, that's expected
+      return { exists: false, type: null };
     }
   };
 
